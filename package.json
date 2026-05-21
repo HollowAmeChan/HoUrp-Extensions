@@ -1,0 +1,19 @@
+{
+  "name": "com.hollow.hourp-extensions",
+  "displayName": "HoUrp Extensions",
+  "version": "0.1.0",
+  "unity": "6000.3",
+  "hideInEditor": false,
+  "description": "URP-only RenderGraph-first renderer extensions for Hollow's local rendering stack. This package intentionally does not declare URP package dependencies so projects can bind it to a locally modified URP fork.",
+  "author": {
+    "name": "Hollow"
+  },
+  "keywords": [
+    "urp",
+    "rendergraph",
+    "renderer-feature",
+    "post-processing",
+    "hollow"
+  ],
+  "license": "MIT"
+}

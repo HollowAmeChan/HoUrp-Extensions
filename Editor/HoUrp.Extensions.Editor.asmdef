@@ -1,0 +1,20 @@
+{
+  "name": "HoUrp.Extensions.Editor",
+  "rootNamespace": "HoUrp.Extensions.Editor",
+  "references": [
+    "HoUrp.Extensions.Runtime",
+    "Unity.RenderPipelines.Core.Runtime",
+    "Unity.RenderPipelines.Universal.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
