@@ -1214,6 +1214,15 @@ Layer/Tag 的问题是：
 
 让对象、材质、灯光、角色的功能都显式可配，而不是靠隐式层和 tag 猜测。`HoAovSubject` / `HoAovGroup` 可以作为第一版对象语义 UI 的基础，而不是推倒重做。
 
+第八阶段先做 **Capability UI / Authoring 最小闭环**，不做完整 Capability 调度器，不做 Light Capability，不做新材质系统，也不做 Debug Framework。重点是把现有 `ObjectSemanticAuthoring` / `MaterialSemanticAuthoring` 从临时测试组件整理为可复用的对象/材质语义入口：
+
+- `ObjectSemanticAuthoring` inspector：对象参与、object custom 0-7、id/group/flags、常用对象 preset。
+- `MaterialSemanticAuthoring` inspector：material class、SSS policy、material custom 0-3、常用材质 preset。
+- Capability 表示“允许参与什么”，Policy 表示“如何参与”，UI 只能写入已定义语义和策略值。
+- 旧 `HoAovSubject` / `HoAovGroup` 只作为行为参照，不继承旧全局优先级系统，也不把 renderer user value 作为唯一核心路径。
+
+第八阶段执行按 `Documentation~/rp重构第八步执行计划.md` 推进。
+
 ### 第九优先级：建立 Debug Framework
 
 把 debug 提升成一级系统，让它能查询、能切换、能重置、能叠加控制、能可视化。
