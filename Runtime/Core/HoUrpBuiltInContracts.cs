@@ -319,7 +319,11 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Capabilities.SupportsDebugView),
-                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.DebugViews.AovMask,
+                    HoUrpBuiltInNames.DebugViews.AovObjectId,
+                    HoUrpBuiltInNames.DebugViews.AovLinearDepth,
+                    HoUrpBuiltInNames.DebugViews.AovWorldNormal),
                 HoUrpMigrationDecision.Replace,
                 "old per-feature debug passes",
                 "Central debug composite owner for registered debug views."));

@@ -61,6 +61,33 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
+        public void MinimalAovRegistryLinksDebugCompositeToRegisteredAovDebugViews()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            var debugComposite = registry.Features.Get(HoUrpBuiltInNames.Features.DebugComposite);
+
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovMask));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovObjectId));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovLinearDepth));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovWorldNormal));
+        }
+
+        [Test]
+        public void MinimalAovShaderBindingsUseNewHoUrpNames()
+        {
+            Assert.That(HoUrpShaderPropertyIds.AovOutputFallbackShaderName, Is.EqualTo("Hidden/HoURP/AOV/AovOutputFallback"));
+            Assert.That(HoUrpShaderPropertyIds.AovDebugShaderName, Is.EqualTo("Hidden/HoURP/Debug/AovDebug"));
+            Assert.That(HoUrpShaderPropertyIds.SemanticPostAovReadProbeShaderName, Is.EqualTo("Hidden/HoURP/SemanticPost/AovReadProbe"));
+
+            Assert.That(HoUrpShaderPropertyIds.AovMaskIdTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovMaskIdTexture")));
+            Assert.That(HoUrpShaderPropertyIds.AovNormalDepthTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovNormalDepthTexture")));
+            Assert.That(HoUrpShaderPropertyIds.SourceColorTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSourceColorTexture")));
+            Assert.That(HoUrpShaderPropertyIds.AovDebugMode, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDebugMode")));
+            Assert.That(HoUrpShaderPropertyIds.SemanticPostTintColor, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSemanticPostTintColor")));
+        }
+
+        [Test]
         public void RegistryRejectsDuplicateDefinitions()
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using HoUrp.Extensions.Core;
 using HoUrp.Extensions.RenderGraph;
 using UnityEngine;
@@ -17,7 +18,10 @@ namespace HoUrp.Extensions.Features
         [SerializeField]
         private bool enabledForSceneView = true;
 
-        private AovOutputDeclarationPass declarationPass;
+        [SerializeField]
+        private LayerMask layerMask = -1;
+
+        private AovOutputPass aovOutputPass;
         private HoUrpContractRegistry registry;
 
         public HoUrpContractRegistry Registry => registry;
@@ -25,7 +29,7 @@ namespace HoUrp.Extensions.Features
         public override void Create()
         {
             registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
-            declarationPass = new AovOutputDeclarationPass(registry)
+            aovOutputPass = new AovOutputPass(registry)
             {
                 renderPassEvent = RenderPassEvent.AfterRenderingOpaques
             };
@@ -33,17 +37,24 @@ namespace HoUrp.Extensions.Features
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (!ShouldRender(in renderingData) || declarationPass == null)
+            if (!ShouldRender(in renderingData) || aovOutputPass == null)
             {
                 return;
             }
 
-            renderer.EnqueuePass(declarationPass);
+            aovOutputPass.Setup(layerMask);
+            if (!aovOutputPass.HasFallbackMaterial)
+            {
+                return;
+            }
+
+            renderer.EnqueuePass(aovOutputPass);
         }
 
         protected override void Dispose(bool disposing)
         {
-            declarationPass = null;
+            aovOutputPass?.Dispose();
+            aovOutputPass = null;
             registry = null;
         }
 
@@ -54,20 +65,51 @@ namespace HoUrp.Extensions.Features
                 || (enabledForSceneView && cameraType == CameraType.SceneView);
         }
 
-        private sealed class AovOutputDeclarationPass : ScriptableRenderPass
+        private sealed class AovOutputPass : ScriptableRenderPass
         {
-            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("HoURP AOV Resource Declaration");
-            private readonly HoUrpContractRegistry registry;
+            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("HoURP AOV Output");
+            private static readonly List<ShaderTagId> ShaderTagIds = new List<ShaderTagId>
+            {
+                new ShaderTagId("UniversalForwardOnly"),
+                new ShaderTagId("UniversalForward"),
+                new ShaderTagId("SRPDefaultUnlit"),
+                new ShaderTagId("LightweightForward")
+            };
 
-            public AovOutputDeclarationPass(HoUrpContractRegistry registry)
+            private readonly HoUrpContractRegistry registry;
+            private readonly Material fallbackMaterial;
+            private LayerMask layerMask;
+
+            public AovOutputPass(HoUrpContractRegistry registry)
             {
                 this.registry = registry;
                 ConfigureInput(ScriptableRenderPassInput.None);
+
+                Shader fallbackShader = Shader.Find(HoUrpShaderPropertyIds.AovOutputFallbackShaderName);
+                if (fallbackShader != null)
+                {
+                    fallbackMaterial = CoreUtils.CreateEngineMaterial(fallbackShader);
+                }
+            }
+
+            public bool HasFallbackMaterial => fallbackMaterial != null;
+
+            public void Setup(LayerMask layerMask)
+            {
+                this.layerMask = layerMask;
+            }
+
+            public void Dispose()
+            {
+                CoreUtils.Destroy(fallbackMaterial);
             }
 
             public override void RecordRenderGraph(UnityRenderGraph renderGraph, ContextContainer frameData)
             {
                 UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+                UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
+                UniversalLightData lightData = frameData.Get<UniversalLightData>();
+                UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
                 HoUrpRenderGraphResources resources = frameData.GetOrCreate<HoUrpRenderGraphResources>();
 
                 HoUrpAovResourceDeclaration.DeclareMinimalAovTextures(
@@ -79,21 +121,51 @@ namespace HoUrp.Extensions.Features
                 TextureHandle maskIdTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovMaskId);
                 TextureHandle normalDepthTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovNormalDepth);
 
+                FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.opaque, layerMask);
+                DrawingSettings drawingSettings = RenderingUtils.CreateDrawingSettings(
+                    ShaderTagIds,
+                    renderingData,
+                    cameraData,
+                    lightData,
+                    cameraData.defaultOpaqueSortFlags);
+                drawingSettings.overrideMaterial = fallbackMaterial;
+                drawingSettings.overrideMaterialPassIndex = 0;
+
+                RendererListParams rendererListParams = new RendererListParams(
+                    renderingData.cullResults,
+                    drawingSettings,
+                    filteringSettings);
+
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>(
-                    "HoURP AOV Resource Declaration",
+                    "HoURP AOV Output",
                     out PassData passData,
                     ProfilingSampler))
                 {
                     passData.maskIdTexture = maskIdTexture;
                     passData.normalDepthTexture = normalDepthTexture;
+                    passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
+
+                    if (!passData.rendererList.IsValid())
+                    {
+                        return;
+                    }
+
+                    builder.UseRendererList(passData.rendererList);
                     builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.WriteAll);
                     builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.WriteAll);
+
+                    if (resourceData.activeDepthTexture.IsValid())
+                    {
+                        builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture, AccessFlags.Read);
+                    }
+
                     builder.AllowPassCulling(false);
-                    builder.SetRenderFunc(static (PassData data, RasterGraphContext context)
+                    builder.AllowGlobalStateModification(true);
+                    builder.SetRenderFunc((PassData data, RasterGraphContext context)
                     {
                         _ = data.maskIdTexture;
                         _ = data.normalDepthTexture;
-                        context.cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
+                        context.cmd.DrawRendererList(data.rendererList);
                     });
                 }
             }
@@ -102,6 +174,7 @@ namespace HoUrp.Extensions.Features
             {
                 public TextureHandle maskIdTexture;
                 public TextureHandle normalDepthTexture;
+                public RendererListHandle rendererList;
             }
         }
     }
