@@ -23,6 +23,30 @@ Runtime/Semantic/MaterialSemanticAuthoring.cs
 | flags | ObjectDomain | Semantic policy | AovOutput, SemanticPost |
 | custom0-7 | ObjectDomain | Capability / region policy | SemanticPost, future CharacterSpecialization |
 
+当前写入映射：
+
+| Authoring 字段 | Shader 属性 | AOV 资源 / 通道 | 说明 |
+| --- | --- | --- | --- |
+| `WritesAov ? MaskWeight : 0` | `_HoUrpAovMaskWeight` | `Aov.MaskId.r` | AOV 覆盖权重 |
+| `ObjectId` | `_HoUrpObjectId` | `Aov.MaskId.g` | 对象 ID |
+| `GroupId` | `_HoUrpObjectGroupId` | `Aov.MaskId.b` | 对象分组 |
+| `EffectiveFlags` | `_HoUrpObjectFlags` | `Aov.MaskId.a` | `ReceivesSemanticPost` 写入 bit0 |
+| `ObjectCustomMask` | `_HoUrpObjectCustomMask` | `Aov.ObjectCustom0_3` / `Aov.ObjectCustom4_7` | 对象语义位，不受 `ReceivesSemanticPost` 清空 |
+
+`EffectiveFlags` 的约定：
+
+```text
+EffectiveFlags = user flags with bit0 cleared
+if ReceivesSemanticPost:
+    EffectiveFlags |= bit0
+```
+
+因此 `Object.Custom0-7` 和 `ReceivesSemanticPost` 的职责不同：
+
+- `Object.Custom0-7`：对象声明自己是什么。
+- `ReceivesSemanticPost` / `Object.Flags.bit0`：对象是否允许 SemanticPost 消费这些语义。
+- `POST MASK`：后处理规则和 flag 门控之后的结果，不是对象声明本身。
+
 建议新增 helper：
 
 ```text
