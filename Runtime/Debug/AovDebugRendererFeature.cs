@@ -42,7 +42,8 @@ namespace HoUrp.Extensions.Debugging
             SssMask = 24,
             SssPreparedSource = 25,
             SssDiffusion = 26,
-            SssCompositeWeight = 27
+            SssCompositeWeight = 27,
+            SemanticPostMask = 28
         }
 
         [SerializeField]
@@ -170,6 +171,8 @@ namespace HoUrp.Extensions.Debugging
                     return HoUrpBuiltInNames.DebugViews.SssDiffusion;
                 case AovDebugView.SssCompositeWeight:
                     return HoUrpBuiltInNames.DebugViews.SssCompositeWeight;
+                case AovDebugView.SemanticPostMask:
+                    return HoUrpBuiltInNames.DebugViews.SemanticPostMask;
                 default:
                     return HoUrpBuiltInNames.DebugViews.AovMask;
             }
@@ -229,6 +232,8 @@ namespace HoUrp.Extensions.Debugging
                     return 24;
                 case AovDebugView.SssCompositeWeight:
                     return 25;
+                case AovDebugView.SemanticPostMask:
+                    return 26;
                 default:
                     return 0;
             }
@@ -601,6 +606,11 @@ namespace HoUrp.Extensions.Debugging
                 if (id == HoUrpBuiltInNames.DebugViews.SssCompositeWeight)
                 {
                     return 25;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.SemanticPostMask)
+                {
+                    return 26;
                 }
 
                 return 0;

@@ -37,6 +37,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier ShadingSssWeight = "Shading.SssWeight";
             public static readonly HoUrpIdentifier ShadingSssDiffusionColor = "Shading.SssDiffusionColor";
             public static readonly HoUrpIdentifier ShadingSssCompositeWeight = "Shading.SssCompositeWeight";
+            public static readonly HoUrpIdentifier CompositeSemanticPostMask = "Composite.SemanticPostMask";
             public static readonly HoUrpIdentifier GeometryWorldNormal = "Geometry.WorldNormal";
             public static readonly HoUrpIdentifier GeometryLinearDepth = "Geometry.LinearDepth";
         }
@@ -52,6 +53,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovSssSource = "Aov.SssSource";
             public static readonly HoUrpIdentifier SssSource = "Sss.Source";
             public static readonly HoUrpIdentifier SssDiffusion = "Sss.Diffusion";
+            public static readonly HoUrpIdentifier SemanticPostMask = "SemanticPost.Mask";
         }
 
         public static class DebugViews
@@ -86,6 +88,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier SssProfileId = "SSS.ProfileId";
             public static readonly HoUrpIdentifier SssThickness = "SSS.Thickness";
             public static readonly HoUrpIdentifier SssCurvature = "SSS.Curvature";
+            public static readonly HoUrpIdentifier SemanticPostMask = "SemanticPost.Mask";
         }
 
         public static class Capabilities

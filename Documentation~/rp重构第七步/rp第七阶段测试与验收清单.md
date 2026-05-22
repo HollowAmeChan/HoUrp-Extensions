@@ -4,13 +4,13 @@
 
 | 检查 | 状态 |
 | --- | --- |
-| registry count / link tests | 待补 |
-| `SemanticPostProcess` descriptor tests | 待补 |
-| `SemanticPost.Mask` resource descriptor tests | 待定：若登记正式资源则必须补 |
-| `SemanticPost.Mask` debug view mapping tests | 待补 |
-| rule source -> semantic/resource mapping tests | 待补 |
-| shader property mapping tests | 待补 |
-| `git diff --check` | 待跑 |
+| registry count / link tests | 已补：资源/语义/debug view 计数更新 |
+| `SemanticPostProcess` descriptor tests | 已补：produced `SemanticPost.Mask`，consumed AOV + SSS 输入 |
+| `SemanticPost.Mask` resource descriptor tests | 已补：正式资源，`R8G8B8A8_UNorm`，zero clear |
+| `SemanticPost.Mask` debug view mapping tests | 已补：`SemanticPost.Mask -> Composite.SemanticPostMask` |
+| rule source -> semantic/resource mapping tests | 部分覆盖：契约覆盖 AOV/SSS 消费，具体 rule shader 需 Unity 复测 |
+| shader property mapping tests | 已补：mask/layer/rule property id |
+| `git diff --check` | 已跑：仅 LF/CRLF warning，无 whitespace error |
 
 ## 手动 Unity 验收
 
@@ -48,9 +48,18 @@ MaterialSemanticAuthoring:
 | Transparent present | 无 `_CameraTargetAttachment` RenderGraph 读写冲突 |
 | AllRegistered | 包含 SemanticPost debug tile |
 
+当前代码状态：
+
+- `SemanticPostProcessRendererFeature` 已从单 pass AOV read probe 改为 `SemanticPost Mask -> SemanticTint Composite` 两段。
+- `SemanticPost.Mask` 已登记为正式 RenderGraph 资源，并进入 DebugComposite / AllRegistered。
+- 第一版固定最多 4 个 layer、每层最多 4 条 rule；effect 只实现 `SemanticTint`。
+- SSS 输入为可选读取：若 `Sss.Source` / `Sss.Diffusion` 未声明，则回退到 `Aov.SssSource`，避免依赖旧全局纹理状态。
+- Composite 读取的是 camera color copy，不直接读写 live camera color。
+
 ## 风险点
 
 - 规则语言过早膨胀。
 - effect shader 各自实现 rule，导致语义规则散落。
 - 直接读取 live camera color，重新触发第六阶段遇到的 RenderGraph 冲突。
 - 把 Shoost final image effect 混入 SemanticPost。
+- 尚未运行 Unity batchmode / EditMode tests；当前包目录没有独立 Unity project / `.csproj`。

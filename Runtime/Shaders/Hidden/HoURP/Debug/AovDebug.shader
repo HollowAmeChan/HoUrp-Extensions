@@ -193,6 +193,11 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                     half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(sssDiffusion.a);
                 }
+                else if (_HoUrpAovDebugMode == 26)
+                {
+                    half4 semanticPostMask = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(max(max(semanticPostMask.r, semanticPostMask.g), max(semanticPostMask.b, semanticPostMask.a)));
+                }
                 else
                 {
                     half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
@@ -349,6 +354,7 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 if (mode == 23) return PickLabelChar(index, 83u, 83u, 83u, 32u, 83u, 82u, 67u, 50u, 32u, 32u);
                 if (mode == 24) return PickLabelChar(index, 83u, 83u, 83u, 32u, 68u, 73u, 70u, 70u, 32u, 32u);
                 if (mode == 25) return PickLabelChar(index, 83u, 83u, 83u, 32u, 67u, 77u, 80u, 32u, 87u, 32u);
+                if (mode == 26) return PickLabelChar(index, 80u, 79u, 83u, 84u, 32u, 77u, 65u, 83u, 75u, 32u);
                 return 32u;
             }
 
@@ -532,6 +538,12 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 {
                     half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugScalar(sssDiffusion.a), uv);
+                }
+
+                if (_HoUrpAovDebugMode == 26)
+                {
+                    half4 semanticPostMask = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(max(max(semanticPostMask.r, semanticPostMask.g), max(semanticPostMask.b, semanticPostMask.a))), uv);
                 }
 
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);

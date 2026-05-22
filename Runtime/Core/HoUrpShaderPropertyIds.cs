@@ -6,7 +6,8 @@ namespace HoUrp.Extensions.Core
     {
         public const string AovOutputFallbackShaderName = "Hidden/HoURP/AOV/AovOutputFallback";
         public const string AovDebugShaderName = "Hidden/HoURP/Debug/AovDebug";
-        public const string SemanticPostAovReadProbeShaderName = "Hidden/HoURP/SemanticPost/AovReadProbe";
+        public const string SemanticPostShaderName = "Hidden/HoURP/SemanticPost/AovReadProbe";
+        public const string SemanticPostAovReadProbeShaderName = SemanticPostShaderName;
         public const string SubsurfaceScatteringShaderName = "Hidden/HoURP/SSS/SubsurfaceScattering";
 
         public static readonly int AovMaskIdTexture = Shader.PropertyToID("_HoUrpAovMaskIdTexture");
@@ -37,6 +38,11 @@ namespace HoUrp.Extensions.Core
         public static readonly int SssWeight = Shader.PropertyToID("_HoUrpSssWeight");
         public static readonly int SemanticPostObjectCustomChannel = Shader.PropertyToID("_HoUrpSemanticPostObjectCustomChannel");
         public static readonly int SemanticPostMaterialCustomChannel = Shader.PropertyToID("_HoUrpSemanticPostMaterialCustomChannel");
+        public static readonly int SemanticPostMaskTexture = Shader.PropertyToID("_HoUrpSemanticPostMaskTexture");
+        public static readonly int SemanticPostLayerParams = Shader.PropertyToID("_HoUrpSemanticPostLayerParams");
+        public static readonly int SemanticPostLayerColors = Shader.PropertyToID("_HoUrpSemanticPostLayerColors");
+        public static readonly int SemanticPostRuleParams = Shader.PropertyToID("_HoUrpSemanticPostRuleParams");
+        public static readonly int SemanticPostRuleValues = Shader.PropertyToID("_HoUrpSemanticPostRuleValues");
         public static readonly int SssStrength = Shader.PropertyToID("_HoUrpSssStrength");
         public static readonly int SssRadius = Shader.PropertyToID("_HoUrpSssRadius");
         public static readonly int SssDepthTolerance = Shader.PropertyToID("_HoUrpSssDepthTolerance");
