@@ -85,6 +85,28 @@ namespace HoUrp.Extensions.Core
                 "Feature Inspector / Debug Panel",
                 "HoPost AOV rules",
                 "Marks a feature as a consumer of registered AOV resources."));
+
+            registry.Capabilities.Register(new CapabilityDefinition(
+                HoUrpBuiltInNames.Capabilities.SupportsOit,
+                HoUrpDomain.Material,
+                CapabilityOwnerKind.Material,
+                "MaterialPreset",
+                "HoUrpOitAccumulation pass",
+                false,
+                "Material preset",
+                "_lilOITEnabled",
+                "Marks a generated material preset as capable of producing OIT accumulation input."));
+
+            registry.Capabilities.Register(new CapabilityDefinition(
+                HoUrpBuiltInNames.Capabilities.ParticipatesOit,
+                HoUrpDomain.Material,
+                CapabilityOwnerKind.Material,
+                "MaterialPreset / material instance",
+                "Weighted OIT runtime draw list",
+                false,
+                "Material preset",
+                "_lilOITEnabled",
+                "Marks a generated material instance as participating in OIT accumulation. Runtime support is deferred to the OIT stage."));
         }
 
         private static void RegisterDebugViews(HoUrpContractRegistry registry)
@@ -815,6 +837,46 @@ namespace HoUrp.Extensions.Core
                 "_lilHoAovSssTexture.a",
                 "SSS participation weight encoded into Aov.SssSource.a.");
 
+            RegisterGeneratedMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.TransparentColor,
+                HoUrpDomain.Material,
+                SemanticFormat.Float3,
+                "SurfaceData.baseColor",
+                "Transparent color emitted by generated material presets for forward and OIT-ready passes.");
+
+            RegisterGeneratedMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.TransparentAlpha,
+                HoUrpDomain.Material,
+                SemanticFormat.NormalizedFloat,
+                "SurfaceData.alpha",
+                "Transparent alpha shared by forward, AOV, and OIT-ready passes.");
+
+            RegisterGeneratedMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.TransparentCoverage,
+                HoUrpDomain.Material,
+                SemanticFormat.NormalizedFloat,
+                "TransparentOutputData.coverage",
+                "Coverage after alpha clip or dithering. The stage-ten prototype may mirror alpha.");
+
+            RegisterGeneratedMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.OitAccumulationInput,
+                HoUrpDomain.Composite,
+                SemanticFormat.Float4,
+                "OitAccumulationData.weightedColor",
+                "OIT-ready weighted color/alpha input produced by the material pass. OIT runtime resources are deferred.");
+
+            RegisterGeneratedMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.OitRevealageInput,
+                HoUrpDomain.Composite,
+                SemanticFormat.NormalizedFloat,
+                "OitAccumulationData.revealage",
+                "OIT-ready revealage input produced by the material pass. OIT runtime resources are deferred.");
+
             registry.Semantics.Register(new SemanticDefinition(
                 HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
                 HoUrpDomain.Shading,
@@ -948,6 +1010,30 @@ namespace HoUrp.Extensions.Core
                 debugView,
                 HoUrpMigrationDecision.KeepConceptRename,
                 legacySource,
+                description));
+        }
+
+        private static void RegisterGeneratedMaterialSemantic(
+            HoUrpContractRegistry registry,
+            HoUrpIdentifier semantic,
+            HoUrpDomain domain,
+            SemanticFormat format,
+            string source,
+            string description)
+        {
+            registry.Semantics.Register(new SemanticDefinition(
+                semantic,
+                domain,
+                format,
+                HoUrpPassStage.MaterialShadingSemanticAov,
+                HoUrpLifetime.PerMaterial,
+                HoUrpBuiltInNames.Features.GeneratedMaterial,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.AovOutput,
+                    HoUrpBuiltInNames.Features.DebugComposite),
+                HoUrpBuiltInNames.DebugViews.None,
+                HoUrpMigrationDecision.Replace,
+                source,
                 description));
         }
 
@@ -1119,6 +1205,37 @@ namespace HoUrp.Extensions.Core
 
         private static void RegisterFeatures(HoUrpContractRegistry registry)
         {
+            registry.Features.Register(new FeatureDescriptor(
+                HoUrpBuiltInNames.Features.GeneratedMaterial,
+                HoUrpDomain.Material,
+                HoUrpPassStage.MaterialShadingSemanticAov,
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Semantics.MaterialClass,
+                    HoUrpBuiltInNames.Semantics.MaterialSssProfile,
+                    HoUrpBuiltInNames.Semantics.MaterialThickness,
+                    HoUrpBuiltInNames.Semantics.MaterialCurvature,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom0,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom1,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom2,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom3,
+                    HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
+                    HoUrpBuiltInNames.Semantics.ShadingSssWeight,
+                    HoUrpBuiltInNames.Semantics.TransparentColor,
+                    HoUrpBuiltInNames.Semantics.TransparentAlpha,
+                    HoUrpBuiltInNames.Semantics.TransparentCoverage,
+                    HoUrpBuiltInNames.Semantics.OitAccumulationInput,
+                    HoUrpBuiltInNames.Semantics.OitRevealageInput),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Capabilities.SupportsOit,
+                    HoUrpBuiltInNames.Capabilities.ParticipatesOit),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                HoUrpMigrationDecision.Replace,
+                "future generated material system",
+                "Stage-ten declaration for generated material shader ABI. It produces material and OIT-ready semantics but owns no RenderGraph resources."));
+
             registry.Features.Register(new FeatureDescriptor(
                 HoUrpBuiltInNames.Features.AovOutput,
                 HoUrpDomain.Geometry,

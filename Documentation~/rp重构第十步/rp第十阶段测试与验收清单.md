@@ -4,18 +4,22 @@
 
 | 检查 | 期望 |
 | --- | --- |
-| HLSL ABI files | 存在 `HoUrpMaterialSurface.hlsl`、`HoUrpMaterialAov.hlsl`、`HoUrpMaterialOit.hlsl` 或等价实现 |
+| HLSL ABI files | 存在 `HoUrpObjectSemantic.hlsl`、`HoUrpMaterialSurface.hlsl`、`HoUrpMaterialAov.hlsl`、`HoUrpMaterialOit.hlsl` 或等价实现 |
+| object semantic ABI | 对象语义从 RSUV / MPB 解析，材质 asset 不暴露 `AOV Mask Weight`、ObjectId、GroupId、Flags、ObjectCustom 等对象字段 |
 | `SurfaceData` | 包含 `baseColor`、`alpha`、`normalWS` |
 | `MaterialSemanticData` | 覆盖 material class、SSS profile、thickness、curvature、material custom、SSS source、SSS weight |
 | `AovOutputData` | 不新增第 8 个 MRT |
+| `AovOutputData` | byte-like material semantic 不被 fractional mask coverage 压低到不可解码；mask 只 gate participation，SSS contribution 可继续按 coverage 缩放 |
 | `TransparentOutputData` | 包含 color、alpha、coverage、OIT participation 信息 |
 | `OitAccumulationData` | 包含 weighted color / alpha、revealage、weight |
 | generated shader | 包含 `HoUrpAovOutput` pass |
 | generated shader | 包含 `HoUrpOitAccumulation` pass |
 | generated shader | 包含独立 `UniversalForward` 最小 pass |
+| generated shader | 只暴露材质侧参数；对象/RSUV 字段通过 object semantic ABI 消费，不进入材质 Properties 面板 |
 | generated shader | 不包含 `lilToon`、`lilPBR`、`_lilHoAov`、`_HoAov` |
 | generated shader | 不包含 `lilToonOIT`、`_lilOITEnabled`、`_lilOITActive` |
 | generated shader | 不引用 URP Lit full include / pass include |
+| AOV renderer feature | 保留 fallback overrideMaterial 路径，并额外绘制 explicit `HoUrpAovOutput` pass；explicit pass 必须覆盖 transparent queue |
 | preset descriptor | 能查询 produced semantics |
 | preset descriptor | 能查询 supported passes |
 | preset descriptor | 能查询 `SupportsOit` / `ParticipatesOit` |
@@ -40,6 +44,9 @@ MaterialPreset exposes SupportsOit / ParticipatesOit
 Generated shader text does not contain old OIT ABI
 Generated shader text does not contain old AOV ABI
 HoUrpBuiltInContracts allows GeneratedMaterial producer for material semantics
+AOV renderer draws explicit HoUrpAovOutput passes across render queues
+Generated material shader does not expose object/RSUV fields as material Properties
+Material AOV ABI does not scale material semantic ids by fractional coverage
 ```
 
 ## 手动 Unity 验收
@@ -64,7 +71,13 @@ HoUrpBuiltInContracts allows GeneratedMaterial producer for material semantics
 | 对象 | 材质 | 说明 |
 | --- | --- | --- |
 | A | `MaterialSemanticAuthoring` + 简单材质 | 对照组 |
-| B | 第十步 generated shader prototype | 新材质 producer |
+| B | `ObjectSemanticAuthoring` + 第十步 generated shader prototype | 新材质 producer；对象语义来自 ObjectSemanticAuthoring / RSUV，材质语义来自 generated material |
+
+注意：
+
+- B 不应同时挂 `MaterialSemanticAuthoring`。该组件会通过 `MaterialPropertyBlock` 覆盖 `_HoUrpMaterial*`，用于对照组而不是 generated material producer。
+- 如果曾经在同一个 Renderer 上挂过 `MaterialSemanticAuthoring`，要确认没有残留 MPB 覆盖材质侧语义。prototype shader 的材质侧属性应使用 generated-material 专用命名，避免被过渡组件覆盖。
+- generated material 面板不应出现 AOV Mask Weight / Object Id / Object Group Id / Object Flags / Object Custom Mask。这些属于对象侧 authoring。
 
 B 的 prototype preset 建议：
 
@@ -81,6 +94,7 @@ Character_DebugLit_SSS_OITReady
 - `sssSourceColor` 明显可见。
 - `SupportsOit=true`。
 - `ParticipatesOit=true`。
+- `ObjectSemanticAuthoring.MaskWeight` 可为 1 做首轮验收；如果使用 fractional mask，material class/profile 等 byte-like 语义仍应能被 debug view 解码。
 
 ## AOV / SSS 验收
 
@@ -95,6 +109,8 @@ Character_DebugLit_SSS_OITReady
 | `SSS.Source` | 能读取 B 的 SSS source |
 | `SSS.Diffusion` | 能受 B 的 SSS 输入影响 |
 | `SemanticPost.Mask` | 能按材质语义规则命中 B |
+
+Frame Debugger / RenderDoc 侧应能看到 AOV pass 中 B 使用自己的 `HoUrpAovOutput` shader pass，而不是只被 fallback `AovOutputFallback` overrideMaterial 绘制。fallback path 仍用于没有 explicit AOV pass 的普通/对照材质。
 
 ## Forward 验收
 
@@ -137,6 +153,7 @@ Character_DebugLit_SSS_OITReady
 Runtime/Shaders/ShaderLibrary/HoUrpMaterialSurface.hlsl
 Runtime/Shaders/ShaderLibrary/HoUrpMaterialAov.hlsl
 Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl
+Runtime/Shaders/ShaderLibrary/HoUrpObjectSemantic.hlsl
 Runtime/Shaders/Generated/HoUrpDebugLitMinimal.shader
 Runtime/Semantic/MaterialFeatureBlockDefinition.cs
 Runtime/Semantic/MaterialPresetDefinition.cs
@@ -164,3 +181,7 @@ Tests/Runtime/HoUrpMaterialShaderAbiTests.cs
 - generated shader 仍引用旧材质 include。
 - preset 描述缺少 `SupportedPasses`，后续 runtime 无法查询。
 - AOV 输出和 OIT 输出各自定义 alpha，导致透明行为不一致。
+- generated material 与 `MaterialSemanticAuthoring` 使用同名材质语义属性，导致 MPB 覆盖材质 asset 参数。
+- AOV renderer 只走 opaque fallback overrideMaterial，导致 transparent generated shader 的 `HoUrpAovOutput` pass 不会写入 HoAOV。
+- 将 Object/RSUV 字段暴露在 generated material 面板上，造成“可调但无效”的错误 authoring 入口。
+- fractional `AOV Mask Weight` 被直接乘到 material class/profile 这类 byte-like 语义上，导致 debug 解码回 0。

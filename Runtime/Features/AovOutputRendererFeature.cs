@@ -77,6 +77,15 @@ namespace HoUrp.Extensions.Features
                 new ShaderTagId("LightweightForward")
             };
 
+            private static readonly List<ShaderTagId> ExplicitAovShaderTagIds = new List<ShaderTagId>
+            {
+                new ShaderTagId("HoUrpAovOutput")
+            };
+
+            // Generated/material-owned AOV passes must run as their own shader pass.
+            // The fallback path below intentionally keeps using overrideMaterial for legacy/authoring-only materials.
+            private static readonly RenderQueueRange ExplicitAovRenderQueueRange = RenderQueueRange.all;
+
             private readonly HoUrpContractRegistry registry;
             private readonly Material fallbackMaterial;
             private LayerMask layerMask;
@@ -154,6 +163,19 @@ namespace HoUrp.Extensions.Features
                     drawingSettings,
                     filteringSettings);
 
+                FilteringSettings explicitAovFilteringSettings = new FilteringSettings(ExplicitAovRenderQueueRange, layerMask);
+                DrawingSettings explicitAovDrawingSettings = RenderingUtils.CreateDrawingSettings(
+                    ExplicitAovShaderTagIds,
+                    renderingData,
+                    cameraData,
+                    lightData,
+                    SortingCriteria.CommonTransparent);
+
+                RendererListParams explicitAovRendererListParams = new RendererListParams(
+                    renderingData.cullResults,
+                    explicitAovDrawingSettings,
+                    explicitAovFilteringSettings);
+
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>(
                     "HoURP AOV Output",
                     out PassData passData,
@@ -166,14 +188,23 @@ namespace HoUrp.Extensions.Features
                     passData.surfaceDataTexture = surfaceDataTexture;
                     passData.materialCustomTexture = materialCustomTexture;
                     passData.sssSourceTexture = sssSourceTexture;
-                    passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
+                    passData.fallbackRendererList = renderGraph.CreateRendererList(rendererListParams);
+                    passData.explicitAovRendererList = renderGraph.CreateRendererList(explicitAovRendererListParams);
 
-                    if (!passData.rendererList.IsValid())
+                    if (!passData.fallbackRendererList.IsValid() && !passData.explicitAovRendererList.IsValid())
                     {
                         return;
                     }
 
-                    builder.UseRendererList(passData.rendererList);
+                    if (passData.fallbackRendererList.IsValid())
+                    {
+                        builder.UseRendererList(passData.fallbackRendererList);
+                    }
+
+                    if (passData.explicitAovRendererList.IsValid())
+                    {
+                        builder.UseRendererList(passData.explicitAovRendererList);
+                    }
                     builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.ReadWrite);
                     builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.ReadWrite);
                     builder.SetRenderAttachment(objectCustom0Texture, 2, AccessFlags.ReadWrite);
@@ -198,7 +229,15 @@ namespace HoUrp.Extensions.Features
                         _ = data.surfaceDataTexture;
                         _ = data.materialCustomTexture;
                         _ = data.sssSourceTexture;
-                        context.cmd.DrawRendererList(data.rendererList);
+                        if (data.fallbackRendererList.IsValid())
+                        {
+                            context.cmd.DrawRendererList(data.fallbackRendererList);
+                        }
+
+                        if (data.explicitAovRendererList.IsValid())
+                        {
+                            context.cmd.DrawRendererList(data.explicitAovRendererList);
+                        }
                     });
                 }
             }
@@ -212,7 +251,8 @@ namespace HoUrp.Extensions.Features
                 public TextureHandle surfaceDataTexture;
                 public TextureHandle materialCustomTexture;
                 public TextureHandle sssSourceTexture;
-                public RendererListHandle rendererList;
+                public RendererListHandle fallbackRendererList;
+                public RendererListHandle explicitAovRendererList;
             }
         }
     }

@@ -7,6 +7,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovOutput = "AovOutput";
             public static readonly HoUrpIdentifier SubsurfaceScattering = "SubsurfaceScattering";
             public static readonly HoUrpIdentifier SemanticPostProcess = "SemanticPostProcess";
+            public static readonly HoUrpIdentifier GeneratedMaterial = "GeneratedMaterial";
             public static readonly HoUrpIdentifier DebugComposite = "DebugComposite";
         }
 
@@ -40,6 +41,11 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier CompositeSemanticPostMask = "Composite.SemanticPostMask";
             public static readonly HoUrpIdentifier GeometryWorldNormal = "Geometry.WorldNormal";
             public static readonly HoUrpIdentifier GeometryLinearDepth = "Geometry.LinearDepth";
+            public static readonly HoUrpIdentifier TransparentColor = "Transparent.Color";
+            public static readonly HoUrpIdentifier TransparentAlpha = "Transparent.Alpha";
+            public static readonly HoUrpIdentifier TransparentCoverage = "Transparent.Coverage";
+            public static readonly HoUrpIdentifier OitAccumulationInput = "OIT.AccumulationInput";
+            public static readonly HoUrpIdentifier OitRevealageInput = "OIT.RevealageInput";
         }
 
         public static class Resources
@@ -111,6 +117,15 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier ReceivesSemanticPost = "ReceivesSemanticPost";
             public static readonly HoUrpIdentifier RequiresAov = "RequiresAov";
             public static readonly HoUrpIdentifier SupportsDebugView = "SupportsDebugView";
+            public static readonly HoUrpIdentifier SupportsOit = "SupportsOit";
+            public static readonly HoUrpIdentifier ParticipatesOit = "ParticipatesOit";
+        }
+
+        public static class ShaderPasses
+        {
+            public static readonly HoUrpIdentifier UniversalForward = "UniversalForward";
+            public static readonly HoUrpIdentifier HoUrpAovOutput = "HoUrpAovOutput";
+            public static readonly HoUrpIdentifier HoUrpOitAccumulation = "HoUrpOitAccumulation";
         }
     }
 }

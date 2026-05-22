@@ -62,6 +62,7 @@ Object / Material Authoring
 ### 做
 
 - 定义第一版材质侧 shader ABI：
+  - `ObjectSemanticData`
   - `SurfaceData`
   - `MaterialSemanticData`
   - `AovOutputData`
@@ -77,6 +78,7 @@ Object / Material Authoring
   - `Sss.Source`
   - `Sss.Weight`
 - 明确对象静态语义仍来自 `ObjectSemanticAuthoring` / RSUV / MPB，不由材质 shader 私自定义。
+- 对象静态语义应通过独立 object semantic shader ABI 被材质 pass 消费；generated material 的 Properties 面板不暴露对象/RSUV 字段。
 - 固化第一版 pass 契约：
   - AOV output pass
   - forward pass 占位契约
@@ -100,7 +102,8 @@ Object / Material Authoring
   - ABI 名称稳定。
   - preset / feature block 描述可查询。
   - generated shader 不引用旧 ABI。
-  - AOV / SSS / debug 绑定名仍使用 `_HoUrp*` 新命名。
+- AOV / SSS / debug 绑定名仍使用 `_HoUrp*` 新命名。
+- AOV runtime 必须同时支持 fallback overrideMaterial 路径和 generated material 自己的 explicit `HoUrpAovOutput` pass，后者不能只限 opaque queue。
 
 ### 不做
 
@@ -206,6 +209,28 @@ HoToon or future HoMaterialSystem
 - Material 语义由材质 shader / generated shader 生产。
 - Geometry 语义由当前 pass 的顶点 / fragment 输入生产。
 - Shading 派生语义只写入已经登记的 AOV 通道，不临时加私有 RT。
+- `AOV Mask Weight` 表示对象参与/覆盖，不应把 material class、profile 这类 byte-like 材质语义按 fractional coverage 压低到不可解码。SSS source / weight 这类实际贡献量可以继续按 coverage 缩放。
+
+### 4.3.1 `ObjectSemanticData`
+
+`ObjectSemanticData` 是对象静态语义进入材质 AOV pass 的统一入口。它属于 renderer-owned ABI，不属于材质 asset 属性。
+
+第一版应覆盖：
+
+| Field | 来源 | 说明 |
+| --- | --- | --- |
+| `maskWeight` | `ObjectSemanticAuthoring` / MPB | AOV participation / coverage gate |
+| `objectId` | RSUV 优先，MPB fallback | `Aov.MaskId.g` |
+| `objectGroupAndHighFlags` | RSUV 优先，MPB fallback | group id 与高位 feature flags 打包 |
+| `objectFlags` | RSUV 优先，MPB fallback | 低 8 位 object feature flags |
+| `objectCustomMask` | RSUV 优先，MPB fallback | object custom 0-7 |
+
+原则：
+
+- `unity_RendererUserValue` 是首选对象语义来源。
+- MPB uniform 只是 fallback，用于无法写 RSUV 或测试 authoring 场景。
+- generated material 可以 consume 解析后的对象语义，但不能在材质 Properties 面板暴露这些字段。
+- `MaterialSemanticAuthoring` 与 generated material 是两种 producer 路径；不要让它们共享同名材质语义属性导致 MPB 覆盖材质 asset 参数。
 
 ### 4.4 `TransparentOutputData`
 
@@ -256,6 +281,11 @@ HoToon or future HoMaterialSystem
 | MotionVectors | `MotionVectors` | 不做 | 形变 / motion 阶段再处理 |
 
 第十步重点是 AOV output 和 OIT-ready material pass：AOV 是 SSS、SemanticPost 和 Debug 的共同入口；OIT accumulation pass 是第十一步直接测试 Weighted OIT 的前置条件。
+
+AOV runtime 应区分两条路径：
+
+- fallback path：对没有 explicit AOV pass 的普通材质使用 `AovOutputFallback` overrideMaterial，继续服务 `MaterialSemanticAuthoring` / MPB 对照路径。
+- explicit path：绘制材质自己的 `LightMode = HoUrpAovOutput` pass，覆盖 opaque 与 transparent queue，不使用 overrideMaterial。generated material prototype 必须走这条路径。
 
 ---
 

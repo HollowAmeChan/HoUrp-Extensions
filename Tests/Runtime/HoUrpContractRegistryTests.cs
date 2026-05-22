@@ -3,8 +3,11 @@ using System.Reflection;
 using HoUrp.Extensions.Capability;
 using HoUrp.Extensions.Core;
 using HoUrp.Extensions.Debugging;
+using HoUrp.Extensions.Features;
 using HoUrp.Extensions.Resources;
+using HoUrp.Extensions.Semantic;
 using NUnit.Framework;
+using UnityEngine.Rendering;
 
 namespace HoUrp.Extensions.Tests.Runtime
 {
@@ -15,11 +18,11 @@ namespace HoUrp.Extensions.Tests.Runtime
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
-            Assert.That(registry.Features.Count, Is.EqualTo(4));
+            Assert.That(registry.Features.Count, Is.EqualTo(5));
             Assert.That(registry.Resources.Count, Is.EqualTo(10));
-            Assert.That(registry.Semantics.Count, Is.EqualTo(28));
+            Assert.That(registry.Semantics.Count, Is.EqualTo(33));
             Assert.That(registry.DebugViews.Count, Is.EqualTo(43));
-            Assert.That(registry.Capabilities.Count, Is.EqualTo(5));
+            Assert.That(registry.Capabilities.Count, Is.EqualTo(7));
         }
 
         [Test]
@@ -151,6 +154,24 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(resolveShaderMode.Invoke(null, new[] { flag7 }), Is.EqualTo(34));
             Assert.That(resolveShaderMode.Invoke(null, new[] { flag8 }), Is.EqualTo(35));
             Assert.That(resolveShaderMode.Invoke(null, new[] { flag12 }), Is.EqualTo(39));
+        }
+
+        [Test]
+        public void AovOutputFeatureDrawsExplicitAovPassesAcrossRenderQueues()
+        {
+            Type featureType = typeof(AovOutputRendererFeature);
+            Type passType = featureType.GetNestedType("AovOutputPass", BindingFlags.NonPublic);
+            FieldInfo explicitTagsField = passType?.GetField("ExplicitAovShaderTagIds", BindingFlags.Static | BindingFlags.NonPublic);
+            FieldInfo explicitQueueField = passType?.GetField("ExplicitAovRenderQueueRange", BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(passType, Is.Not.Null);
+            Assert.That(explicitTagsField, Is.Not.Null);
+            Assert.That(explicitQueueField, Is.Not.Null);
+
+            var explicitTags = explicitTagsField.GetValue(null) as System.Collections.IEnumerable;
+            Assert.That(explicitTags, Is.Not.Null);
+            Assert.That(explicitTags, Has.Some.EqualTo(new ShaderTagId("HoUrpAovOutput")));
+            Assert.That(explicitQueueField.GetValue(null), Is.EqualTo(RenderQueueRange.all));
         }
 
         [Test]
@@ -302,6 +323,41 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(writesObjectCustom.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Object));
             Assert.That(receivesSemanticPost.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Object));
             Assert.That(receivesSemanticPost.Affects, Is.EqualTo("SemanticPostProcess masks"));
+        }
+
+        [Test]
+        public void MinimalAovRegistryRegistersGeneratedMaterialDeclarationWithoutOitResources()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            FeatureDescriptor feature = registry.Features.Get(HoUrpBuiltInNames.Features.GeneratedMaterial);
+            SemanticDefinition transparentAlpha = registry.Semantics.Get(HoUrpBuiltInNames.Semantics.TransparentAlpha);
+            SemanticDefinition oitAccumulation = registry.Semantics.Get(HoUrpBuiltInNames.Semantics.OitAccumulationInput);
+            var supportsOit = registry.Capabilities.Get(HoUrpBuiltInNames.Capabilities.SupportsOit);
+            var participatesOit = registry.Capabilities.Get(HoUrpBuiltInNames.Capabilities.ParticipatesOit);
+
+            Assert.That(feature.Domain, Is.EqualTo(HoUrpDomain.Material));
+            Assert.That(feature.Stage, Is.EqualTo(HoUrpPassStage.MaterialShadingSemanticAov));
+            Assert.That(feature.ProducedResources.Count, Is.EqualTo(0));
+            Assert.That(feature.ConsumedResources.Count, Is.EqualTo(0));
+            Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.MaterialClass));
+            Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.ShadingSssWeight));
+            Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.TransparentColor));
+            Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.TransparentAlpha));
+            Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.TransparentCoverage));
+            Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.OitAccumulationInput));
+            Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.OitRevealageInput));
+            Assert.That(feature.RequiredCapabilities, Contains.Item(HoUrpBuiltInNames.Capabilities.SupportsOit));
+            Assert.That(feature.RequiredCapabilities, Contains.Item(HoUrpBuiltInNames.Capabilities.ParticipatesOit));
+
+            Assert.That(transparentAlpha.Producer, Is.EqualTo(HoUrpBuiltInNames.Features.GeneratedMaterial));
+            Assert.That(transparentAlpha.Consumers, Contains.Item(HoUrpBuiltInNames.Features.AovOutput));
+            Assert.That(oitAccumulation.Producer, Is.EqualTo(HoUrpBuiltInNames.Features.GeneratedMaterial));
+            Assert.That(oitAccumulation.Format, Is.EqualTo(SemanticFormat.Float4));
+            Assert.That(supportsOit.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Material));
+            Assert.That(participatesOit.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Material));
+            Assert.That(registry.Resources.TryGet(HoUrpIdentifier.From("Oit.Accumulation"), out _), Is.False);
+            Assert.That(registry.Resources.TryGet(HoUrpIdentifier.From("Oit.Revealage"), out _), Is.False);
         }
 
         [Test]
