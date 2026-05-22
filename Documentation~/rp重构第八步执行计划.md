@@ -279,7 +279,7 @@ ResetSemanticValues()
 - Capability / Policy / Authoring 三者边界清楚。
 - 旧 `HoAovSubject` / `HoAovGroup` 只作为行为参照，没有污染新 runtime 契约。
 - 不新增 RenderGraph 资源冲突。
-- 第九步可以自然转向 Debug Framework，而不是继续修 authoring 入口。
+- 第九步可以自然转向 AOV 生命周期整理与 RSUV 静态语义前移，而不是继续修 authoring 入口。
 
 ---
 

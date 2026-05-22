@@ -1223,9 +1223,20 @@ Layer/Tag 的问题是：
 
 第八阶段执行按 `Documentation~/rp重构第八步执行计划.md` 推进。
 
-### 第九优先级：建立 Debug Framework
+### 第九优先级：整理 AOV 生命周期与 RSUV 静态语义前移
 
-把 debug 提升成一级系统，让它能查询、能切换、能重置、能叠加控制、能可视化。
+第八阶段之后，AOV 已经从单纯输出贴图推进为对象语义、材质语义、SSS 输入、语义后处理和 debug 共同消费的中间语义集合。继续扩展 Debug Framework 前，必须先回答每个 AOV 值的来源、生命周期、producer / consumer 和是否可提前绑定。
+
+第九阶段先做 **AOV 生命周期整理 / Renderer Static Semantic 前移**：
+
+- 把 `Object.Custom0-7`、`Object.Id`、`Object.GroupId`、`Object.Flags` 明确归类为 per-renderer 静态语义。
+- 参考旧 `HoAovGroup.PackRendererUserValue()`，建立新包自己的 RSUV pack/unpack helper。
+- 让 RSUV 成为 `ObjectSemanticAuthoring` 的可选 fast path，而不是唯一 ABI。
+- 保留 MPB 作为通用回退路径。
+- 明确 AOV fallback shader 的读取优先级：RSUV -> MPB -> fallback default。
+- 输出 AOV 生命周期表，供后续 Debug Framework 查询。
+
+旧 RSUV 的价值是证明 renderer 级静态语义可以提前到 AOV pass 之前，不是要求迁移旧 `HoAovGroup` 的全局 priority resolver。第九阶段执行按 `Documentation~/rp重构第九步执行计划.md` 推进。
 
 ### 第十优先级：材质系统重构
 
