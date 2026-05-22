@@ -52,6 +52,17 @@ namespace HoUrp.Extensions.Core
                 "Feature Inspector / Debug Panel",
                 "old per-feature debug modes",
                 "Requires a feature to expose at least one queryable debug view."));
+
+            registry.Capabilities.Register(new CapabilityDefinition(
+                HoUrpBuiltInNames.Capabilities.RequiresAov,
+                HoUrpDomain.Capability,
+                CapabilityOwnerKind.Feature,
+                "FeatureDescriptor",
+                "AOV resource reads",
+                true,
+                "Feature Inspector / Debug Panel",
+                "HoPost AOV rules",
+                "Marks a feature as a consumer of registered AOV resources."));
         }
 
         private static void RegisterDebugViews(HoUrpContractRegistry registry)
@@ -114,7 +125,11 @@ namespace HoUrp.Extensions.Core
 
         private static void RegisterSemantics(HoUrpContractRegistry registry)
         {
-            HoUrpIdentifier[] consumers = { HoUrpBuiltInNames.Features.DebugComposite };
+            HoUrpIdentifier[] consumers =
+            {
+                HoUrpBuiltInNames.Features.SemanticPostProcess,
+                HoUrpBuiltInNames.Features.DebugComposite
+            };
 
             registry.Semantics.Register(new SemanticDefinition(
                 HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
@@ -203,6 +218,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
                 HoUrpBuiltInNames.Features.AovOutput,
                 new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SemanticPostProcess,
                     HoUrpBuiltInNames.Features.DebugComposite),
                 ResourceFormatHint.MaskRgba8,
                 ResourceScale.Full,
@@ -218,6 +234,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                 HoUrpBuiltInNames.Features.AovOutput,
                 new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SemanticPostProcess,
                     HoUrpBuiltInNames.Features.DebugComposite),
                 ResourceFormatHint.HighPrecisionRgba16Float,
                 ResourceScale.Full,
@@ -257,6 +274,34 @@ namespace HoUrp.Extensions.Core
                 HoUrpMigrationDecision.KeepConceptRename,
                 "Runtime/AOV/HoAovRendererFeature.cs",
                 "Minimum AOV contract for mask/id and normal/depth resources."));
+
+            registry.Features.Register(new FeatureDescriptor(
+                HoUrpBuiltInNames.Features.SemanticPostProcess,
+                HoUrpDomain.Composite,
+                HoUrpPassStage.SemanticPost,
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Resources.AovMaskId,
+                    HoUrpBuiltInNames.Resources.AovNormalDepth),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
+                    HoUrpBuiltInNames.Semantics.ObjectId,
+                    HoUrpBuiltInNames.Semantics.ObjectGroupId,
+                    HoUrpBuiltInNames.Semantics.ObjectFlags,
+                    HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
+                    HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Capabilities.RequiresAov,
+                    HoUrpBuiltInNames.Capabilities.SupportsDebugView),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.DebugViews.AovMask,
+                    HoUrpBuiltInNames.DebugViews.AovObjectId,
+                    HoUrpBuiltInNames.DebugViews.AovLinearDepth,
+                    HoUrpBuiltInNames.DebugViews.AovWorldNormal),
+                HoUrpMigrationDecision.KeepConceptRename,
+                "Runtime/HoPostProcessing/HoPostProcessRendererFeature.cs",
+                "Minimum read-only AOV consumer for semantic post processing."));
 
             registry.Features.Register(new FeatureDescriptor(
                 HoUrpBuiltInNames.Features.DebugComposite,

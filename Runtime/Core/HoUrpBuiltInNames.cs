@@ -5,6 +5,7 @@ namespace HoUrp.Extensions.Core
         public static class Features
         {
             public static readonly HoUrpIdentifier AovOutput = "AovOutput";
+            public static readonly HoUrpIdentifier SemanticPostProcess = "SemanticPostProcess";
             public static readonly HoUrpIdentifier DebugComposite = "DebugComposite";
         }
 
@@ -35,6 +36,7 @@ namespace HoUrp.Extensions.Core
         public static class Capabilities
         {
             public static readonly HoUrpIdentifier WritesAov = "WritesAov";
+            public static readonly HoUrpIdentifier RequiresAov = "RequiresAov";
             public static readonly HoUrpIdentifier SupportsDebugView = "SupportsDebugView";
         }
     }

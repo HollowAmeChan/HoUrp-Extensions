@@ -13,11 +13,11 @@ namespace HoUrp.Extensions.Tests.Runtime
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
-            Assert.That(registry.Features.Count, Is.EqualTo(2));
+            Assert.That(registry.Features.Count, Is.EqualTo(3));
             Assert.That(registry.Resources.Count, Is.EqualTo(2));
             Assert.That(registry.Semantics.Count, Is.EqualTo(6));
             Assert.That(registry.DebugViews.Count, Is.EqualTo(4));
-            Assert.That(registry.Capabilities.Count, Is.EqualTo(2));
+            Assert.That(registry.Capabilities.Count, Is.EqualTo(3));
         }
 
         [Test]
@@ -45,6 +45,19 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(worldNormal.Range, Is.EqualTo(DebugValueRange.MinusOneToOne));
             Assert.That(worldNormal.DisplayModes.Count, Is.EqualTo(1));
             Assert.That(worldNormal.DisplayModes[0], Is.EqualTo(DebugDisplayMode.Replace));
+        }
+
+        [Test]
+        public void MinimalAovRegistryLinksSemanticPostAsAovConsumer()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            ResourceDefinition maskId = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovMaskId);
+
+            Assert.That(maskId.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.SemanticPostProcess));
+            Assert.That(
+                registry.Features.Get(HoUrpBuiltInNames.Features.SemanticPostProcess).ConsumedResources,
+                Contains.Item(HoUrpBuiltInNames.Resources.AovMaskId));
         }
 
         [Test]
