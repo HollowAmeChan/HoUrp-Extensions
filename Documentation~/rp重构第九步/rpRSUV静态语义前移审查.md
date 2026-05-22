@@ -14,6 +14,12 @@ ObjectSemanticAuthoring
 
 RSUV 在第九阶段只服务对象静态语义，不承载材质、几何、SSS 或 composite 数据。
 
+位分配的正式讨论见：
+
+```text
+Documentation~/rp重构第九步/rpRSUV位分配契约.md
+```
+
 ## 旧实现事实
 
 旧参考：
@@ -33,6 +39,8 @@ lilPBR/Shaders/hoaov.hlsl
 | 8-15 | characterId | `Object.GroupId` |
 | 16-23 | partId | `Object.Id` |
 | 24-31 | flags | `Object.Flags` |
+
+这也是当前新包 `RendererStaticSemanticValue` 已实现的 v0 布局。它是迁移期布局，不是最终建议布局。
 
 旧 shader 行为：
 
@@ -59,6 +67,8 @@ else:
 
 ## 新包建议实现
 
+注意：本节描述的是当前阶段已落地的 v0 helper。下一轮应按 `rpRSUV位分配契约.md` 迁移到 v1 HoAOV-first Compact 布局：优先把 HoAOV 中已属于 renderer/object 静态层的对象区域、ID/group 和对象 capability flags 前移到 RSUV；材质、几何、SSS source、derived composite 仍不进入 RSUV。
+
 新增：
 
 ```text
@@ -80,6 +90,21 @@ public readonly struct RendererStaticSemanticValue
     public static uint Pack(int objectCustomMask, int groupId, int objectId, int flags);
 }
 ```
+
+v1 helper 应新增 compact 布局 API 或等价结构，不能继续把 `GroupId/ObjectId/Flags` 当成三个 byte 扩展：
+
+```csharp
+public static bool TryPackV1(
+    int objectRegionMask,
+    int objectFeatureFlags,
+    int objectId,
+    int groupId,
+    out uint packed);
+
+public static bool TryUnpackV1(uint packed, out RendererStaticSemanticValueV1 value);
+```
+
+其中 `ObjectId` 范围为 `0..15`，`GroupId` 范围为 `0..7`，超出时不截断，交给 MPB fallback。
 
 新增：
 
@@ -120,6 +145,8 @@ rendererStaticBindingMode = PreferRendererUserValue
 - 如果 renderer 不支持 `SetShaderUserValue`，必须回退 MPB。
 - `OnDisable` / `OnDestroy` 必须清理 RSUV 和 MPB。
 - `ReceivesSemanticPost` 仍只影响 `Object.Flags.bit0`。
+- v1 中 `WritesAov / ReceivesSemanticPost / ReceivesSss / ReceivesCharacterComposite / ReceivesOutline` 等对象 capability 应进入 `ObjectFeatureFlags`，低 8 bit 继续映射到当前 `Aov.MaskId.a`。
+- `ObjectId > 15` 或 `GroupId > 7` 时不写 compact RSUV，不截断，回退 MPB。
 - `WritesAov=false` 应让 mask weight 为 0，但是否清 RSUV 要明确：建议仍写 identity/custom，mask 由 AOV 权重控制。
 
 ## Shader 读取优先级
@@ -147,6 +174,14 @@ float flags = hasRendererSemantic
     : _HoUrpObjectFlags;
 ```
 
+这是 v0 读取示意。v1 读取必须先检查 `Valid + LayoutVersion`，再按 compact 位宽解出：
+
+```hlsl
+featureFlags = (rendererSemantic >> 8u) & 8191u;
+objectId = (rendererSemantic >> 21u) & 15u;
+groupId = (rendererSemantic >> 25u) & 7u;
+```
+
 注意：
 
 - `unity_RendererUserValue == 0` 表示没有 RSUV 覆盖。
@@ -161,17 +196,17 @@ float flags = hasRendererSemantic
 | Authoring | MPB Property | RSUV Byte |
 | --- | --- | --- |
 | `ObjectCustomMask` | `_HoUrpObjectCustomMask` | bits 0-7 |
-| `GroupId` | `_HoUrpObjectGroupId` | bits 8-15 |
-| `ObjectId` | `_HoUrpObjectId` | bits 16-23 |
-| `EffectiveFlags` | `_HoUrpObjectFlags` | bits 24-31 |
+| `EffectiveFlags` / object capability | `_HoUrpObjectFlags` | v1 bits 8-20 |
+| `ObjectId` | `_HoUrpObjectId` | v1 bits 21-24 |
+| `GroupId` | `_HoUrpObjectGroupId` | v1 bits 25-27 |
 
-`Aov.MaskId.r` 的 `MaskWeight` 不进入 RSUV，继续走 MPB / material property。
+`Aov.MaskId.r` 的 `MaskWeight` 不进入 RSUV，继续走 MPB / material property。`WritesAov` 可以进入 RSUV 作为对象 capability，但最终 mask weight 仍由 AOV 输出策略写入。
 
 原因：
 
 - `MaskWeight` 是 participation policy，不是身份语义。
 - `WritesAov=false` 可以让同一 renderer 保留静态身份但不参与当前 AOV 输出。
-- 32-bit RSUV 应优先留给稳定 byte 语义。
+- 32-bit RSUV 应优先留给 HoAOV 已验证的稳定对象语义和对象 capability，而不是为 group/id 预留过宽 byte。
 
 ## 清理规则
 
@@ -200,6 +235,9 @@ _HoUrpObjectFlags = 0
 | --- | --- |
 | `Pack(1, 2, 3, 4)` | packed 后可解回 1/2/3/4 |
 | 超范围输入 | clamp 到 byte |
+| `TryPackV1(mask, flags, objectId:15, groupId:7)` | 成功并可解回 compact 值 |
+| `TryPackV1(... objectId:16 ...)` | 失败，调用方回退 MPB |
+| `TryPackV1(... groupId:8 ...)` | 失败，调用方回退 MPB |
 | `ObjectSemanticPreset.Hair` | object custom mask 为 5 |
 | `ReceivesSemanticPost=true` | packed flags bit0 为 1 |
 | `ReceivesSemanticPost=false` | packed flags bit0 为 0 |

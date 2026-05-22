@@ -6,9 +6,12 @@
 | --- | --- |
 | AOV 生命周期文档 | 覆盖 `Aov.*`、`Sss.*`、`SemanticPost.Mask` |
 | RSUV pack/unpack tests | 新增并通过 |
-| byte clamp tests | object custom / group / id / flags 均 clamp 到 `0..255` |
+| v0 byte clamp tests | object custom / group / id / flags 均 clamp 到 `0..255`，仅覆盖迁移期 v0 |
+| v1 compact pack/unpack tests | region mask、13-bit feature flags、`ObjectId 0..15`、`GroupId 0..7` 均可解回 |
+| v1 compact overflow tests | `ObjectId > 15` 或 `GroupId > 7` 不截断，触发 MPB fallback |
 | preset -> RSUV tests | Subject / Hair 等 preset 生成预期 object custom mask |
 | `ReceivesSemanticPost` tests | flags bit0 与 `EffectiveFlags` / packed flags 一致 |
+| object capability flag tests | `WritesAov`、`ReceivesSss`、`ReceivesCharacterComposite` 等进入 v1 feature flags 的预期 bit |
 | MPB fallback tests | `MaterialPropertyBlockOnly` 路径保持第八步行为 |
 | packed zero convention | 测试或文档明确 shader 侧视为无 RSUV 覆盖 |
 | contract registry tests | object semantics 仍注册到正确 domain/resource/debug view |
@@ -27,6 +30,9 @@ Tests/Runtime/HoUrpRendererStaticSemanticTests.cs
 RendererStaticSemanticValue.Pack(1, 2, 3, 4)
 RendererStaticSemanticValue.FromPacked(...)
 RendererStaticSemanticValue.Pack(-1, 300, 999, 4)
+RendererStaticSemanticValue.TryPackV1(mask: 1, featureFlags: 0x1fff, objectId: 15, groupId: 7, out _)
+RendererStaticSemanticValue.TryPackV1(mask: 1, featureFlags: 0, objectId: 16, groupId: 0, out _)
+RendererStaticSemanticValue.TryPackV1(mask: 1, featureFlags: 0, objectId: 0, groupId: 8, out _)
 ObjectSemanticAuthoring.ApplyPreset(ObjectSemanticPreset.Hair)
 ObjectSemanticAuthoring.ReceivesSemanticPost false/true
 ```
@@ -121,6 +127,7 @@ Tests/Runtime/HoUrpRendererStaticSemanticTests.cs
 | `partId` 是否成为正式语义 | 暂映射到 `Object.Id`，后续角色系统再决定 |
 | `Character.Id` / `Character.PartId` | 不在第九阶段新增 |
 | material semantic 是否进入 RSUV | 不进入第一版 |
+| `Object.Id` / `Object.GroupId` 超出 v1 compact 范围 | 不截断，MPB fallback |
 | Debug Framework | 等生命周期表稳定后推进 |
 
 ## 风险点

@@ -256,7 +256,7 @@ D:\Unity_Fork\lilPBR\Shaders\hoaov.hlsl
 
 ```text
 Runtime/Semantic/RendererStaticSemanticValue.cs
-Runtime/Semantic/RendererStaticSemanticBinding.cs
+Runtime/Semantic/RendererStaticSemanticBindingMode.cs
 ```
 
 第一版可以只做纯数据与 helper：
@@ -339,6 +339,7 @@ float objectFlags = hasRendererSemantic
 ```text
 Documentation~/rp重构第九步/rpAov生命周期审查.md
 Documentation~/rp重构第九步/rpRSUV静态语义前移审查.md
+Documentation~/rp重构第九步/rpRSUV位分配契约.md
 Documentation~/rp重构第九步/rp第九阶段实现边界审查.md
 Documentation~/rp重构第九步/rp第九阶段测试与验收清单.md
 ```

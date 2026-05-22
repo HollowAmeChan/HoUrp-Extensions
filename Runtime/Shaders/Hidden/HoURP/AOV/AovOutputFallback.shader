@@ -14,6 +14,7 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
             ZWrite Off
 
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
 
@@ -63,6 +64,12 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                 return half(step(0.5, fmod(floor(mask / bitValue), 2.0)));
             }
 
+            float RendererSemanticByteToFloat(uint packedValue, uint shift)
+            {
+                uint byteValue = (packedValue >> shift) & 255u;
+                return float(byteValue);
+            }
+
             Varyings Vert(Attributes input)
             {
                 Varyings output;
@@ -88,13 +95,26 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
 
                 AovOutput output;
                 half3 encodedNormal = half3(normalWS * 0.5 + 0.5);
-                float objectCustomMask = round(clamp(_HoUrpObjectCustomMask, 0.0, 255.0));
+                uint rendererStaticSemantic = unity_RendererUserValue;
+                bool hasRendererStaticSemantic = rendererStaticSemantic != 0u;
+                float objectCustomMask = hasRendererStaticSemantic
+                    ? RendererSemanticByteToFloat(rendererStaticSemantic, 0u)
+                    : round(clamp(_HoUrpObjectCustomMask, 0.0, 255.0));
+                float objectId = hasRendererStaticSemantic
+                    ? RendererSemanticByteToFloat(rendererStaticSemantic, 16u)
+                    : _HoUrpObjectId;
+                float objectGroupId = hasRendererStaticSemantic
+                    ? RendererSemanticByteToFloat(rendererStaticSemantic, 8u)
+                    : _HoUrpObjectGroupId;
+                float objectFlags = hasRendererStaticSemantic
+                    ? RendererSemanticByteToFloat(rendererStaticSemantic, 24u)
+                    : _HoUrpObjectFlags;
                 half maskWeight = half(saturate(_HoUrpAovMaskWeight));
                 output.maskId = half4(
                     maskWeight,
-                    half(saturate(_HoUrpObjectId / 255.0)),
-                    half(saturate(_HoUrpObjectGroupId / 255.0)),
-                    half(saturate(_HoUrpObjectFlags / 255.0)));
+                    half(saturate(objectId / 255.0)),
+                    half(saturate(objectGroupId / 255.0)),
+                    half(saturate(objectFlags / 255.0)));
                 output.normalDepth = half4(encodedNormal, half(saturate(linear01Depth)));
                 output.objectCustom0 = half4(
                     HasMaskBit(objectCustomMask, 1.0),

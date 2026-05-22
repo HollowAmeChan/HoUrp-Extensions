@@ -65,6 +65,8 @@ Scene / Prefab / Authoring-time
 
 每个 renderer 上可提前绑定的对象语义。旧实现里的 RSUV 属于这一层。
 
+第一版字段中，HoAOV 里已经属于对象静态层的值应优先考虑 RSUV fast path；不能提前的材质、几何、着色和派生资源仍留在 AOV pass 或后续 producer 中。
+
 第一版字段：
 
 | Field | Semantic | 当前 AOV 映射 | 是否可 RSUV |
@@ -73,6 +75,8 @@ Scene / Prefab / Authoring-time
 | group id | `Object.GroupId` | `Aov.MaskId.b` | 是 |
 | object id | `Object.Id` | `Aov.MaskId.g` | 是 |
 | flags | `Object.Flags` | `Aov.MaskId.a` | 是 |
+
+v1 RSUV 目标不是继续保持 `Object.Id / Object.GroupId / Object.Flags` 三个 byte，而是采用 HoAOV-first Compact：保留 `Object.Custom0-7`，收紧 `Object.Id` 到 4 bit、`Object.GroupId` 到 3 bit，并把释放出的位优先给对象 capability flags。超出 compact 范围时回退 MPB，不截断。
 
 生命周期：
 
@@ -124,6 +128,7 @@ Per camera / frame transient, derived after AOV
 - `Object.Id`
 - `Object.GroupId`
 - `Object.Flags`
+- 对象 capability flags，例如 `WritesAov`、`ReceivesSemanticPost`、`ReceivesSss`、`ReceivesCharacterComposite`
 
 原因：
 
@@ -131,6 +136,7 @@ Per camera / frame transient, derived after AOV
 - 不依赖 depth / normal。
 - 不依赖材质着色结果。
 - 旧 RSUV 已验证这类数据可通过 `unity_RendererUserValue` 输入 shader。
+- 旧 HoAOV/HoPost/HoSSS/角色特化链路已经证明对象区域和对象参与能力比宽 ID 更常被屏幕空间 consumer 使用。
 
 ### 不应提前到 RSUV
 

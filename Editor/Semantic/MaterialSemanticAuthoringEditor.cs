@@ -36,34 +36,34 @@ namespace HoUrp.Extensions.Editor.Semantic
             DrawPresetToolbar();
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Target", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(includeChildren, new GUIContent("Include Children"));
+            EditorGUILayout.LabelField("目标", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(includeChildren, new GUIContent("包含子级 Renderer"));
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Material Class", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(materialClass, new GUIContent("Class Id"));
+            EditorGUILayout.LabelField("材质分类", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(materialClass, new GUIContent("分类 ID"));
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("SSS", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(sssProfile, new GUIContent("Profile"));
-            EditorGUILayout.PropertyField(thickness, new GUIContent("Thickness"));
-            EditorGUILayout.PropertyField(curvature, new GUIContent("Curvature"));
-            EditorGUILayout.PropertyField(sssSourceColor, new GUIContent("Source Color"));
-            EditorGUILayout.PropertyField(sssWeight, new GUIContent("Weight"));
+            EditorGUILayout.PropertyField(sssProfile, new GUIContent("Profile ID"));
+            EditorGUILayout.PropertyField(thickness, new GUIContent("厚度"));
+            EditorGUILayout.PropertyField(curvature, new GUIContent("曲率"));
+            EditorGUILayout.PropertyField(sssSourceColor, new GUIContent("源颜色"));
+            EditorGUILayout.PropertyField(sssWeight, new GUIContent("权重"));
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Material Custom", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("材质自定义通道", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(materialCustom0_3, new GUIContent("Custom 0-3"));
 
             EditorGUILayout.Space();
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("Apply"))
+                if (GUILayout.Button("应用"))
                 {
                     ApplyToTargets();
                 }
 
-                if (GUILayout.Button("Reset"))
+                if (GUILayout.Button("重置"))
                 {
                     ApplyResetToTargets();
                 }
@@ -74,20 +74,20 @@ namespace HoUrp.Extensions.Editor.Semantic
 
         private void DrawPresetToolbar()
         {
-            EditorGUILayout.LabelField("Preset", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("预设", EditorStyles.boldLabel);
             using (new EditorGUILayout.HorizontalScope())
             {
-                DrawPresetButton("Default", MaterialSemanticPreset.DefaultOpaque);
-                DrawPresetButton("Skin SSS", MaterialSemanticPreset.SkinSss);
-                DrawPresetButton("Hair", MaterialSemanticPreset.Hair);
-                DrawPresetButton("Eye", MaterialSemanticPreset.Eye);
+                DrawPresetButton("默认", MaterialSemanticPreset.DefaultOpaque);
+                DrawPresetButton("皮肤 SSS", MaterialSemanticPreset.SkinSss);
+                DrawPresetButton("头发", MaterialSemanticPreset.Hair);
+                DrawPresetButton("眼睛", MaterialSemanticPreset.Eye);
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                DrawPresetButton("Cloth", MaterialSemanticPreset.Cloth);
-                DrawPresetButton("Metal", MaterialSemanticPreset.Metal);
-                DrawPresetButton("Clear", MaterialSemanticPreset.Clear);
+                DrawPresetButton("布料", MaterialSemanticPreset.Cloth);
+                DrawPresetButton("金属", MaterialSemanticPreset.Metal);
+                DrawPresetButton("清空", MaterialSemanticPreset.Clear);
             }
         }
 

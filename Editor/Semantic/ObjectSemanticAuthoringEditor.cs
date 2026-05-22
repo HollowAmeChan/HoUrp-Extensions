@@ -8,9 +8,17 @@ namespace HoUrp.Extensions.Editor.Semantic
     [CanEditMultipleObjects]
     public sealed class ObjectSemanticAuthoringEditor : UnityEditor.Editor
     {
+        private static readonly string[] BindingModeLabels =
+        {
+            "禁用 RSUV",
+            "优先 RSUV，失败回退 MPB",
+            "仅 MPB"
+        };
+
         private SerializedProperty includeChildren;
         private SerializedProperty writesAov;
         private SerializedProperty receivesSemanticPost;
+        private SerializedProperty rendererStaticBindingMode;
         private SerializedProperty maskWeight;
         private SerializedProperty objectCustomMask;
         private SerializedProperty objectId;
@@ -38,6 +46,7 @@ namespace HoUrp.Extensions.Editor.Semantic
             includeChildren = serializedObject.FindProperty("includeChildren");
             writesAov = serializedObject.FindProperty("writesAov");
             receivesSemanticPost = serializedObject.FindProperty("receivesSemanticPost");
+            rendererStaticBindingMode = serializedObject.FindProperty("rendererStaticBindingMode");
             maskWeight = serializedObject.FindProperty("maskWeight");
             objectCustomMask = serializedObject.FindProperty("objectCustomMask");
             objectId = serializedObject.FindProperty("objectId");
@@ -67,28 +76,30 @@ namespace HoUrp.Extensions.Editor.Semantic
             DrawPresetToolbar();
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Capability", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(includeChildren, new GUIContent("Include Children"));
-            EditorGUILayout.PropertyField(writesAov, new GUIContent("Writes AOV"));
-            EditorGUILayout.PropertyField(receivesSemanticPost, new GUIContent("Receives Semantic Post"));
-            EditorGUILayout.PropertyField(maskWeight, new GUIContent("Mask Weight"));
+            EditorGUILayout.LabelField("能力", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(includeChildren, new GUIContent("包含子级 Renderer"));
+            EditorGUILayout.PropertyField(writesAov, new GUIContent("写入 AOV"));
+            EditorGUILayout.PropertyField(receivesSemanticPost, new GUIContent("允许 SemanticPost 消费"));
+            DrawBindingModeField();
+            DrawBindingStatus();
+            EditorGUILayout.PropertyField(maskWeight, new GUIContent("遮罩权重"));
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Object Semantics", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("对象语义", EditorStyles.boldLabel);
             DrawObjectCustomBits();
 
             EditorGUILayout.Space();
-            showAdvancedIdentity = EditorGUILayout.Foldout(showAdvancedIdentity, "Advanced Identity", true);
+            showAdvancedIdentity = EditorGUILayout.Foldout(showAdvancedIdentity, "高级身份", true);
             if (showAdvancedIdentity)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(objectId, new GUIContent("Object Id"));
-                EditorGUILayout.PropertyField(groupId, new GUIContent("Group Id"));
+                EditorGUILayout.PropertyField(objectId, new GUIContent("对象 ID"));
+                EditorGUILayout.PropertyField(groupId, new GUIContent("分组 ID"));
                 DrawFlagBits();
                 using (new EditorGUI.DisabledScope(true))
                 {
-                    EditorGUILayout.IntField("Packed Object Bits", GetObjectBitsPreview());
-                    EditorGUILayout.IntField("Effective Flags", GetEffectiveFlagsPreview());
+                    EditorGUILayout.IntField("对象语义位打包值", GetObjectBitsPreview());
+                    EditorGUILayout.IntField("最终 Flags", GetEffectiveFlagsPreview());
                 }
 
                 EditorGUI.indentLevel--;
@@ -97,12 +108,12 @@ namespace HoUrp.Extensions.Editor.Semantic
             EditorGUILayout.Space();
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("Apply"))
+                if (GUILayout.Button("应用"))
                 {
                     ApplyToTargets();
                 }
 
-                if (GUILayout.Button("Reset"))
+                if (GUILayout.Button("重置"))
                 {
                     ApplyResetToTargets();
                 }
@@ -113,21 +124,21 @@ namespace HoUrp.Extensions.Editor.Semantic
 
         private void DrawPresetToolbar()
         {
-            EditorGUILayout.LabelField("Preset", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("预设", EditorStyles.boldLabel);
             using (new EditorGUILayout.HorizontalScope())
             {
-                DrawPresetButton("Subject", ObjectSemanticPreset.Subject);
-                DrawPresetButton("Face", ObjectSemanticPreset.Face);
-                DrawPresetButton("Hair", ObjectSemanticPreset.Hair);
-                DrawPresetButton("Eye", ObjectSemanticPreset.Eye);
+                DrawPresetButton("主体", ObjectSemanticPreset.Subject);
+                DrawPresetButton("脸部", ObjectSemanticPreset.Face);
+                DrawPresetButton("头发", ObjectSemanticPreset.Hair);
+                DrawPresetButton("眼睛", ObjectSemanticPreset.Eye);
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                DrawPresetButton("Accessory", ObjectSemanticPreset.Accessory);
-                DrawPresetButton("Cloth", ObjectSemanticPreset.Cloth);
-                DrawPresetButton("Prop", ObjectSemanticPreset.Prop);
-                DrawPresetButton("Clear", ObjectSemanticPreset.Clear);
+                DrawPresetButton("配件", ObjectSemanticPreset.Accessory);
+                DrawPresetButton("衣物", ObjectSemanticPreset.Cloth);
+                DrawPresetButton("道具", ObjectSemanticPreset.Prop);
+                DrawPresetButton("清空", ObjectSemanticPreset.Clear);
             }
         }
 
@@ -152,14 +163,14 @@ namespace HoUrp.Extensions.Editor.Semantic
 
         private void DrawObjectCustomBits()
         {
-            EditorGUILayout.PropertyField(custom0Subject, new GUIContent("Subject"));
-            EditorGUILayout.PropertyField(custom1Face, new GUIContent("Face"));
-            EditorGUILayout.PropertyField(custom2Hair, new GUIContent("Hair"));
-            EditorGUILayout.PropertyField(custom3Eye, new GUIContent("Eye"));
-            EditorGUILayout.PropertyField(custom4Accessory, new GUIContent("Accessory"));
-            EditorGUILayout.PropertyField(custom5Cloth, new GUIContent("Cloth"));
-            EditorGUILayout.PropertyField(custom6Prop, new GUIContent("Prop"));
-            EditorGUILayout.PropertyField(custom7Reserved, new GUIContent("Reserved"));
+            EditorGUILayout.PropertyField(custom0Subject, new GUIContent("主体"));
+            EditorGUILayout.PropertyField(custom1Face, new GUIContent("脸部"));
+            EditorGUILayout.PropertyField(custom2Hair, new GUIContent("头发"));
+            EditorGUILayout.PropertyField(custom3Eye, new GUIContent("眼睛"));
+            EditorGUILayout.PropertyField(custom4Accessory, new GUIContent("配件"));
+            EditorGUILayout.PropertyField(custom5Cloth, new GUIContent("衣物"));
+            EditorGUILayout.PropertyField(custom6Prop, new GUIContent("道具"));
+            EditorGUILayout.PropertyField(custom7Reserved, new GUIContent("预留"));
         }
 
         private void DrawFlagBits()
@@ -167,7 +178,7 @@ namespace HoUrp.Extensions.Editor.Semantic
             EditorGUILayout.LabelField("Flags", EditorStyles.miniBoldLabel);
             using (new EditorGUI.DisabledScope(true))
             {
-                EditorGUILayout.ToggleLeft("Semantic Post Receiver", receivesSemanticPost.boolValue);
+                EditorGUILayout.ToggleLeft("SemanticPost 接收者", receivesSemanticPost.boolValue);
             }
 
             EditorGUILayout.PropertyField(flag1, new GUIContent("Flag 1"));
@@ -177,6 +188,51 @@ namespace HoUrp.Extensions.Editor.Semantic
             EditorGUILayout.PropertyField(flag5, new GUIContent("Flag 5"));
             EditorGUILayout.PropertyField(flag6, new GUIContent("Flag 6"));
             EditorGUILayout.PropertyField(flag7, new GUIContent("Flag 7"));
+        }
+
+        private void DrawBindingModeField()
+        {
+            rendererStaticBindingMode.enumValueIndex = EditorGUILayout.Popup(
+                new GUIContent("静态语义绑定"),
+                rendererStaticBindingMode.enumValueIndex,
+                BindingModeLabels);
+        }
+
+        private void DrawBindingStatus()
+        {
+            if (targets.Length != 1)
+            {
+                EditorGUILayout.HelpBox("多选时不显示 RSUV / MPB 实际绑定统计。", MessageType.Info);
+                return;
+            }
+
+            var authoring = (ObjectSemanticAuthoring)target;
+            string modeText = GetBindingModeLabel((RendererStaticSemanticBindingMode)rendererStaticBindingMode.enumValueIndex);
+            string status = $"当前模式：{modeText}\n"
+                + $"目标 Renderer：{authoring.LastBindingTargetCount}\n"
+                + $"RSUV 生效：{authoring.LastRendererUserValueBindingCount}\n"
+                + $"MPB 回退/来源：{authoring.LastMaterialPropertyBlockSourceCount}";
+            EditorGUILayout.HelpBox(status, MessageType.Info);
+            if (GUILayout.Button("刷新绑定状态"))
+            {
+                serializedObject.ApplyModifiedProperties();
+                authoring.ApplyToRenderers();
+                EditorUtility.SetDirty(authoring);
+                serializedObject.Update();
+            }
+        }
+
+        private static string GetBindingModeLabel(RendererStaticSemanticBindingMode mode)
+        {
+            switch (mode)
+            {
+                case RendererStaticSemanticBindingMode.Disabled:
+                    return "禁用 RSUV，仅保留 MPB 属性";
+                case RendererStaticSemanticBindingMode.MaterialPropertyBlockOnly:
+                    return "仅 MPB";
+                default:
+                    return "优先 RSUV，不支持时回退 MPB";
+            }
         }
 
         private int GetEffectiveFlagsPreview()

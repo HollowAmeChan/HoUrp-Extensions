@@ -22,7 +22,9 @@ namespace HoUrp.Extensions.Semantic
     {
         public const int SemanticPostReceiverFlag = 1 << 0;
 
+        private static readonly List<ObjectSemanticAuthoring> ActiveAuthorings = new List<ObjectSemanticAuthoring>();
         private static readonly List<Renderer> RendererCache = new List<Renderer>();
+        private static readonly List<Renderer> SceneRendererCache = new List<Renderer>();
 
         [SerializeField]
         private bool includeChildren = true;
@@ -32,6 +34,9 @@ namespace HoUrp.Extensions.Semantic
 
         [SerializeField]
         private bool receivesSemanticPost = true;
+
+        [SerializeField]
+        private RendererStaticSemanticBindingMode rendererStaticBindingMode = RendererStaticSemanticBindingMode.PreferRendererUserValue;
 
         [SerializeField]
         [Range(0.0f, 1.0f)]
@@ -104,6 +109,9 @@ namespace HoUrp.Extensions.Semantic
         private bool flag7;
 
         private MaterialPropertyBlock propertyBlock;
+        private int lastBindingTargetCount;
+        private int lastRendererUserValueBindingCount;
+        private int lastMaterialPropertyBlockSourceCount;
 
         public bool IncludeChildren
         {
@@ -131,6 +139,16 @@ namespace HoUrp.Extensions.Semantic
             set
             {
                 receivesSemanticPost = value;
+                ApplyToRenderers();
+            }
+        }
+
+        public RendererStaticSemanticBindingMode RendererStaticBindingMode
+        {
+            get => rendererStaticBindingMode;
+            set
+            {
+                rendererStaticBindingMode = value;
                 ApplyToRenderers();
             }
         }
@@ -189,6 +207,14 @@ namespace HoUrp.Extensions.Semantic
 
         public int EffectiveFlags => BuildEffectiveFlags();
 
+        public uint PackedRendererStaticSemantic => BuildRendererStaticSemantic().PackedValue;
+
+        public int LastBindingTargetCount => lastBindingTargetCount;
+
+        public int LastRendererUserValueBindingCount => lastRendererUserValueBindingCount;
+
+        public int LastMaterialPropertyBlockSourceCount => lastMaterialPropertyBlockSourceCount;
+
         public static int GetPresetObjectCustomMask(ObjectSemanticPreset preset)
         {
             switch (preset)
@@ -234,6 +260,7 @@ namespace HoUrp.Extensions.Semantic
             groupId = 0;
             flags = 0;
             UnpackFlags();
+            rendererStaticBindingMode = RendererStaticSemanticBindingMode.PreferRendererUserValue;
             ApplyToRenderers();
         }
 
@@ -252,17 +279,26 @@ namespace HoUrp.Extensions.Semantic
 
         private void OnEnable()
         {
+            if (!ActiveAuthorings.Contains(this))
+            {
+                ActiveAuthorings.Add(this);
+            }
+
             ApplyToRenderers();
         }
 
         private void OnDisable()
         {
+            ActiveAuthorings.Remove(this);
             ClearRenderers();
+            RefreshRendererStaticSemantics();
         }
 
         private void OnDestroy()
         {
+            ActiveAuthorings.Remove(this);
             ClearRenderers();
+            RefreshRendererStaticSemantics();
         }
 
         private void OnValidate()
@@ -295,6 +331,7 @@ namespace HoUrp.Extensions.Semantic
                 return;
             }
 
+            EnsureActiveAuthoringRegistered();
             EnsurePropertyBlock();
             objectCustomMask = PackObjectCustomMask();
             flags = PackFlags();
@@ -318,6 +355,7 @@ namespace HoUrp.Extensions.Semantic
             }
 
             RendererCache.Clear();
+            RefreshRendererStaticSemantics();
         }
 
         private void ClearRenderers()
@@ -344,6 +382,42 @@ namespace HoUrp.Extensions.Semantic
             RendererCache.Clear();
         }
 
+        public static void RefreshRendererStaticSemantics()
+        {
+            ClearSceneRendererStaticSemantics();
+            for (int i = 0; i < ActiveAuthorings.Count; i++)
+            {
+                ObjectSemanticAuthoring authoring = ActiveAuthorings[i];
+                if (authoring == null || !authoring.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                authoring.ApplyRendererStaticSemanticToTargets();
+            }
+        }
+
+        private static void ClearSceneRendererStaticSemantics()
+        {
+            SceneRendererCache.Clear();
+            SceneRendererCache.AddRange(Object.FindObjectsByType<Renderer>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None));
+
+            for (int i = 0; i < SceneRendererCache.Count; i++)
+            {
+                Renderer targetRenderer = SceneRendererCache[i];
+                if (targetRenderer == null || !targetRenderer.gameObject.scene.IsValid())
+                {
+                    continue;
+                }
+
+                ClearRendererStaticSemantic(targetRenderer);
+            }
+
+            SceneRendererCache.Clear();
+        }
+
         private void CollectRenderers()
         {
             RendererCache.Clear();
@@ -357,6 +431,83 @@ namespace HoUrp.Extensions.Semantic
             {
                 RendererCache.Add(targetRenderer);
             }
+        }
+
+        private void EnsureActiveAuthoringRegistered()
+        {
+            if (!ActiveAuthorings.Contains(this))
+            {
+                ActiveAuthorings.Add(this);
+            }
+        }
+
+        private RendererStaticSemanticValue BuildRendererStaticSemantic()
+        {
+            return new RendererStaticSemanticValue(objectCustomMask, groupId, objectId, BuildEffectiveFlags());
+        }
+
+        private void ApplyRendererStaticSemanticToTargets()
+        {
+            lastBindingTargetCount = 0;
+            lastRendererUserValueBindingCount = 0;
+            lastMaterialPropertyBlockSourceCount = 0;
+
+            if (rendererStaticBindingMode == RendererStaticSemanticBindingMode.Disabled
+                || rendererStaticBindingMode == RendererStaticSemanticBindingMode.MaterialPropertyBlockOnly)
+            {
+                CollectRenderers();
+                lastBindingTargetCount = RendererCache.Count;
+                lastMaterialPropertyBlockSourceCount = RendererCache.Count;
+                RendererCache.Clear();
+                return;
+            }
+
+            objectCustomMask = PackObjectCustomMask();
+            flags = PackFlags();
+            uint packed = BuildRendererStaticSemantic().PackedValue;
+            CollectRenderers();
+            for (int i = 0; i < RendererCache.Count; i++)
+            {
+                Renderer targetRenderer = RendererCache[i];
+                if (targetRenderer == null)
+                {
+                    continue;
+                }
+
+                lastBindingTargetCount++;
+                if (TrySetRendererUserValue(targetRenderer, packed))
+                {
+                    lastRendererUserValueBindingCount++;
+                }
+                else
+                {
+                    lastMaterialPropertyBlockSourceCount++;
+                }
+            }
+
+            RendererCache.Clear();
+        }
+
+        private static void ClearRendererStaticSemantic(Renderer targetRenderer)
+        {
+            TrySetRendererUserValue(targetRenderer, 0u);
+        }
+
+        private static bool TrySetRendererUserValue(Renderer targetRenderer, uint value)
+        {
+            if (targetRenderer is MeshRenderer meshRenderer)
+            {
+                meshRenderer.SetShaderUserValue(value);
+                return true;
+            }
+
+            if (targetRenderer is SkinnedMeshRenderer skinnedMeshRenderer)
+            {
+                skinnedMeshRenderer.SetShaderUserValue(value);
+                return true;
+            }
+
+            return false;
         }
 
         private void EnsurePropertyBlock()
