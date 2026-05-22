@@ -1196,15 +1196,29 @@ Layer/Tag 的问题是：
 
 这一步必须把“禁止私自创建链路”作为验收项：Feature 之间只能通过登记过的资源和声明过的 pass 依赖连接；不能靠私有 RT、全局纹理副作用、固定执行顺序或 shader 里偷偷采样未声明纹理来完成数据传递。
 
-### 第七优先级：建立 Capability UI
+### 第七优先级：迁移语义后处理层
+
+在 AOV、对象语义、材质语义、SSS 输入和 SSS 最小闭环都成立之后，可以开始把 `SemanticPostProcess` 从“读取 AOV 的 probe”推进为正式 HoPost 方向的语义后处理层。
+
+这一阶段不应迁移 Shoost final image stack，也不应把旧 HoPost 全量效果搬进来。重点是先建立：
+
+- `SemanticPostLayer` 数据模型。
+- AOV rule source / operator / combine 子集。
+- `SemanticPost.Mask` debug 观察路径。
+- `SemanticTint` 等最小 layer composite。
+- 读 camera color 再写回 camera color 的 RenderGraph copy 规则。
+
+旧 HoPost 的价值是提供 rule/layer/effect 行为参照，不是定义新 ABI。第七阶段执行按 `Documentation~/rp重构第七步执行计划.md` 推进。
+
+### 第八优先级：建立 Capability UI
 
 让对象、材质、灯光、角色的功能都显式可配，而不是靠隐式层和 tag 猜测。`HoAovSubject` / `HoAovGroup` 可以作为第一版对象语义 UI 的基础，而不是推倒重做。
 
-### 第八优先级：建立 Debug Framework
+### 第九优先级：建立 Debug Framework
 
 把 debug 提升成一级系统，让它能查询、能切换、能重置、能叠加控制、能可视化。
 
-### 第九优先级：材质系统重构
+### 第十优先级：材质系统重构
 
 材质重构应排在新 RP 契约定义之后。`lilToon/lilPBR` 现在已经能对接旧 RP 扩展，说明现有能力链路可行；但新材质系统不应继承它们的厚 UI、历史 keyword 和旧属性体系。下一步应按材质重构大纲推进模板、Feature Block、Preset、Generated Shader，并让它们直接实现新 RP 的语义/资源契约。
 
