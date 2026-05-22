@@ -20,80 +20,197 @@
 
 ---
 
-## 1. 当前已经存在的系统
+## 1. 当前已经存在的系统（按 2026-05-22 仓库核查修正版）
 
-你现在的系统其实已经非常有雏形了，而且远比一般自定义 RP 走得更深。
+本节不再只按概念推断，而是按 `D:\Unity_Fork\lilToon-URP-Extensions`、`lilToon` 和 `lilPBR` 里已经落地的能力来描述。结论是：当前旧工作流已经不是“几个 RenderFeature 的集合”，而是一个由管线扩展、shader pass 契约、全局纹理/状态、Volume/Inspector UI 和材质属性共同组成的临时协作体系。
 
-### 1.1 HOAOV
+但这只是现状盘点，不是新 RP 的设计约束。新的 RP 重构不准备直接承接旧 `lilToon/lilPBR` 材质系统，也不应在核心架构里建立“旧材质桥”。旧项目的价值主要是证明哪些能力已经跑通过、哪些资源流/时序/语义确实有用，以及迁移时有哪些行为需要重新定义。
 
-你定义了一个 HOAOV，它位于物体真实渲染之后，负责输出各种辅助数据与语义数据。它不是单纯的颜色缓冲，而是一个更宽泛的“场景辅助输出层”。
+### 1.1 lilToon-URP-Extensions 的真实定位
 
-当前 HOAOV 里已经包含：
+`lilToon-URP-Extensions` 目前是旧工作流里的 **URP 管线扩展与能力验证层**：
 
-- 颜色
-- 法线
-- 世界法线
-- 深度
-- 物体 ID
-- 材质 ID
-- 遮罩
-- 材质层面的 mask
-- RSUV 相关 ID 组
-- 光照分组
-- 物体分组
-- 角色部位分组
+- `lilToon` 和 `lilPBR` 提供 shader pass、材质属性和 HLSL include。
+- `lilToon-URP-Extensions` 负责分配 RT、调度 pass、发布全局纹理/缓冲、提供 Volume/Inspector 控制面。
+- 它通过 `LightMode`、全局 shader property、MaterialPropertyBlock、`SetShaderUserValue` 等契约与旧项目对接。
+- 这些契约应该被记录为 **Legacy Interop / Current State**，用来理解现有能力与迁移风险；新 RP 不应把它们原样提升成长期 ABI。
 
-这说明 HOAOV 已经不是传统意义上的 GBuffer，也不只是普通 AOV，而是一个包含“语义”的多用途信息层。
+已经存在的公开 RendererFeature / runtime 入口包括：
 
-### 1.2 HOPost
+- `HoAovRendererFeature`
+- `HoSubsurfaceScatteringRendererFeature`
+- `HoCharacterSpecializationRendererFeature`
+- `HoPostProcessRendererFeature`
+- `ShoostPostProcessRendererFeature`
+- `WeightedOITRendererFeature`
+- `HoShadowCastRendererFeature`
+- `LILPlanarReflectionSurface`（不是 RendererFeature，而是场景组件驱动）
 
-你有一个吃 HOAOV 的后处理栈。它的特点是：
+这些模块多数已经同时保留 RenderGraph 路径和非 RenderGraph 兼容路径。对新 `HoUrp-Extensions` 来说，非 RenderGraph 路径只应作为旧实现对照和行为验证来源；新实现方向应保持 RenderGraph-first。
 
-- 可以直接读取语义信息
-- 能做角色、材质、区域、光照组等定向后处理
-- 不是完全图像空间的后期，而是“语义感知后期”
+### 1.2 新仓库骨架的当前状态
 
-这非常接近离线合成里的 AOV 合成思路，只不过它发生在实时渲染里。
+当前 `D:\Unity_Fork\HoUrp-Extensions` 已经是新的目标包骨架：
 
-### 1.3 SHOPost
+- 包名是 `com.hollow.hourp-extensions`。
+- 定位是 URP-only、Unity `6000.3+`、RenderGraph-first。
+- `Runtime/RenderGraph/`、`Runtime/Features/`、`Runtime/Resources/`、`Editor/`、`Tests/` 已经建好目录和 asmdef。
+- 当前还没有迁移旧实现代码，旧实现来源仍是 `D:\Unity_Fork\lilToon-URP-Extensions`。
 
-你还有一个纯图像空间的后处理栈，负责不依赖语义的信息处理，例如：
+材质侧也已经有新包边界：
 
-- Bloom
-- 镜头畸变
-- 色彩调整
-- 颗粒
-- 锐化
-- 其它不需要知道对象是谁的效果
+- `HoPbr`：未来 PBR 特化 shader 包，目前主要是包骨架。
+- `HoNpr`：未来 NPR shader 包，目前主要是包骨架。
+- `HoToon`：已有轻量 toon shader，URP 版本包含 `UniversalForward`、`ShadowCaster`、`DepthOnly` 与描边 pass，但它不是新 RP 的完整材质系统。
 
-这说明你已经把后处理分成了两类：
+因此，新 RP 大纲应该服务于这些新包：`HoUrp-Extensions` 先定义 RenderGraph 资源、Feature、语义与调试契约；`HoPbr/HoNpr/HoToon` 或后续材质生成系统再按新契约接入。旧 `lilToon/lilPBR` 只作为能力样本和迁移参照。
 
-- **语义感知后处理**（HOPost）
-- **纯图像后处理**（SHOPost）
+### 1.3 HoAOV：已经是多 MRT 语义集合，而不是单张图
 
-这是很合理、也很先进的划分。
+当前 HoAOV 默认在 `AfterRenderingOpaques` 写入，并通过 `LightMode = "HoAOV"` 与 `LightMode = "HoAOVSSS"` 绘制材质原生 pass；在材质没有原生 HoAOV pass 时，可用 fallback material 写入基础 AOV。
 
-### 1.4 OIT
+当前全局输出包括：
 
-你已经有 OIT 路径，说明透明物体已经不是简单地混进主流程，而是有独立的处理思路。
+- `_lilHoAovMaskIdTexture`：mask、group/object/material/flags 等 ID 类信息。
+- `_lilHoAovNormalDepthTexture`：世界法线/视图相关法线与线性深度。
+- `_lilHoAovTangentNormalTexture`：切线空间法线。
+- `_lilHoAovSurfaceDataTexture`：厚度、曲率、材质/profile、utility 等材质/SSS 输入。
+- `_lilHoAovCustom0_3Texture`：材质自定义通道 0-3。
+- `_lilHoAovObjectCustom0_3Texture` 与 `_lilHoAovObjectCustom4_7Texture`：对象/角色部件自定义位。
+- `_lilHoAovSssTexture`：HoSSS 专用源色 MRT。
+- `_lilHoAovDepthTexture`：HoAOV 自己的 depth target。
 
-### 1.5 SSR（水面）
+这说明文档里“HOAOV 是一个 Semantic Collection”的判断是对的，但需要修正一点：它现在已经不是等待未来拆分的单一 HOAOV；当前代码层已经先形成了 **Mask/ID、Normal/Depth、SurfaceData、Custom、ObjectCustom、SSS Source** 这些子资源。
 
-你已经做了水面的屏幕空间反射，说明水面已经不是一个单独的小特效，而是有自己的反射逻辑和后续扩展空间。
+### 1.4 HoAOV 的对象语义组件已经存在
 
-### 1.6 ShadowCast 多光源阴影
+当前已经有两个很重要的早期语义/能力配置组件：
 
-你还有额外的多光源阴影路径。这说明阴影系统与主渲染路径之间也已经开始分离。
+- `HoAovSubject`：通过 MaterialPropertyBlock 写入 mask weight、system write mask、custom write mask、group id、object id、material class、flags、thickness、curvature、utility、debug color、自定义通道值。
+- `HoAovGroup`：按角色组 ID、部件 ID、flags、主体/脸/前发/眼睛/眼透区域/配件等列表给 Renderer 打包语义；优先使用 `MeshRenderer/SkinnedMeshRenderer.SetShaderUserValue()`，失败时回退到 MaterialPropertyBlock。
 
-### 1.7 角色特化 RenderFeature
+`HoAovGroup.PackRendererUserValue()` 当前把 `objectCustomMask + characterId + partId + flags` 打成 32-bit renderer user value。也就是说，原文里说的 RSUV/角色部位语义并不只是设想，已经有一版面向 Renderer 的显式语义写入机制。
 
-你有角色特化的 RenderFeature，负责：
+### 1.5 HoPost：语义感知后处理栈已落地
 
-- 眼透
-- DropShadow
-- 角色特化的 HOAOV 消费
+`HoPostProcessRendererFeature` 当前是 Volume 驱动的语义后处理栈，旧实现支持 RenderGraph/兼容路径。现有 effect 包括：
 
-这说明“角色”已经不是普通场景物体，而是一个独立的渲染域。
+- `EdgeLight`
+- `Outline`
+- `DropShadow`
+- `DepthOfField`
+- `PostLighting`
+- `CustomMaterial`
+
+每个 HoPost layer 可启用 HoAOV mask，并且已经有规则系统：
+
+- source 可读 `Mask / GroupId / ObjectId / Flags / Thickness / Curvature / Material / Utility / Custom0-3 / ObjectCustom0-7`。
+- operator 支持 direct、threshold、比较、范围、颜色匹配、flags any/all。
+- combine 支持 replace、or、and、subtract、add、multiply。
+- runtime 最多评估 4 条规则。
+
+所以 HoPost 不只是“吃 HOAOV 的后处理”，它已经有一个初步的语义查询语言雏形。
+
+### 1.6 Shoost：主要是最终图像栈，但并非完全不碰 AOV
+
+原文把 SHOPost/Shoost 说成纯图像后处理，这个方向基本对，但需要补充边界：当前 `ShoostPostProcessing` 是 final-stack 风格的后处理系统，包含大量画面风格效果，例如色彩、CRT、VHS、Glow、IrisBlur、RGBBlur、Kuwahara、Weather、LogoOverlay 等。
+
+它的工程结构已经比较清晰：
+
+- `ShoostPostProcessEffectDescriptor` 是 effect metadata 的集中事实来源。
+- descriptor 维护默认 shader、运行顺序、是否支持 AOV composite、执行类型（SinglePass/MultiPass/Stateful/Removed）。
+- 正式 effect 通过 executor 注册，而不是散落 switch。
+
+但它并非绝对“纯图像”：部分效果支持 AOV composite。更准确的边界应是：
+
+- 需要角色 mask、主体捕获、depth/normal/ID 精确控制的效果放 HoPost 或 CharacterSpecialization。
+- Shoost 保持最终风格栈为主，只允许轻量 AOV composite 作为局部遮罩/混合辅助。
+
+### 1.7 HoSSS：独立屏幕空间 SSS，不属于 HoPost 调试输出
+
+当前已经有独立的 `HoSubsurfaceScatteringRendererFeature`。它读取 HoAOV，而不是 HoPost 的一个子效果。
+
+当前输入包括：
+
+- HoAOV mask/id
+- HoAOV normal/depth
+- HoAOV surface data
+- HoAOV SSS 专用源色 `_lilHoAovSssTexture`
+
+当前结构包括 Source、横向扩散、纵向扩散、Transmission gather/blur、Composite。设置里有 8 个 profile 槽位，质量档控制 Burley-like disk gather 的采样预算。默认 source/composite 时机约束在 opaque 之后、transparent 之前，避免皮肤散射结果被透明顺序污染。
+
+所以原文“未来要接入 SSS/SSS 只是后处理”的表述需要修正：HoSSS 已经是一个独立的 HoAOV 数据消费者，同时也证明了材质派生语义可以在屏幕空间被专门模块消费。
+
+### 1.8 OIT：Weighted Blended OIT 已经形成完整数据流
+
+`WeightedOITRendererFeature` 当前提供：
+
+- per-camera reset：每个相机开始时重置 `_lilOITActive = 0`。
+- opaque copy：skybox 之后复制 camera color 到 `_lilOITOpaqueTexture`，同时发布给 `_CameraOpaqueTexture` 路径。
+- accumulation：绘制 `LightMode = "lilToonOIT"` 的对象到 accumulation/revealage MRT。
+- composite：透明阶段后把 OIT 结果合成回 camera color。
+
+材质侧通过 `_lilOITEnabled` 与 `_lilOITActive` 握手，避免启用 OIT 的透明材质在 accumulation 阶段又走普通 forward。这个系统的关键不是“透明也能画”，而是它已经形成了 **pass tag + 全局状态 + 背景拷贝 + 独立合成** 的完整数据流。
+
+### 1.9 HoShadowCast：独立 shadow atlas + 材质 forward 接收
+
+`HoShadowCastRendererFeature` 当前在 `BeforeRenderingPrePasses` 默认执行，使用 `ShadowCaster` pass 生成自己的 shadow atlas，并发布：
+
+- `_HoShadowCastAtlas`
+- `_HoShadowCastSecondDirectionalAtlas`
+- light/slice/worldToShadow 数组
+- PCSS 参数与 debug 参数
+
+它支持点光、聚光、方向光，以及第二方向光级联 atlas。采样侧已经从硬件 compare 转向 raw depth + manual compare / PCSS，atlas tile 会 clamp，避免串采样。
+
+需要修正的一点是：当前 HoShadowCast 的主消费路径仍然是 `lilToon/lilPBR` 的材质 forward 阶段调用 `HoShadowCastAttenuation(positionWS)`。HoAOV depth 可以服务 debug、receiver guard 或未来屏幕空间版本，但不能替代 shadow atlas 的 blocker search。
+
+### 1.10 角色特化：眼透和前发投影是独立角色合成域
+
+`HoCharacterSpecializationRendererFeature` 当前使用 `LightMode = "HoCharacterCapture"` 做角色捕获，然后合成：
+
+- 眼睛透过（Eye Reveal）
+- 前发向脸部投影（Hair Drop Shadow）
+- 相关 debug view
+
+它读取 HoAOV 的 mask/id/normal-depth/objectCustom，并通过 Volume 覆盖参数。角色部件语义依赖 `HoAovGroup` 写入的主体、脸、前发、眼睛、眼透区域等 object custom 位。
+
+所以“角色”在当前系统里已经不是普通对象分类，而是有自己的 capture pass、语义输入、合成 RT 和屏幕空间规则。
+
+### 1.11 平面反射：当前扩展仓库可确认的是 Planar Reflection，不是 SSR
+
+原文写“SSR（水面）”需要谨慎。按当前 `lilToon-URP-Extensions` 仓库核查，已落地的是 `LILPlanarReflectionSurface`：
+
+- 由场景组件注册 `RenderPipelineManager.beginCameraRendering`。
+- 创建镜像相机和反射 RenderTexture。
+- 通过 MaterialPropertyBlock 写入 `_LILPBRPlanarReflectionTexture`、矩阵和参数。
+- 可自动设置 `_UsePlanarReflection`。
+
+因此在这份 RP 大纲里应把它归为 **Reflection/PlanarReflection 子系统**。如果水体 SSR 存在于其它仓库，需要另行核对，不应把它当成当前 URP 扩展包已经确认的能力。
+
+### 1.12 lilToon / lilPBR 旧项目的实际对接方式（迁移参照，不是新设计边界）
+
+旧项目并不是“等待未来接入”，它们已经通过 shader pass 契约接入了当前 RP 扩展。
+
+`lilToon` 当前可确认的对接点：
+
+- URP block 中有 `HoAOV`、`HoAOVSSS`、`HoCharacterCapture`、`UniversalGBuffer`、`MotionVectors` 等 pass。
+- 透明模板中有 `LightMode = "lilToonOIT"`。
+- forward include 通过 `_lilOITEnabled / _lilOITActive` 跳过 OIT accumulation 期间的普通 forward。
+- light attenuation 宏里乘 `HoShadowCastAttenuation(positionWS)`。
+- `lil_pass_hoaov.hlsl` 写入 HoAOV 的 mask/id/surface/custom/objectCustom/SSS 源。
+- `lil_pass_hocharacter_capture.hlsl` 接入角色捕获输出。
+
+`lilPBR` 当前可确认的对接点：
+
+- `lilPBR.shader` / `lilPBR_Tessellation.shader` 有 `UniversalForward`、`UniversalGBuffer`、`ShadowCaster`、`DepthOnly`、`DepthNormals`、`Meta`、`MotionVectors`、`XRMotionVectors`、`HoAOV`、`HoAOVSSS`、`HoCharacterCapture` pass。
+- `hoaov.hlsl` 写入与 lilToon 一致的 HoAOV 数据。
+- `hocharacter_capture.hlsl` 接入角色捕获。
+- `unity_urp.hlsl` 采样 `_LILPBRPlanarReflectionTexture`，并通过 `_HoShadowStrength` 控制 HoShadowCast 对材质阴影的影响。
+
+这说明旧系统已经形成了一个临时但可工作的 ABI：`LightMode` 名称、全局纹理名、材质属性名、renderer user value 打包格式、HLSL include 路径。
+
+这里需要明确修正：**新 RP 不以承接这个旧 ABI 为目标**。这些内容应作为迁移参照和能力清单，而不是未来核心架构的一部分。真正需要固化的是新 RP 自己的 Semantic / Feature / Resource 契约；材质系统会在后续重构中按新契约接入，而不是通过一个长期存在的旧材质桥接层接入。
 
 ---
 
@@ -182,6 +299,18 @@
 - 统一放在一个层里会让它们的生命周期互相冲突
 
 ---
+
+### 3.4 按当前仓库实现修正这个判断
+
+当前代码里已经有一个很重要的事实：`HoAovSubject` / `HoAovGroup` 写入的对象语义，已经可以在渲染前通过 MaterialPropertyBlock 或 renderer user value 绑定到 Renderer；而 `HoAOV` / `HoAOVSSS` pass 仍然需要在绘制阶段把深度、法线、surface data、SSS source 等写入 MRT。
+
+所以“HOAOV 不能提前”不应该理解成所有 AOV 都被困在 late pass，而应该拆成三类：
+
+1. **Renderer/对象级静态语义**：例如 characterId、partId、objectCustomMask、flags、groupId。当前已经能提前绑定，只是还没有统一注册表。
+2. **几何可得语义**：例如 depth、normal、tangent normal、coverage。它们需要一次绘制，但不一定需要完整 forward lighting。
+3. **材质/着色派生语义**：例如 SSS thinness/source、profile、曲率增强、custom channel 采样、alpha clip 后覆盖。这类必须走材质 pass。
+
+当前 HoAOV 的真实问题不是“还没拆成资源”，而是 **资源已经拆出雏形，但语义定义、生产者、消费者和生命周期还没有被正式登记**。
 
 ## 4. 我们建议的核心拆分：ObjectDomain / MaterialDomain / ShadingDomain
 
@@ -340,7 +469,7 @@
 
 ## 7. 一个更合理的 HOAOV 拆法
 
-为了让 HOAOV 能提前，我们建议把它拆成至少两层：
+为了让 HOAOV 能提前，我们建议把它拆成至少两层。按当前仓库实现，这个拆分首先应该是 **语义生命周期拆分**，不一定立刻等于重命名/重建所有 RT。现有 `MaskId / NormalDepth / SurfaceData / Custom / ObjectCustom / SSS` 已经是物理资源雏形，下一步要补的是正式语义表。
 
 ### 7.1 HOAOV_Base / PreSemantic
 
@@ -351,17 +480,28 @@
 - CharacterPart
 - RSUV Group
 - FeatureFlags
-- Depth
-- Normal
+- RendererUserValue / ObjectCustomMask
+- GroupID / CharacterID / PartID
 - Render Layer
 
 这层本质上是“对象与材质的静态语义层”。
+
+当前已有对应雏形：
+
+- `HoAovSubject` 通过 MaterialPropertyBlock 写入对象/材质语义。
+- `HoAovGroup` 通过 renderer user value 或 MaterialPropertyBlock 写入角色组、部件和 object custom 位。
+- 旧 `lilToon/lilPBR` 的 HoAOV pass 会优先读取 renderer user value，再回退到材质属性；新材质系统应重新定义这条读取规则，而不是原样继承旧属性名。
+
+Depth / normal 虽然可以早于后处理生成，但它们仍然需要绘制，建议归到 `GeometrySemantic` 或 `AOV_Geometry`，不要混进纯对象静态语义。
 
 ### 7.2 HOAOV_Shading / ShadingSemantic
 
 负责真正着色以后才有的内容：
 
 - SSSMask
+- SSS Source Color
+- SSS Profile
+- Thickness / Curvature / Utility 的材质派生值
 - AnimeRamp
 - StylizedShadow
 - SpecMask
@@ -376,6 +516,34 @@
 - 提前执行一部分 HOAOV
 - 保留必须晚出的着色结果
 - 让后处理、角色特化、语义提取各取所需
+
+### 7.3 当前 HoAOV 资源到语义域的建议映射
+
+```text
+_lilHoAovMaskIdTexture
+  -> Object / Material / Capability / Coverage
+
+_lilHoAovNormalDepthTexture
+  -> Geometry / View / Coverage
+
+_lilHoAovTangentNormalTexture
+  -> MaterialGeometry / Shading Input
+
+_lilHoAovSurfaceDataTexture
+  -> Material / ShadingSemantic / SSS Input
+
+_lilHoAovCustom0_3Texture
+  -> Material Custom Semantic
+
+_lilHoAovObjectCustom0_3Texture
+_lilHoAovObjectCustom4_7Texture
+  -> Object / Character Part / RSUV-like Semantic
+
+_lilHoAovSssTexture
+  -> ShadingSemantic / HoSSS Source
+```
+
+这张映射表应该成为后续 Semantic Registry 的初始数据，而不是另起一套与现有 shader 名称脱节的概念。
 
 ---
 
@@ -439,7 +607,14 @@ RenderGraph / FrameGraph 的意义是：
 - 更容易接入并行处理
 - 更容易加调试可视化
 
-你现在已经具备了非常适合迁移到 RenderGraph 的系统规模。
+你现在已经具备了非常适合迁移到 RenderGraph 的系统规模。但按当前仓库看，重点不是“从零引入 RenderGraph”：AOV、OIT、HoSSS、HoPost、Shoost、HoShadowCast、角色特化都已经有 `RecordRenderGraph` 或 RenderGraph path。
+
+真正需要推进的是：
+
+- 统一各 Feature 的资源命名和生命周期规则。
+- 减少每个 Feature 自己维护临时 RT、拷贝、blur、debug 的重复逻辑。
+- 让跨 Feature 依赖显式化，例如 HoSSS 消费 HoAOV，角色特化消费 HoAOV 与 HoCharacterCapture，Shoost 可选消费 AOV composite。
+- 把旧 compatibility path 作为行为对照，避免迁移时遗漏功能；新 `HoUrp-Extensions` 不应再以双路径长期维护为目标。
 
 ---
 
@@ -945,7 +1120,19 @@ Layer/Tag 的问题是：
 
 ## 19. 下一步最值得推进的事情
 
-### 第一优先级：把语义分层写清楚
+### 第一优先级：定义新 RP 的核心契约，并盘点旧 ABI 作为迁移参照
+
+当前最先要做的不是重写模块，也不是给旧材质系统补一个更厚的桥，而是先定义新 RP 自己的核心契约。旧系统接口需要被记录下来，但它们的定位是迁移参照、能力验收清单和断点说明，不是未来必须长期兼容的公共 ABI。
+
+至少包括：
+
+- 新 RP 的语义命名、资源命名、Feature 声明、Pass 时机和 Debug View 命名。
+- 新材质未来需要实现的 producer/consumer 接口，例如写入哪些语义、读取哪些管线资源、声明哪些能力。
+- 旧系统现状清单：`HoAOV`、`HoAOVSSS`、`HoCharacterCapture`、`lilToonOIT`、`_lilHoAov*`、`_lilOIT*`、`_HoShadowCast*`、`_LILPBRPlanarReflectionTexture`、`_HoAov*`、`_HoSSS*`、`_HoShadowStrength`、`_lilOITEnabled`、`_UsePlanarReflection`、renderer user value 打包格式。
+- 新旧差异表：哪些行为保留，哪些重命名，哪些删除，哪些必须由新材质系统重新生产。
+- pass 时机基线：HoShadowCast、HoAOV、HoSSS、OIT、HoCharacter、HoPost、Shoost 当前相对顺序可作为迁移验证，不作为最终顺序锁死。
+
+### 第二优先级：把语义分层写清楚
 
 至少要明确：
 
@@ -954,15 +1141,13 @@ Layer/Tag 的问题是：
 - GeometryDomain
 - DeformationDomain
 - ShadingDomain
+- LightingDomain
 - ImageDomain
 - CompositeDomain
 - DebugDomain
 - CapabilityDomain
 
-### 第二优先级：把 HOAOV 拆成可前置与不可前置两层
-
-- PreSemantic / HOAOV_Base
-- ShadingSemantic / HOAOV_Shading
+当前 HoAOV 资源应该先映射到这些 Domain，而不是先大规模改名。
 
 ### 第三优先级：建立统一的语义注册机制
 
@@ -973,22 +1158,39 @@ Layer/Tag 的问题是：
 - 生命周期多长
 - 分辨率/精度/格式如何
 
-### 第四优先级：整理滤波后端
+第一版可以直接从现有 HoAOV texture、HoPost AOV rule、HoSSS input、HoCharacter input 反推。
+
+### 第四优先级：整理 Feature Descriptor 和依赖关系
+
+每个 feature 至少声明：
+
+- 需要哪些 `LightMode`
+- 生产哪些资源/语义
+- 消费哪些资源/语义
+- 依赖哪个 pass 时机
+- 旧实现是否有 RenderGraph/compatibility 双路径，以及新实现是否只需要 RenderGraph 路径
+- 提供哪些 debug view
+
+### 第五优先级：整理滤波后端
 
 - 统一 Blur / Downsample / Upsample / Temporal / Bilateral
-- 让 SSR、SSS、Bloom、AO 等共享底层能力
+- 让 HoSSS、Shoost Glow/IrisBlur/RGBBlur、HoPost DoF、未来 AO/SSR/水体共享底层能力
 
-### 第五优先级：引入 RenderGraph
+### 第六优先级：收敛 RenderGraph 资源管理
 
-把资源生命周期、依赖顺序、临时 RT 复用统一起来。
+把资源生命周期、依赖顺序、临时 RT 复用统一起来。当前不是“有没有 RenderGraph”的问题，而是多个 Feature 的 RenderGraph path 还缺统一资源目录、统一 debug 和统一依赖声明。
 
-### 第六优先级：建立 Capability UI
+### 第七优先级：建立 Capability UI
 
-让对象、材质、灯光、角色的功能都显式可配，而不是靠隐式层和 tag 猜测。
+让对象、材质、灯光、角色的功能都显式可配，而不是靠隐式层和 tag 猜测。`HoAovSubject` / `HoAovGroup` 可以作为第一版对象语义 UI 的基础，而不是推倒重做。
 
-### 第七优先级：建立 Debug Framework
+### 第八优先级：建立 Debug Framework
 
 把 debug 提升成一级系统，让它能查询、能切换、能重置、能叠加控制、能可视化。
+
+### 第九优先级：材质系统重构
+
+材质重构应排在新 RP 契约定义之后。`lilToon/lilPBR` 现在已经能对接旧 RP 扩展，说明现有能力链路可行；但新材质系统不应继承它们的厚 UI、历史 keyword 和旧属性体系。下一步应按材质重构大纲推进模板、Feature Block、Preset、Generated Shader，并让它们直接实现新 RP 的语义/资源契约。
 
 ---
 
@@ -1017,6 +1219,7 @@ Runtime/
 ├── Resource/
 ├── Semantic/
 ├── Capability/
+├── LegacyInterop/
 ├── Geometry/
 ├── Deformation/
 ├── Lighting/
@@ -1029,6 +1232,8 @@ Runtime/
 ├── UI/
 └── Tools/
 ```
+
+其中 `LegacyInterop/` 不是新 RP 的长期桥接层，而是迁移期的事实记录与验证工具。它可以保存当前 `lilToon/lilPBR` 的旧 ABI 清单、对照表、调试验证脚本和一次性迁移适配；但核心 runtime 不应该通过它来设计新材质系统。新材质后续要直接面向 `Semantic/`、`Resource/`、`Feature/` 和 `Capability/` 的正式契约。
 
 ---
 
@@ -1065,6 +1270,8 @@ Core/
 ## 20.3 RenderGraph
 
 负责真正的帧依赖管理。
+
+这里不建议另造一套完全替代 URP RenderGraph 的系统。当前项目已经在 URP 17.x 上实现多条 `RecordRenderGraph` 路径，合理做法是先建立项目自己的 **Feature/Resource 声明层**，再落到 URP RenderGraph。
 
 建议职责：
 
@@ -1316,6 +1523,37 @@ HOAOV/
 ├── HOAOV_Composite
 └── HOAOV_Debug
 ```
+
+按当前代码，更贴近实际的第一版目录可以是：
+
+```text
+HoAOV/
+├── Contract/
+│   ├── HoAovSemanticNames
+│   ├── HoAovTextureBindings
+│   └── HoAovRendererUserValue
+├── Producer/
+│   ├── HoAovSubject
+│   ├── HoAovGroup
+│   ├── HoAovPassContract
+│   └── HoAovFallback
+├── Resources/
+│   ├── MaskId
+│   ├── NormalDepth
+│   ├── TangentNormal
+│   ├── SurfaceData
+│   ├── CustomChannels
+│   ├── ObjectCustomChannels
+│   └── SssSource
+├── Consumer/
+│   ├── HoPostAovRules
+│   ├── HoSSSInput
+│   ├── HoCharacterInput
+│   └── ShoostAovComposite
+└── Debug/
+```
+
+这样能直接覆盖现有实现，而不是用一个过早理想化的目录把已存在资源打散。
 
 ---
 
@@ -1675,33 +1913,58 @@ Composite Participation
 
 ## 20.23 推荐的系统执行顺序
 
-推荐：
+抽象顺序可以保持 Scene -> Geometry -> Deformation -> Semantic -> Shading -> Composite。按当前旧仓库核查，现有事实基线顺序是：
 
 ```text
-Scene
-↓
-Geometry
-↓
-Deformation
-↓
-PreSemantic
-↓
-Shadow
-↓
-Lighting
-↓
-Shading
-↓
-HOAOV_Shading
-↓
-Composite
-↓
-Image Post
-↓
-DebugComposite
-↓
+Per-camera reset
+  - _lilHoAovActive = 0
+  - _lilOITActive = 0
+  - _HoShadowCastActive / light counts reset
+
+Object semantic binding
+  - HoAovSubject / HoAovGroup
+  - renderer user value / MaterialPropertyBlock
+
+HoShadowCast
+  - ShadowCaster pass -> _HoShadowCastAtlas
+  - second directional atlas when enabled
+
+Opaque / forward / gbuffer shading
+  - old lilToon / lilPBR consume HoShadowCastAttenuation(positionWS)
+
+HoAOV
+  - LightMode = HoAOV
+  - fallback material when native pass is missing
+  - outputs mask/id, normal/depth, tangent normal, surface data, custom, object custom
+  - LightMode = HoAOVSSS -> _lilHoAovSssTexture
+
+HoSSS
+  - consumes HoAOV mask/normal-depth/surfaceData/SSS source
+  - source/diffusion/transmission/composite before transparents
+
+Transparent / OIT
+  - OIT opaque copy after skybox
+  - LightMode = lilToonOIT accumulation before transparents
+  - OIT composite after transparents
+
+HoCharacterSpecialization
+  - LightMode = HoCharacterCapture
+  - eye reveal / hair drop shadow composite
+
+HoPost
+  - semantic-aware layer stack
+  - HoAOV rule masks
+
+Shoost
+  - final image style stack
+  - optional AOV composite for supported effects
+
+Debug composite / overlays
+
 Final Output
 ```
+
+这个顺序不是最终设计，也不是新 RP 必须长期兼容的顺序。它只是迁移时用来确认“旧能力为什么能工作”的事实基线。未来如果把 HoShadowCast 接收改成屏幕空间 composite、把 HoAOV 拆出 pre-semantic pass，或者引入更完整的 FrameGraph，都应以新契约为准，并用这张表检查哪些旧行为需要被替代或删除。
 
 ---
 
@@ -1748,4 +2011,3 @@ Final Output
 如果后续继续推进，最值得优先完善的不是某个具体效果，而是这套系统的 **术语、分层、注册表、能力模型、调试体系和资源流向**。
 
 一旦这些基础打稳，后面再加体积雾、水体、粒子、SSS、透明、风格化效果，都会顺很多。
-
