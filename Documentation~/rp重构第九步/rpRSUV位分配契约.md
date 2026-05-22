@@ -79,7 +79,7 @@ Inspector 必须允许 `Object.Custom0-7` 全部关闭。隐藏的 `ObjectCustom
 
 ### High 5 Flags
 
-高 5 位已经进入 authoring / RSUV packed，但当前 `Aov.MaskId.a` 只有 8 bit，不能被现有屏幕空间 consumer 直接读取：
+高 5 位进入 authoring / RSUV packed，并在 AOV 输出阶段写入 `Aov.MaskId.b` bit3-7。`Aov.MaskId.b` 的 bit0-2 仍保留给 compact `Object.GroupId`：
 
 | Feature Bit | RSUV Bit | 状态 |
 | ---: | ---: | --- |
@@ -89,13 +89,7 @@ Inspector 必须允许 `Object.Custom0-7` 全部关闭。隐藏的 `ObjectCustom
 | 11 | 19 | Reserved，需要 capability registry 登记 |
 | 12 | 20 | Reserved，需要 capability registry 登记 |
 
-如果未来需要让 high flags 被屏幕空间 consumer 使用，应新增显式资源，例如：
-
-```text
-Aov.ObjectFeatureMask
-```
-
-不要把 high flags 塞进 `Aov.ObjectCustom*` 或 `Aov.SurfaceData`。
+不要为 high flags 新增第 8 个 color attachment。当前 AOV pass 的 7 个 color target 加 depth 已经达到 URP RenderGraph native pass attachment 上限。
 
 ## 解码规则
 
@@ -150,10 +144,27 @@ shader 输出仍写入正式 `Aov.*` 资源。Debug view 也只能读取资源�
 | authoring `GroupId=512` | clamp 到 7 |
 | AOV Debug `Flag0Reserved` | 恒为 0 |
 | AOV Debug `PostReceiver` | 跟随 feature bit1 |
+| AOV Debug `Flag8-12` | 跟随 feature bit8-12，读取 `Aov.MaskId.b` bit3-7 |
+
+## 2026-05-22 调整：high flags 复用 `Aov.MaskId.b`
+
+第九阶段不新增 `Aov.ObjectFeatureFlagsHigh` 或 `Aov.ObjectFeatureMask` 资源。原因不是语义上不能资源化，而是 URP RenderGraph native pass 的 fixed attachment array 只能容纳 8 个 attachment；当前 AOV pass 已经是 7 个 color target，加上 depth 后再增加第 8 个 color target 会触发 `FixedAttachmentArray can only contain 8 items`。
+
+最终布局如下：
+
+| AOV byte | bits | 语义 |
+| --- | --- | --- |
+| `Aov.MaskId.a` | 0 | `ObjectFeatureFlags.bit0`，保留空洞，期望恒 0 |
+| `Aov.MaskId.a` | 1 | `ReceivesSemanticPost` / `ObjectFeatureFlags.bit1` |
+| `Aov.MaskId.a` | 2-7 | `ObjectFeatureFlags.bit2-7` |
+| `Aov.MaskId.b` | 0-2 | compact `Object.GroupId`，范围 0-7 |
+| `Aov.MaskId.b` | 3-7 | `ObjectFeatureFlags.bit8-12` |
+
+所有 consumer 读取 group 时必须先还原 byte，再用 `& 7` 取低 3 位。所有 high flag debug view 必须从 `Aov.MaskId.b` 的 bit3-7 读取，不能直接读取 `unity_RendererUserValue`。
 
 ## 不做
 
 - 不在 RSUV v1 中承载材质、几何、SSS source 或 derived composite。
 - 不为大量 group/id 预留宽位。
-- 不把 high feature flags 偷塞进现有 AOV 资源。
+- 不新增第 8 个 color attachment 来承载 high feature flags。
 - 不让屏幕空间 consumer 直接依赖 renderer 是否使用 RSUV。

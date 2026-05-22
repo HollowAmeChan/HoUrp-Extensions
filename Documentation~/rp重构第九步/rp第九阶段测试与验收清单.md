@@ -105,10 +105,21 @@ ObjectSemanticAuthoring ObjectId / GroupId clamp to 15 / 7
 | `AOV.ObjectFlag0` / `Flag0Reserved` | bit0 保留空洞恒为 0 |
 | `AOV.ObjectFlag1` / `POST RX` | `ReceivesSemanticPost` gate 一致 |
 | `AOV.ObjectFlag2-7` | low feature flags 与 `Aov.MaskId.a` bit2-7 一致 |
+| `AOV.ObjectFlag8-12` | high feature flags 与 `Aov.MaskId.b` bit3-7 一致 |
 | `AOV.ObjectCustom0-7` | preset 与 binding mode 无关 |
 | `SemanticPost.Mask` | 只受最终规则和 flag gate 影响 |
 
-`ObjectFeatureFlags.bit8-12` 已进入 authoring / RSUV packed，但当前 `Aov.MaskId.a` 只有 8 bit。第九阶段不要求 AOV Debug 显示 bit8-12；如果后续屏幕空间 consumer 需要这些位，必须先新增显式 `Aov.ObjectFeatureMask` 类资源。
+`ObjectFeatureFlags.bit8-12` 已进入 authoring / RSUV packed，并在 AOV 输出时写入 `Aov.MaskId.b` bit3-7。第九阶段验收必须确认 individual debug view 和 `AllRegistered` 都包含 `AOV.ObjectFlag8-12`。
+
+RenderGraph 验收额外要求：
+
+| 检查 | 期望 |
+| --- | --- |
+| AOV pass color attachment | 最高只使用 index 6 |
+| shader target | 不出现 `SV_Target7` |
+| AOV resource | 不新增 `Aov.ObjectFeatureFlagsHigh` / `Aov.ObjectFeatureMask` |
+| Unity Play Mode | 不再出现 `FixedAttachmentArray can only contain 8 items` |
+| SemanticPost group rule | 读取 `Aov.MaskId.b` 时先 `& 7` |
 
 ## 当前代码落地检查
 

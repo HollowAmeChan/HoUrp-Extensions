@@ -171,6 +171,22 @@ Per camera / frame transient, derived after AOV
 | `Shading.Sss*` | AOV pass / material producer |
 | `Composite.SemanticPostMask` | SemanticPost |
 
+## 2026-05-22 补记：`Aov.MaskId` byte layout
+
+第九阶段不再新增 high feature flags 专用 AOV 资源。当前 AOV pass 保持 7 个 color target；加上 depth 后已经达到 URP RenderGraph native pass 的 fixed attachment array 上限，继续增加第 8 个 color target 会在 native pass merge/compile 阶段报错。
+
+`Aov.MaskId` 的生命周期仍然属于 per-camera AOV 输出，但其 byte 内语义需要明确：
+
+| Channel | Byte bits | Producer | Consumer |
+| --- | --- | --- | --- |
+| `MaskId.a` | bit0 | AOV pass | `AOV.ObjectFlag0`，保留空洞 |
+| `MaskId.a` | bit1 | AOV pass | `AOV.ObjectFlag1` / SemanticPost gate |
+| `MaskId.a` | bit2-7 | AOV pass | `AOV.ObjectFlag2-7` |
+| `MaskId.b` | bit0-2 | AOV pass | `Object.GroupId` rule，读取时必须 `& 7` |
+| `MaskId.b` | bit3-7 | AOV pass | `AOV.ObjectFlag8-12` |
+
+这意味着 `AOV.ObjectFlag8-12` 已经是资源视图，不是 RSUV direct view。Debug Framework 只能解释它来自 `Aov.MaskId.b`，不能把它描述为直接读取 renderer static semantic。
+
 ## 验收问题
 
 - 任意 `Aov.*` 资源能否说明 producer 和 consumer？

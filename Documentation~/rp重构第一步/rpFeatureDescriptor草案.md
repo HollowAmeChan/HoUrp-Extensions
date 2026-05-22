@@ -77,6 +77,7 @@ Required declarations:
 - Opaque copy happens before accumulation and remains aligned with old behavior in first version.
 - `Oit.OpaqueColor` is a resource, not a hidden `_CameraOpaqueTexture` side effect.
 - `_lilOITActive` style handshake is a migration fact; new material capability is `SupportsOit` / `ParticipatesOit`.
+- Implementation is intentionally deferred until after the material ABI stage. First define transparent/OIT material pass contract, then migrate the RenderGraph runtime.
 
 ### ShadowCast
 

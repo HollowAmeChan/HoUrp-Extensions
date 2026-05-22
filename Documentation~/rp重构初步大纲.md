@@ -1242,6 +1242,37 @@ Layer/Tag 的问题是：
 
 材质重构应排在新 RP 契约定义之后。`lilToon/lilPBR` 现在已经能对接旧 RP 扩展，说明现有能力链路可行；但新材质系统不应继承它们的厚 UI、历史 keyword 和旧属性体系。下一步应按材质重构大纲推进模板、Feature Block、Preset、Generated Shader，并让它们直接实现新 RP 的语义/资源契约。
 
+第十阶段先做 **材质系统接入新 RP 的契约准备**：冻结 SurfaceData / MaterialSemanticData / AOV 输出 ABI，建立 Feature Block / Preset 最小描述模型，并用一个 generated shader 原型证明材质可以直接生产新 `Aov.*` / `Sss.*` 语义。第十阶段执行按 `Documentation~/rp重构第十步执行计划.md` 推进。
+
+### 第十一优先级：Weighted OIT runtime 验证
+
+旧项目里的 Weighted OIT 已经证明能力可行，但它依赖旧 `lilToonOIT` pass、`_lilOITEnabled` 材质开关和 `_lilOITActive` 全局握手。新 RP 不能直接把这些名字提升为长期 ABI。
+
+第十阶段已经要求独立最小 shader 提供 `HoUrpOitAccumulation` pass、`SupportsOit` / `ParticipatesOit` 元数据、transparent alpha / coverage / weight 输出和 normal forward phase policy。因此第十一阶段可以直接做 **Weighted OIT runtime 最小验证**：
+
+- 声明 `Oit.OpaqueColor`、`Oit.Accumulation`、`Oit.Revealage`、`Oit.CompositeSource`。
+- clear accumulation / revealage。
+- opaque copy 在 accumulation 前完成。
+- draw `HoUrpOitAccumulation` pass。
+- composite source copy 遵守第六阶段 camera color copy 规则。
+- composite 回 camera color。
+- debug view 覆盖 accumulation、revealage、opaque color、composite source。
+
+第十一阶段仍不迁移旧 `WeightedOITRendererFeature` 的全部 settings / compatibility path。验收重点是 **RenderGraph 资源链路和第十阶段 OIT-ready shader 能跑通**。
+
+### 第十二优先级：Weighted OIT 完整化与透明语义扩展
+
+第十二阶段在第十一阶段最小 runtime 成立后，再补完整化能力：
+
+- render scale / quality policy。
+- alpha clip threshold / weight policy。
+- transparent AOV / transparent SSS 是否进入正式语义。
+- 与 CharacterSpecialization 的半透明部件排序。
+- 与 ImagePost / SemanticPost 的最终时机。
+- 旧 Weighted OIT 行为差异验收。
+
+旧 `WeightedOITRendererFeature`、`WeightedOITSettings`、`WeightedOIT.hlsl` 和 `WeightedOITComposite.shader` 是行为参照；新实现应使用 `Oit.*` 资源名、RenderGraph 声明和新材质 pass 契约。
+
 ---
 
 ## 20. 工程化结构设计（第一版）

@@ -107,15 +107,18 @@ groupId = (rendererStaticSemantic >> 25u) & 7u;
 
 ## Debug Consumer
 
-当前唯一已有下游消费端是 AOV Debug。Debug view 读取的是 `Aov.MaskId.a`，不是 `unity_RendererUserValue`。
+当前已有下游消费端是 AOV Debug 和 SemanticPost probe。Debug view 读取的是 `Aov.MaskId`，不是 `unity_RendererUserValue`。
 
 | Debug View | AOV bit | 语义 |
 | --- | ---: | --- |
-| `Flag0Reserved` / `AOV.ObjectFlag0` | 0 | 保留空洞，期望恒 0 |
-| `PostReceiver` / `AOV.ObjectFlag1` | 1 | `ReceivesSemanticPost` gate |
-| `AOV.ObjectFlag2-7` | 2-7 | low feature flags |
+| `Flag0Reserved` / `AOV.ObjectFlag0` | `MaskId.a bit0` | 保留空洞，期望恒 0 |
+| `PostReceiver` / `AOV.ObjectFlag1` | `MaskId.a bit1` | `ReceivesSemanticPost` gate |
+| `AOV.ObjectFlag2-7` | `MaskId.a bit2-7` | low feature flags |
+| `AOV.ObjectFlag8-12` | `MaskId.b bit3-7` | high feature flags |
 
-`ObjectFeatureFlags.bit8-12` 已经进入 authoring / RSUV packed，但还没有资源化。第九阶段不要求 AOV Debug 显示这些 high flags；后续如果有 consumer 需要读取，应新增显式资源。
+`Aov.MaskId.b` 的低 3 位仍是 compact `Object.GroupId`。任何按 group 做规则匹配的 consumer 都必须用 `round(maskId.b * 255) & 7` 解码，避免 high flag 位污染 group 判断。
+
+`AllRegistered` 必须包含 `AOV.ObjectFlag0-12`。`Flag8-12` 属于已经落到 AOV resource 的语义，不再允许 debug view 直接回读 RSUV。
 
 ## 验收
 
@@ -130,12 +133,13 @@ groupId = (rendererStaticSemantic >> 25u) & 7u;
 | feature flags 全关 | `ObjectFeatureFlags == 0` |
 | `ReceivesSemanticPost` 开关 | feature bit1 / AOV bit1 同步 |
 | authoring ID / Group 赋越界值 | clamp 到 15 / 7 |
-| Debug mapping | `Flag0Reserved -> mode27`，`PostReceiver -> mode28` |
+| Debug mapping | `Flag0Reserved -> mode27`，`PostReceiver -> mode28`，`Flag8 -> mode35`，`Flag12 -> mode39` |
 
 手动验证：
 
 - MPB-only 和 RSUV-preferred 模式下 AOV Debug 输出一致。
 - `POST RX` tile 在两种模式下都随 `ReceivesSemanticPost` 变化。
+- `AOV.ObjectFlag8-12` 在 individual view 和 `AllRegistered` 中都随 high feature flags 变化。
 - 关闭全部 `Object.Custom0-7` 后 object custom debug tile 全黑。
 - 禁用 / 删除 component 后不残留 renderer user value。
 
@@ -144,4 +148,4 @@ groupId = (rendererStaticSemantic >> 25u) & 7u;
 - `SetShaderUserValue` API 可用性受 renderer 类型限制。
 - packed zero 与合法全零语义容易混淆，shader 必须通过 valid/version 判断。
 - RSUV 残留会造成 AOV 误输出。
-- high feature flags 已打包但未资源化，不能被屏幕空间 consumer 直接依赖。
+- `Aov.MaskId.b` 同时承载 group 和 high flags，consumer 忘记 mask 低 3 位会误判 group。

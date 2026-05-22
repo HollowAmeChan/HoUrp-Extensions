@@ -61,7 +61,11 @@ Debug:
 
 三者不能混用。AOV consumer 只能消费 `Aov.*` 或派生资源，不能直接依赖某个 renderer 是否使用 RSUV。
 
-因此 debug view 也不能直接读取 `unity_RendererUserValue`。当前 debug view 只验证已经落到 `Aov.MaskId.a` 的 low 8 位；`ObjectFeatureFlags.bit8-12` 在第九阶段属于已打包但未资源化的静态输入。
+因此 debug view 也不能直接读取 `unity_RendererUserValue`。当前 debug view 验证已经落到 `Aov.MaskId` 的 feature flags：`ObjectFeatureFlags.bit0-7` 位于 `Aov.MaskId.a`，`ObjectFeatureFlags.bit8-12` 位于 `Aov.MaskId.b` bit3-7。
+
+第九阶段的实现边界是复用现有 `Aov.MaskId`，不新增 high flags 专用 color attachment。URP RenderGraph native pass 的 fixed attachment array 只能容纳 8 个 attachment；当前 7 个 color target 加 depth 已经到上限，添加第 8 个 color target 会触发 `FixedAttachmentArray can only contain 8 items`。
+
+`Aov.MaskId.b` 的低 3 位仍归 `Object.GroupId`。任何 consumer 读取 group 时必须先 `& 7`；任何 consumer 读取 high flags 时必须从 bit3-7 取值。`AllRegistered` 必须包含 `AOV.ObjectFlag0-12`，并且这些 view 都是 resource view，不是 RSUV direct view。
 
 ## 与后续阶段关系
 
@@ -83,4 +87,5 @@ Debug:
 - binding mode 切换时 MPB 和 RSUV 同时存在，shader 优先级导致用户误判。
 - 测试只测 pack/unpack，不测 `ReceivesSemanticPost` 与 feature flags bit1 的一致性。
 - 测试只测 pack/unpack，不测 v1 compact 越界拒绝和 authoring clamp。
+- 测试只测 individual debug view，不测 `AllRegistered` 是否包含 `AOV.ObjectFlag8-12`。
 - 文档里把 `partId` 写成新长期 ABI；第九步只能临时映射为 `Object.Id`。
