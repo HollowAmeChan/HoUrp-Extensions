@@ -33,6 +33,14 @@ Replace
 
 shader 只采样 `_HoUrpAovObjectCustom0_3Texture` / `_HoUrpAovObjectCustom4_7Texture`，不读旧全局名。
 
+`AOV.WorldNormal` / `AOV.LinearDepth` debug 对 `Aov.NormalDepth == (0, 0, 0, 0)` 按空值处理，输出透明黑。天空球和未绘制区域没有几何法线，不能用中性法线或任何默认颜色伪装成有效 AOV。
+
+`AllRegistered` 第一版用于同时验收所有已注册 AOV view：
+
+- 单个 `HoURP AOV Debug All` raster pass 内绘制所有 tile。
+- 每个 tile 显式声明 source texture read，并在执行时绑定 `_HoUrpAovDebugSourceTexture`。
+- tile 保持目标画面比例，避免把 normal/depth debug 拉伸成错误比例。
+
 ## Consumer
 
 `SemanticPostProcessRendererFeature` 增加最小 ObjectCustom mask tint：
@@ -47,4 +55,3 @@ shader 只采样 `_HoUrpAovObjectCustom0_3Texture` / `_HoUrpAovObjectCustom4_7Te
 - 不做多规则组合。
 - 不做 UI panel。
 - 不做 overlay / HUD。
-

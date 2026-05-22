@@ -70,6 +70,7 @@ namespace HoUrp.Extensions.Features
             private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("HoURP AOV Output");
             private static readonly List<ShaderTagId> ShaderTagIds = new List<ShaderTagId>
             {
+                new ShaderTagId("UniversalGBuffer"),
                 new ShaderTagId("UniversalForwardOnly"),
                 new ShaderTagId("UniversalForward"),
                 new ShaderTagId("SRPDefaultUnlit"),
@@ -89,6 +90,8 @@ namespace HoUrp.Extensions.Features
                 if (fallbackShader != null)
                 {
                     fallbackMaterial = CoreUtils.CreateEngineMaterial(fallbackShader);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.AovMaskWeight, 1.0f);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.ObjectCustomMask, 0.0f);
                 }
             }
 
@@ -120,6 +123,8 @@ namespace HoUrp.Extensions.Features
 
                 TextureHandle maskIdTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovMaskId);
                 TextureHandle normalDepthTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovNormalDepth);
+                TextureHandle objectCustom0Texture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom0_3);
+                TextureHandle objectCustom1Texture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom4_7);
 
                 FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.opaque, layerMask);
                 DrawingSettings drawingSettings = RenderingUtils.CreateDrawingSettings(
@@ -143,6 +148,8 @@ namespace HoUrp.Extensions.Features
                 {
                     passData.maskIdTexture = maskIdTexture;
                     passData.normalDepthTexture = normalDepthTexture;
+                    passData.objectCustom0Texture = objectCustom0Texture;
+                    passData.objectCustom1Texture = objectCustom1Texture;
                     passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
 
                     if (!passData.rendererList.IsValid())
@@ -151,8 +158,10 @@ namespace HoUrp.Extensions.Features
                     }
 
                     builder.UseRendererList(passData.rendererList);
-                    builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.WriteAll);
-                    builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachment(objectCustom0Texture, 2, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachment(objectCustom1Texture, 3, AccessFlags.ReadWrite);
 
                     if (resourceData.activeDepthTexture.IsValid())
                     {
@@ -161,10 +170,12 @@ namespace HoUrp.Extensions.Features
 
                     builder.AllowPassCulling(false);
                     builder.AllowGlobalStateModification(true);
-                    builder.SetRenderFunc((PassData data, RasterGraphContext context)
+                    builder.SetRenderFunc((PassData data, RasterGraphContext context) =>
                     {
                         _ = data.maskIdTexture;
                         _ = data.normalDepthTexture;
+                        _ = data.objectCustom0Texture;
+                        _ = data.objectCustom1Texture;
                         context.cmd.DrawRendererList(data.rendererList);
                     });
                 }
@@ -174,6 +185,8 @@ namespace HoUrp.Extensions.Features
             {
                 public TextureHandle maskIdTexture;
                 public TextureHandle normalDepthTexture;
+                public TextureHandle objectCustom0Texture;
+                public TextureHandle objectCustom1Texture;
                 public RendererListHandle rendererList;
             }
         }

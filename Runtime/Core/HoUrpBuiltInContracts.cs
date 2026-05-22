@@ -121,6 +121,91 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Features.AovOutput,
                 "HoAovDebugMode.WorldNormal",
                 "Displays world-space normal from Aov.NormalDepth."));
+
+            RegisterObjectCustomDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom0,
+                HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
+                HoUrpBuiltInNames.Semantics.ObjectCustom0,
+                "HoAovDebugMode.ObjectCustom0",
+                "Displays Object.Custom0 from Aov.ObjectCustom0_3.");
+
+            RegisterObjectCustomDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom1,
+                HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
+                HoUrpBuiltInNames.Semantics.ObjectCustom1,
+                "HoAovDebugMode.ObjectCustom1",
+                "Displays Object.Custom1 from Aov.ObjectCustom0_3.");
+
+            RegisterObjectCustomDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom2,
+                HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
+                HoUrpBuiltInNames.Semantics.ObjectCustom2,
+                "HoAovDebugMode.ObjectCustom2",
+                "Displays Object.Custom2 from Aov.ObjectCustom0_3.");
+
+            RegisterObjectCustomDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom3,
+                HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
+                HoUrpBuiltInNames.Semantics.ObjectCustom3,
+                "HoAovDebugMode.ObjectCustom3",
+                "Displays Object.Custom3 from Aov.ObjectCustom0_3.");
+
+            RegisterObjectCustomDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
+                HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
+                HoUrpBuiltInNames.Semantics.ObjectCustom4,
+                "HoAovDebugMode.ObjectCustom4",
+                "Displays Object.Custom4 from Aov.ObjectCustom4_7.");
+
+            RegisterObjectCustomDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom5,
+                HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
+                HoUrpBuiltInNames.Semantics.ObjectCustom5,
+                "HoAovDebugMode.ObjectCustom5",
+                "Displays Object.Custom5 from Aov.ObjectCustom4_7.");
+
+            RegisterObjectCustomDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom6,
+                HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
+                HoUrpBuiltInNames.Semantics.ObjectCustom6,
+                "HoAovDebugMode.ObjectCustom6",
+                "Displays Object.Custom6 from Aov.ObjectCustom4_7.");
+
+            RegisterObjectCustomDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom7,
+                HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
+                HoUrpBuiltInNames.Semantics.ObjectCustom7,
+                "HoAovDebugMode.ObjectCustom7",
+                "Displays Object.Custom7 from Aov.ObjectCustom4_7.");
+        }
+
+        private static void RegisterObjectCustomDebugView(
+            HoUrpContractRegistry registry,
+            HoUrpIdentifier debugView,
+            HoUrpIdentifier resource,
+            HoUrpIdentifier semantic,
+            string legacyReference,
+            string description)
+        {
+            registry.DebugViews.Register(new DebugViewDefinition(
+                debugView,
+                HoUrpDomain.Debug,
+                resource,
+                semantic,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<DebugDisplayMode>(DebugDisplayMode.Replace),
+                DebugValueRange.ZeroToOne,
+                HoUrpBuiltInNames.Features.AovOutput,
+                legacyReference,
+                description));
         }
 
         private static void RegisterSemantics(HoUrpContractRegistry registry)
@@ -208,6 +293,89 @@ namespace HoUrp.Extensions.Core
                 HoUrpMigrationDecision.KeepConceptRename,
                 "_lilHoAovNormalDepthTexture",
                 "Linear depth encoded into Aov.NormalDepth."));
+
+            RegisterObjectCustomSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.ObjectCustom0,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom0,
+                "_lilHoAovObjectCustom0_3Texture.r",
+                "Object custom semantic channel 0.");
+
+            RegisterObjectCustomSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.ObjectCustom1,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom1,
+                "_lilHoAovObjectCustom0_3Texture.g",
+                "Object custom semantic channel 1.");
+
+            RegisterObjectCustomSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.ObjectCustom2,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom2,
+                "_lilHoAovObjectCustom0_3Texture.b",
+                "Object custom semantic channel 2.");
+
+            RegisterObjectCustomSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.ObjectCustom3,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom3,
+                "_lilHoAovObjectCustom0_3Texture.a",
+                "Object custom semantic channel 3.");
+
+            RegisterObjectCustomSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.ObjectCustom4,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
+                "_lilHoAovObjectCustom4_7Texture.r",
+                "Object custom semantic channel 4.");
+
+            RegisterObjectCustomSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.ObjectCustom5,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom5,
+                "_lilHoAovObjectCustom4_7Texture.g",
+                "Object custom semantic channel 5.");
+
+            RegisterObjectCustomSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.ObjectCustom6,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom6,
+                "_lilHoAovObjectCustom4_7Texture.b",
+                "Object custom semantic channel 6.");
+
+            RegisterObjectCustomSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.ObjectCustom7,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom7,
+                "_lilHoAovObjectCustom4_7Texture.a",
+                "Object custom semantic channel 7.");
+        }
+
+        private static void RegisterObjectCustomSemantic(
+            HoUrpContractRegistry registry,
+            HoUrpIdentifier semantic,
+            HoUrpIdentifier debugView,
+            string legacySource,
+            string description)
+        {
+            HoUrpIdentifier[] consumers =
+            {
+                HoUrpBuiltInNames.Features.SemanticPostProcess,
+                HoUrpBuiltInNames.Features.DebugComposite
+            };
+
+            registry.Semantics.Register(new SemanticDefinition(
+                semantic,
+                HoUrpDomain.Object,
+                SemanticFormat.NormalizedFloat,
+                HoUrpPassStage.GeometrySemanticAov,
+                HoUrpLifetime.PerCamera,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<HoUrpIdentifier>(consumers),
+                debugView,
+                HoUrpMigrationDecision.KeepConceptRename,
+                legacySource,
+                description));
         }
 
         private static void RegisterResources(HoUrpContractRegistry registry)
@@ -239,10 +407,42 @@ namespace HoUrp.Extensions.Core
                 ResourceFormatHint.HighPrecisionRgba16Float,
                 ResourceScale.Full,
                 HoUrpLifetime.PerCamera,
-                ResourceClearPolicy.ClearNeutralNormal,
+                ResourceClearPolicy.ClearZero,
                 HoUrpBuiltInNames.DebugViews.AovWorldNormal,
                 "_lilHoAovNormalDepthTexture",
-                "High precision normal/depth AOV resource."));
+                "High precision normal/depth AOV resource. Zero clear means no geometry."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.ObjectCustom0,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SemanticPostProcess,
+                    HoUrpBuiltInNames.Features.DebugComposite),
+                ResourceFormatHint.MaskRgba8,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearZero,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom0,
+                "_lilHoAovObjectCustom0_3Texture",
+                "Packed object custom channels 0-3."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.ObjectCustom4,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SemanticPostProcess,
+                    HoUrpBuiltInNames.Features.DebugComposite),
+                ResourceFormatHint.MaskRgba8,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearZero,
+                HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
+                "_lilHoAovObjectCustom4_7Texture",
+                "Packed object custom channels 4-7."));
         }
 
         private static void RegisterFeatures(HoUrpContractRegistry registry)
@@ -253,13 +453,23 @@ namespace HoUrp.Extensions.Core
                 HoUrpPassStage.GeometrySemanticAov,
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Resources.AovMaskId,
-                    HoUrpBuiltInNames.Resources.AovNormalDepth),
+                    HoUrpBuiltInNames.Resources.AovNormalDepth,
+                    HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
+                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
                     HoUrpBuiltInNames.Semantics.ObjectId,
                     HoUrpBuiltInNames.Semantics.ObjectGroupId,
                     HoUrpBuiltInNames.Semantics.ObjectFlags,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom0,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom1,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom2,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom3,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom4,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom5,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom6,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom7,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(),
@@ -270,10 +480,18 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovMask,
                     HoUrpBuiltInNames.DebugViews.AovObjectId,
                     HoUrpBuiltInNames.DebugViews.AovLinearDepth,
-                    HoUrpBuiltInNames.DebugViews.AovWorldNormal),
+                    HoUrpBuiltInNames.DebugViews.AovWorldNormal,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom0,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom1,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom2,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom3,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom5,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom6,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7),
                 HoUrpMigrationDecision.KeepConceptRename,
                 "Runtime/AOV/HoAovRendererFeature.cs",
-                "Minimum AOV contract for mask/id and normal/depth resources."));
+                "Minimum AOV contract for mask/id, normal/depth, and object custom resources."));
 
             registry.Features.Register(new FeatureDescriptor(
                 HoUrpBuiltInNames.Features.SemanticPostProcess,
@@ -282,13 +500,23 @@ namespace HoUrp.Extensions.Core
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Resources.AovMaskId,
-                    HoUrpBuiltInNames.Resources.AovNormalDepth),
+                    HoUrpBuiltInNames.Resources.AovNormalDepth,
+                    HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
+                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
                     HoUrpBuiltInNames.Semantics.ObjectId,
                     HoUrpBuiltInNames.Semantics.ObjectGroupId,
                     HoUrpBuiltInNames.Semantics.ObjectFlags,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom0,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom1,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom2,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom3,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom4,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom5,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom6,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom7,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(
@@ -298,7 +526,15 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovMask,
                     HoUrpBuiltInNames.DebugViews.AovObjectId,
                     HoUrpBuiltInNames.DebugViews.AovLinearDepth,
-                    HoUrpBuiltInNames.DebugViews.AovWorldNormal),
+                    HoUrpBuiltInNames.DebugViews.AovWorldNormal,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom0,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom1,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom2,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom3,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom5,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom6,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7),
                 HoUrpMigrationDecision.KeepConceptRename,
                 "Runtime/HoPostProcessing/HoPostProcessRendererFeature.cs",
                 "Minimum read-only AOV consumer for semantic post processing."));
@@ -310,11 +546,21 @@ namespace HoUrp.Extensions.Core
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Resources.AovMaskId,
-                    HoUrpBuiltInNames.Resources.AovNormalDepth),
+                    HoUrpBuiltInNames.Resources.AovNormalDepth,
+                    HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
+                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
                     HoUrpBuiltInNames.Semantics.ObjectId,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom0,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom1,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom2,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom3,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom4,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom5,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom6,
+                    HoUrpBuiltInNames.Semantics.ObjectCustom7,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(
@@ -323,7 +569,15 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovMask,
                     HoUrpBuiltInNames.DebugViews.AovObjectId,
                     HoUrpBuiltInNames.DebugViews.AovLinearDepth,
-                    HoUrpBuiltInNames.DebugViews.AovWorldNormal),
+                    HoUrpBuiltInNames.DebugViews.AovWorldNormal,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom0,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom1,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom2,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom3,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom5,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom6,
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7),
                 HoUrpMigrationDecision.Replace,
                 "old per-feature debug passes",
                 "Central debug composite owner for registered debug views."));

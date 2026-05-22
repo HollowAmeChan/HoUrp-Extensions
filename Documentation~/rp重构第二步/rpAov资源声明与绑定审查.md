@@ -9,7 +9,9 @@
 | Resource | Producer | Consumer | Lifetime | Format | Clear |
 | --- | --- | --- | --- | --- | --- |
 | `Aov.MaskId` | `AovOutput` | `DebugComposite`, `SemanticPostProcess` | PerCamera | `R8G8B8A8_UNorm` | `(0,0,0,0)` |
-| `Aov.NormalDepth` | `AovOutput` | `DebugComposite`, `SemanticPostProcess` | PerCamera | `R16G16B16A16_SFloat` | `(0.5,0.5,1,1)` |
+| `Aov.NormalDepth` | `AovOutput` | `DebugComposite`, `SemanticPostProcess` | PerCamera | `R16G16B16A16_SFloat` | `(0,0,0,0)` |
+
+Clear is owned by RenderGraph resource declaration: `TextureDesc.clearBuffer` / `TextureDesc.clearColor` are set from `ResourceClearPolicy` by `HoUrpRenderGraphTextureDescFactory`. `AovOutput` binds AOV attachments as `ReadWrite` partial writes so non-covered pixels keep the resource clear value. Do not add per-resource clear passes or hand-written MRT clear passes for AOV background cleanup.
 
 ## Shader Binding
 

@@ -279,7 +279,7 @@ A   = linear depth or normalized device depth
 - Flags 第一版是否写 0。
 - normal 是否写 world normal 还是 view normal。
 - depth 是否写 linear eye depth、raw depth 还是 0。
-- clear neutral normal 是否继续是 `(0.5, 0.5, 1, 1)`。
+- `NormalDepth` 未覆盖区域是否明确为 zero/no geometry，而不是中性法线 fallback。
 - normal/depth debug view 是否需要 decode 函数。
 
 ### 8.4 建议判定

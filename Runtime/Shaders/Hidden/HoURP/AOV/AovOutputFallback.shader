@@ -38,7 +38,17 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
             {
                 half4 maskId : SV_Target0;
                 half4 normalDepth : SV_Target1;
+                half4 objectCustom0 : SV_Target2;
+                half4 objectCustom1 : SV_Target3;
             };
+
+            float _HoUrpAovMaskWeight;
+            float _HoUrpObjectCustomMask;
+
+            half HasMaskBit(float mask, float bitValue)
+            {
+                return half(step(0.5, fmod(floor(mask / bitValue), 2.0)));
+            }
 
             Varyings Vert(Attributes input)
             {
@@ -70,8 +80,20 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
 
                 AovOutput output;
                 half3 encodedNormal = half3(normalWS * 0.5 + 0.5);
-                output.maskId = half4(1.0h, 1.0h / 255.0h, 0.0h, 0.0h);
+                float objectCustomMask = round(clamp(_HoUrpObjectCustomMask, 0.0, 255.0));
+                half maskWeight = half(saturate(_HoUrpAovMaskWeight));
+                output.maskId = half4(maskWeight, 1.0h / 255.0h, 0.0h, 0.0h);
                 output.normalDepth = half4(encodedNormal, half(saturate(normalizedDepth)));
+                output.objectCustom0 = half4(
+                    HasMaskBit(objectCustomMask, 1.0),
+                    HasMaskBit(objectCustomMask, 2.0),
+                    HasMaskBit(objectCustomMask, 4.0),
+                    HasMaskBit(objectCustomMask, 8.0)) * maskWeight;
+                output.objectCustom1 = half4(
+                    HasMaskBit(objectCustomMask, 16.0),
+                    HasMaskBit(objectCustomMask, 32.0),
+                    HasMaskBit(objectCustomMask, 64.0),
+                    HasMaskBit(objectCustomMask, 128.0)) * maskWeight;
                 return output;
             }
             ENDHLSL

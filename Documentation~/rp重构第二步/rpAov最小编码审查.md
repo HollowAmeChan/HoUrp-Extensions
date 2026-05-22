@@ -22,7 +22,7 @@
 | RGB | `Geometry.WorldNormal` | world normal encoded to `normal * 0.5 + 0.5` |
 | A | `Geometry.LinearDepth` | normalized depth `positionCS.z / positionCS.w` remapped through `UNITY_REVERSED_Z` |
 
-背景 clear 为 `(0.5,0.5,1,1)`。
+背景 clear 为 `(0,0,0,0)`，表示 no geometry / sky / undefined。天空或未绘制区域没有几何法线，不能写中性法线 fallback。
 
 ## Debug Decode
 
@@ -30,8 +30,8 @@ Debug shader 必须与本文件一致：
 
 - `AOV / Mask`：显示 `MaskId.r`。
 - `AOV / Object ID`：显示 `MaskId.g`，第一版是常量。
-- `AOV / Linear Depth`：显示 `NormalDepth.a`。
-- `AOV / World Normal`：显示 `NormalDepth.rgb`，第一版直接显示 encoded normal。
+- `AOV / Linear Depth`：`NormalDepth == (0,0,0,0)` 时显示空值，否则显示 `NormalDepth.a`。
+- `AOV / World Normal`：`NormalDepth == (0,0,0,0)` 时显示空值，否则显示 `NormalDepth.rgb`，第一版直接显示 encoded normal。
 
 ## 未决
 

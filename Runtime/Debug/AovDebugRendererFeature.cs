@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using HoUrp.Extensions.Core;
 using HoUrp.Extensions.RenderGraph;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 using UnityRenderGraph = UnityEngine.Rendering.RenderGraphModule.RenderGraph;
 
@@ -17,7 +19,16 @@ namespace HoUrp.Extensions.Debugging
             Mask,
             ObjectId,
             LinearDepth,
-            WorldNormal
+            WorldNormal,
+            ObjectCustom0,
+            ObjectCustom1,
+            ObjectCustom2,
+            ObjectCustom3,
+            ObjectCustom4,
+            ObjectCustom5,
+            ObjectCustom6,
+            ObjectCustom7,
+            AllRegistered
         }
 
         [SerializeField]
@@ -51,14 +62,26 @@ namespace HoUrp.Extensions.Debugging
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             if (!ShouldRender(in renderingData)
-                || selectedView == AovDebugView.None
                 || debugPass == null
                 || debugMaterial == null)
             {
                 return;
             }
 
-            debugPass.Setup(debugMaterial, ResolveDebugViewId(selectedView), ResolveShaderMode(selectedView));
+            if (selectedView == AovDebugView.None)
+            {
+                return;
+            }
+
+            if (selectedView == AovDebugView.AllRegistered)
+            {
+                debugPass.SetupAll(debugMaterial);
+            }
+            else
+            {
+                debugPass.Setup(debugMaterial, ResolveDebugViewId(selectedView), ResolveShaderMode(selectedView));
+            }
+
             renderer.EnqueuePass(debugPass);
         }
 
@@ -89,6 +112,22 @@ namespace HoUrp.Extensions.Debugging
                     return HoUrpBuiltInNames.DebugViews.AovLinearDepth;
                 case AovDebugView.WorldNormal:
                     return HoUrpBuiltInNames.DebugViews.AovWorldNormal;
+                case AovDebugView.ObjectCustom0:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectCustom0;
+                case AovDebugView.ObjectCustom1:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectCustom1;
+                case AovDebugView.ObjectCustom2:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectCustom2;
+                case AovDebugView.ObjectCustom3:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectCustom3;
+                case AovDebugView.ObjectCustom4:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectCustom4;
+                case AovDebugView.ObjectCustom5:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectCustom5;
+                case AovDebugView.ObjectCustom6:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectCustom6;
+                case AovDebugView.ObjectCustom7:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectCustom7;
                 default:
                     return HoUrpBuiltInNames.DebugViews.AovMask;
             }
@@ -104,6 +143,22 @@ namespace HoUrp.Extensions.Debugging
                     return 2;
                 case AovDebugView.WorldNormal:
                     return 3;
+                case AovDebugView.ObjectCustom0:
+                    return 4;
+                case AovDebugView.ObjectCustom1:
+                    return 5;
+                case AovDebugView.ObjectCustom2:
+                    return 6;
+                case AovDebugView.ObjectCustom3:
+                    return 7;
+                case AovDebugView.ObjectCustom4:
+                    return 8;
+                case AovDebugView.ObjectCustom5:
+                    return 9;
+                case AovDebugView.ObjectCustom6:
+                    return 10;
+                case AovDebugView.ObjectCustom7:
+                    return 11;
                 default:
                     return 0;
             }
@@ -113,15 +168,18 @@ namespace HoUrp.Extensions.Debugging
         {
             private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("HoURP AOV Debug");
             private static readonly MaterialPropertyBlock PropertyBlock = new MaterialPropertyBlock();
+            private const float TilePaddingPixels = 4.0f;
             private readonly HoUrpContractRegistry registry;
             private Material material;
             private HoUrpIdentifier debugViewId;
             private int shaderMode;
+            private bool showAllRegistered;
 
             public AovDebugPass(HoUrpContractRegistry registry)
             {
                 this.registry = registry;
                 ConfigureInput(ScriptableRenderPassInput.None);
+                requiresIntermediateTexture = true;
             }
 
             public void Setup(Material material, HoUrpIdentifier debugViewId, int shaderMode)
@@ -129,11 +187,33 @@ namespace HoUrp.Extensions.Debugging
                 this.material = material;
                 this.debugViewId = debugViewId;
                 this.shaderMode = shaderMode;
+                showAllRegistered = false;
+                requiresIntermediateTexture = true;
+            }
+
+            public void SetupAll(Material material)
+            {
+                this.material = material;
+                debugViewId = HoUrpBuiltInNames.DebugViews.AovMask;
+                shaderMode = 0;
+                showAllRegistered = true;
+                requiresIntermediateTexture = true;
             }
 
             public override void RecordRenderGraph(UnityRenderGraph renderGraph, ContextContainer frameData)
             {
-                if (material == null || !registry.DebugViews.TryGet(debugViewId, out DebugViewDefinition debugView))
+                if (material == null)
+                {
+                    return;
+                }
+
+                if (showAllRegistered)
+                {
+                    RecordAllDebugViews(renderGraph, frameData);
+                    return;
+                }
+
+                if (!registry.DebugViews.TryGet(debugViewId, out DebugViewDefinition debugView))
                 {
                     return;
                 }
@@ -146,51 +226,267 @@ namespace HoUrp.Extensions.Debugging
 
                 UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
                 TextureHandle destination = resourceData.activeColorTexture;
+                MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+                propertyBlock.SetInt(HoUrpShaderPropertyIds.AovDebugMode, shaderMode);
+                propertyBlock.SetInt(HoUrpShaderPropertyIds.AovDebugTileMode, 0);
 
-                using (var builder = renderGraph.AddRasterRenderPass<PassData>(
-                    "HoURP AOV Debug",
-                    out PassData passData,
+                RenderGraphUtils.BlitMaterialParameters blitParameters =
+                    new RenderGraphUtils.BlitMaterialParameters(sourceTexture, destination, material, 0)
+                    {
+                        propertyBlock = propertyBlock,
+                        sourceTexturePropertyID = HoUrpShaderPropertyIds.AovDebugSourceTexture
+                    };
+                renderGraph.AddBlitPass(blitParameters, passName: "HoURP AOV Debug");
+            }
+
+            private void RecordAllDebugViews(UnityRenderGraph renderGraph, ContextContainer frameData)
+            {
+                HoUrpRenderGraphResources resources = frameData.GetOrCreate<HoUrpRenderGraphResources>();
+                UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+                UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+                TextureHandle destination = resourceData.activeColorTexture;
+
+                List<DebugTile> tiles = new List<DebugTile>(registry.DebugViews.Count);
+                foreach (DebugViewDefinition debugView in registry.DebugViews.Definitions)
+                {
+                    if (!resources.TryGetTexture(debugView.SourceResource, out TextureHandle sourceTexture))
+                    {
+                        continue;
+                    }
+
+                    tiles.Add(new DebugTile(sourceTexture, ResolveShaderMode(debugView)));
+                }
+
+                if (tiles.Count == 0)
+                {
+                    return;
+                }
+
+                int targetWidth = Mathf.Max(1, cameraData.cameraTargetDescriptor.width);
+                int targetHeight = Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
+                float targetAspect = targetWidth / (float)targetHeight;
+                float sourceAspect = targetAspect;
+                CalculateTileGrid(tiles.Count, sourceAspect, targetAspect, out int columns, out int rows);
+
+                for (int i = 0; i < tiles.Count; i++)
+                {
+                    DebugTile tile = tiles[i];
+                    int column = i % columns;
+                    int row = i / columns;
+
+                    tiles[i] = new DebugTile(
+                        tile.sourceTexture,
+                        tile.shaderMode,
+                        CalculateTileRect(
+                            column,
+                            row,
+                            columns,
+                            rows,
+                            sourceAspect,
+                            targetAspect,
+                            targetWidth,
+                            targetHeight));
+                }
+
+                using (var builder = renderGraph.AddRasterRenderPass<AllPassData>(
+                    "HoURP AOV Debug All",
+                    out AllPassData passData,
                     ProfilingSampler))
                 {
-                    passData.sourceTexture = sourceTexture;
-                    passData.sourceResource = debugView.SourceResource;
                     passData.material = material;
-                    passData.shaderMode = shaderMode;
+                    passData.tiles = tiles;
 
-                    builder.UseTexture(sourceTexture, AccessFlags.Read);
-                    builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
-                    builder.AllowPassCulling(false);
-                    builder.SetRenderFunc((PassData data, RasterGraphContext context)
+                    for (int i = 0; i < tiles.Count; i++)
                     {
-                        PropertyBlock.Clear();
-                        if (data.sourceResource == HoUrpBuiltInNames.Resources.AovMaskId)
-                        {
-                            PropertyBlock.SetTexture(HoUrpShaderPropertyIds.AovMaskIdTexture, data.sourceTexture);
-                        }
-                        else
-                        {
-                            PropertyBlock.SetTexture(HoUrpShaderPropertyIds.AovNormalDepthTexture, data.sourceTexture);
-                        }
+                        builder.UseTexture(tiles[i].sourceTexture, AccessFlags.Read);
+                    }
 
-                        PropertyBlock.SetInt(HoUrpShaderPropertyIds.AovDebugMode, data.shaderMode);
-                        context.cmd.DrawProcedural(
-                            Matrix4x4.identity,
-                            data.material,
-                            0,
-                            MeshTopology.Triangles,
-                            3,
-                            1,
-                            PropertyBlock);
+                    builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                    builder.AllowPassCulling(false);
+                    builder.AllowGlobalStateModification(true);
+                    builder.SetRenderFunc(static (AllPassData data, RasterGraphContext context) =>
+                    {
+                        context.cmd.ClearRenderTarget(RTClearFlags.Color, Color.black, 1.0f, 0);
+
+                        for (int i = 0; i < data.tiles.Count; i++)
+                        {
+                            DebugTile tile = data.tiles[i];
+                            PropertyBlock.Clear();
+                            PropertyBlock.SetInt(HoUrpShaderPropertyIds.AovDebugTileMode, 1);
+                            PropertyBlock.SetInt(HoUrpShaderPropertyIds.AovDebugMode, tile.shaderMode);
+                            PropertyBlock.SetVector(HoUrpShaderPropertyIds.AovDebugTileRect, tile.tileRect);
+                            context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovDebugSourceTexture, tile.sourceTexture);
+                            context.cmd.DrawProcedural(
+                                Matrix4x4.identity,
+                                data.material,
+                                1,
+                                MeshTopology.Triangles,
+                                6,
+                                1,
+                                PropertyBlock);
+                        }
                     });
                 }
             }
 
-            private sealed class PassData
+            private static void CalculateTileGrid(
+                int tileCount,
+                float sourceAspect,
+                float targetAspect,
+                out int columns,
+                out int rows)
             {
-                public TextureHandle sourceTexture;
-                public HoUrpIdentifier sourceResource;
+                columns = Mathf.CeilToInt(Mathf.Sqrt(tileCount));
+                rows = Mathf.CeilToInt(tileCount / (float)columns);
+
+                float desiredNormalizedAspect = Mathf.Max(0.0001f, sourceAspect / Mathf.Max(0.0001f, targetAspect));
+                float bestScore = float.MaxValue;
+
+                for (int candidateColumns = 1; candidateColumns <= tileCount; candidateColumns++)
+                {
+                    int candidateRows = Mathf.CeilToInt(tileCount / (float)candidateColumns);
+                    float cellAspect = (1.0f / candidateColumns) / (1.0f / candidateRows);
+                    float aspectFit = cellAspect > desiredNormalizedAspect
+                        ? desiredNormalizedAspect / cellAspect
+                        : cellAspect / desiredNormalizedAspect;
+                    int emptyCells = candidateColumns * candidateRows - tileCount;
+                    float emptyPenalty = emptyCells / (float)tileCount;
+                    float score = (1.0f - aspectFit) + emptyPenalty * 0.8f;
+
+                    if (score < bestScore)
+                    {
+                        bestScore = score;
+                        columns = candidateColumns;
+                        rows = candidateRows;
+                    }
+                }
+            }
+
+            private static Vector4 CalculateTileRect(
+                int column,
+                int row,
+                int columns,
+                int rows,
+                float sourceAspect,
+                float targetAspect,
+                int targetWidth,
+                int targetHeight)
+            {
+                float cellWidth = 1.0f / columns;
+                float cellHeight = 1.0f / rows;
+                float cellX = column * cellWidth;
+                float cellY = row * cellHeight;
+
+                float paddingX = Mathf.Min(TilePaddingPixels / targetWidth, cellWidth * 0.2f);
+                float paddingY = Mathf.Min(TilePaddingPixels / targetHeight, cellHeight * 0.2f);
+                float innerX = cellX + paddingX;
+                float innerY = cellY + paddingY;
+                float innerWidth = Mathf.Max(0.0001f, cellWidth - paddingX * 2.0f);
+                float innerHeight = Mathf.Max(0.0001f, cellHeight - paddingY * 2.0f);
+
+                float desiredNormalizedAspect = Mathf.Max(0.0001f, sourceAspect / Mathf.Max(0.0001f, targetAspect));
+                float innerAspect = innerWidth / innerHeight;
+                float fittedWidth = innerWidth;
+                float fittedHeight = innerHeight;
+
+                if (innerAspect > desiredNormalizedAspect)
+                {
+                    fittedWidth = innerHeight * desiredNormalizedAspect;
+                }
+                else
+                {
+                    fittedHeight = innerWidth / desiredNormalizedAspect;
+                }
+
+                float fittedX = innerX + (innerWidth - fittedWidth) * 0.5f;
+                float fittedY = innerY + (innerHeight - fittedHeight) * 0.5f;
+                return new Vector4(fittedX, fittedY, fittedWidth, fittedHeight);
+            }
+
+            private static int ResolveShaderMode(DebugViewDefinition debugView)
+            {
+                HoUrpIdentifier id = debugView.Id;
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectId)
+                {
+                    return 1;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovLinearDepth)
+                {
+                    return 2;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovWorldNormal)
+                {
+                    return 3;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom0)
+                {
+                    return 4;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom1)
+                {
+                    return 5;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom2)
+                {
+                    return 6;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom3)
+                {
+                    return 7;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom4)
+                {
+                    return 8;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom5)
+                {
+                    return 9;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom6)
+                {
+                    return 10;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom7)
+                {
+                    return 11;
+                }
+
+                return 0;
+            }
+
+            private readonly struct DebugTile
+            {
+                public DebugTile(TextureHandle sourceTexture, int shaderMode)
+                    : this(sourceTexture, shaderMode, Vector4.zero)
+                {
+                }
+
+                public DebugTile(TextureHandle sourceTexture, int shaderMode, Vector4 tileRect)
+                {
+                    this.sourceTexture = sourceTexture;
+                    this.shaderMode = shaderMode;
+                    this.tileRect = tileRect;
+                }
+
+                public readonly TextureHandle sourceTexture;
+                public readonly int shaderMode;
+                public readonly Vector4 tileRect;
+            }
+
+            private sealed class AllPassData
+            {
                 public Material material;
-                public int shaderMode;
+                public List<DebugTile> tiles;
             }
         }
     }

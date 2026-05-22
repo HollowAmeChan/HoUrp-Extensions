@@ -32,7 +32,7 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
-        public void NormalDepthResourceDescriptorUsesHighPrecisionFormatAndNeutralClear()
+        public void NormalDepthResourceDescriptorUsesHighPrecisionFormatAndZeroClear()
         {
             ResourceDefinition normalDepth = HoUrpBuiltInContracts
                 .CreateMinimalAovRegistry()
@@ -44,7 +44,29 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(desc.name, Is.EqualTo("Aov.NormalDepth"));
             Assert.That(desc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
             Assert.That(desc.clearBuffer, Is.True);
-            Assert.That(desc.clearColor, Is.EqualTo(new Color(0.5f, 0.5f, 1.0f, 1.0f)));
+            Assert.That(desc.clearColor, Is.EqualTo(Color.clear));
+        }
+
+        [Test]
+        public void ObjectCustomResourceDescriptorsUseMaskFormatAndZeroClear()
+        {
+            var resources = HoUrpBuiltInContracts
+                .CreateMinimalAovRegistry()
+                .Resources;
+            ResourceDefinition objectCustom0 = resources.Get(HoUrpBuiltInNames.Resources.AovObjectCustom0_3);
+            ResourceDefinition objectCustom1 = resources.Get(HoUrpBuiltInNames.Resources.AovObjectCustom4_7);
+
+            TextureDesc desc0 = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(objectCustom0, CreateCameraDescriptor());
+            TextureDesc desc1 = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(objectCustom1, CreateCameraDescriptor());
+
+            Assert.That(desc0.name, Is.EqualTo("Aov.ObjectCustom0_3"));
+            Assert.That(desc0.format, Is.EqualTo(GraphicsFormat.R8G8B8A8_UNorm));
+            Assert.That(desc0.clearBuffer, Is.True);
+            Assert.That(desc0.clearColor, Is.EqualTo(Color.clear));
+            Assert.That(desc1.name, Is.EqualTo("Aov.ObjectCustom4_7"));
+            Assert.That(desc1.format, Is.EqualTo(GraphicsFormat.R8G8B8A8_UNorm));
+            Assert.That(desc1.clearBuffer, Is.True);
+            Assert.That(desc1.clearColor, Is.EqualTo(Color.clear));
         }
 
         [Test]
