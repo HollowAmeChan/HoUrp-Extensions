@@ -121,6 +121,6 @@
 | 项 | 状态 | 后续处理 |
 | --- | --- | --- |
 | Motion vectors / deformation velocity | Deferred | 等 DeformationDomain 设计后再纳入正式 semantic |
-| Stylized shadow / ramp / specular mask | Deferred | 等新 HoPbr/HoNpr material producer 设计 |
+| Stylized shadow / ramp / specular mask | Deferred | 等新 HoNpr unified material producer 设计 |
 | Light group / receiver group | Deferred | 等 Light Capability 细化 |
 | SSR / HTrace | Deferred | 当前第一阶段只确认 PlanarReflection，不把 SSR 纳入旧事实 |

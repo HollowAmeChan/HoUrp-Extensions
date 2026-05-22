@@ -49,7 +49,6 @@ materialCustom0_3: Vector4
 
 ## 与最终材质系统的关系
 
-`MaterialSemanticAuthoring` 只证明 `MaterialDomain` 语义能以显式 producer 进入 RP。最终 HoPbr / HoNpr / HoToon 应直接实现 material producer contract，而不是依赖这个组件。
+`MaterialSemanticAuthoring` 只证明 `MaterialDomain` 语义能以显式 producer 进入 RP。最终 HoNpr 统一材质系统应直接实现 material producer contract，而不是依赖这个组件；HoToon 只作为轻量历史参考包。
 
 后续如果生成式材质系统接入，它应生产同名语义和资源写入，不应反过来改第四阶段定义的 Resource / Semantic 主键。
-

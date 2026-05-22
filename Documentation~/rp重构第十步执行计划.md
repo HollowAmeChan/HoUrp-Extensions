@@ -2,7 +2,7 @@
 
 > 第十步目标：在 AOV 生命周期、RSUV 静态对象语义、Capability UI 和 Debug view 已经形成最小闭环之后，开始准备 **新材质系统接入 RP 的第一版契约**。
 >
-> 本阶段不是完整 `HoPbr` / `HoNpr` / toon 材质包，也不是迁移旧 `lilToon` / `lilPBR`。重点是冻结 **材质语义 ABI、shader pass 契约、SurfaceData / AOV 输出接口、OIT-ready 透明输出接口、Feature Block / Preset 的最小数据模型，以及一个可验证的 generated shader 原型路径**。
+> 本阶段不是完整 `HoNpr` 统一材质包，也不是迁移旧 `lilToon` / `lilPBR`。重点是冻结 **材质语义 ABI、shader pass 契约、SurfaceData / AOV 输出接口、OIT-ready 透明输出接口、Feature Block / Preset 的最小数据模型，以及一个可验证的 generated shader 原型路径**。
 
 ---
 
@@ -149,9 +149,8 @@ Runtime/
 但长期完整材质包应属于：
 
 ```text
-HoPbr
-HoNpr
-HoToon or future HoMaterialSystem
+HoNpr unified material system
+HoToon as lightweight legacy reference
 ```
 
 不能让 `HoUrp-Extensions` 变成旧材质包的附属适配层，也不能让材质包反过来定义 RP 资源名。
@@ -584,7 +583,7 @@ HoUrpDebugLitMinimal
 - 第十一步可以继续推进：
   - Weighted OIT runtime 最小验证。
   - 完整材质生成器。
-  - HoPbr / HoNpr / HoToon 包接入。
+  - HoNpr 统一材质包接入。
   - 材质 inspector 轻量化。
   - 或者回到 Debug Framework 读取 material preset / producer 信息。
 

@@ -39,5 +39,4 @@ _HoUrpSssWeight
 
 ## 与最终材质系统的关系
 
-`MaterialSemanticAuthoring` 只证明 SSS 输入语义能以显式 producer 进入 RP。最终 HoPbr / HoNpr / HoToon 应直接实现 material producer contract，而不是依赖这个组件。
-
+`MaterialSemanticAuthoring` 只证明 SSS 输入语义能以显式 producer 进入 RP。最终 HoNpr 统一材质系统应直接实现 material producer contract，而不是依赖这个组件；HoToon 只作为轻量历史参考包。

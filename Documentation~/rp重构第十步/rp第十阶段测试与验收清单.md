@@ -168,7 +168,7 @@ Tests/Runtime/HoUrpMaterialShaderAbiTests.cs
 | --- | --- |
 | 完整 shader generator | 不做，第十步只允许最小原型 |
 | 材质 inspector | 不做 |
-| HoPbr / HoNpr 接入 | 后续 |
+| HoNpr 统一材质系统接入 | 后续 |
 | Weighted OIT runtime | 第十一步 |
 | OIT composite shader | 第十一步 |
 | transparent SSS / transparent AOV | 第十二步或后续 |

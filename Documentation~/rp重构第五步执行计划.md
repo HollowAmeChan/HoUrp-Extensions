@@ -191,7 +191,7 @@ MaterialSemanticAuthoring
   - sssWeight
 ```
 
-它仍然是迁移期 authoring / test producer，不是最终材质系统。后续 HoPbr / HoNpr / HoToon 应通过正式 material producer 接口写入这些语义。
+它仍然是迁移期 authoring / test producer，不是最终材质系统。后续 HoNpr 统一材质系统应通过正式 material producer 接口写入这些语义；HoToon 只作为轻量历史参考包。
 
 ---
 
@@ -317,4 +317,3 @@ Consumer 最小闭环有两个候选：
 - 哪些旧 HoSSS 行为只是迁移参照，尚未迁移。
 
 如果这些问题答不上来，就不能进入完整 HoSSS diffusion / transmission / composite 迁移。
-

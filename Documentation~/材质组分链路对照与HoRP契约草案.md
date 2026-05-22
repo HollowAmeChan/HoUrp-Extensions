@@ -238,7 +238,7 @@ lilPBR 的 `pbr.hlsl` 中：
 - `SpecularTermAniso()` 支持 anisotropy。
 - `GetReflectionStrength()` 计算 environment reflection 的 Fresnel 和 surface reduction。
 
-这部分可以作为 HoPbr 第一版的数学参考，但要清楚：
+这部分可以作为 HoNpr 中 `HoStandardSurface` / PBR lobe 第一版的数学参考，但要清楚：
 
 - 公式可以参考。
 - 参数名不能继承。
@@ -358,7 +358,7 @@ Base / Alpha / Normal / Fur / Anisotropy
   -> Output or OIT output
 ```
 
-这条顺序非常有参考价值。新 HoNpr / HoToon 可以把它变成静态 component stack：
+这条顺序非常有参考价值。新 HoNpr 可以把它变成静态 component stack；HoToon 只作为轻量历史参考：
 
 ```text
 BaseSurface
@@ -918,7 +918,7 @@ UniversalFragmentPBR(InputData inputData, SurfaceData surfaceData)
 | --- | --- |
 | `InputData` | `HoGeometryData` + `HoLightingContext` |
 | `SurfaceData` | `HoStandardSurfaceData` |
-| `BRDFData` | `HoPbrBrdfData`，仅 PBR lobe 内部使用 |
+| `BRDFData` | `HoStandardBrdfData`，仅 PBR lobe 内部使用 |
 | `LightingData` | `HoCompositeData` / `HoLobeAccumulationData` |
 | `UniversalFragmentPBR` | `HoMaterialEvaluate()` + `HoMaterialComposite()` |
 
@@ -1758,17 +1758,15 @@ MaterialSemanticProduction
 MaterialVariantPolicy
 ```
 
-### Phase E：HoPbr / HoNpr / HoToon 接入
+### Phase E：HoNpr 统一材质系统接入
 
 `HoUrp-Extensions` 只定义契约和测试原型。真正材质包应放在：
 
 ```text
-HoPbr
 HoNpr
-HoToon
 ```
 
-`HoToon` 当前还有 Built-in shader，只能作为历史参考。未来 HoToon 的 HoRP 版应完全移除 Built-in 包袱。
+`HoNpr` 是未来统一 HoRP 材质系统承载仓库。PBR 不是独立产品方向，只作为 `HoStandardSurface`、BRDF/PBR lobe、导入/退化路径存在。`HoToon` 的 URP 半调 toon shader、半调贴图和导入工具已迁入 `HoNpr` 作为小模块；独立 `HoToon` 仓库仍有 Built-in shader，只能作为历史参考，不再承担完整 HoRP 材质系统主线。
 
 ---
 

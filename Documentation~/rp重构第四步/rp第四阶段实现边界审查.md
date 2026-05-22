@@ -43,7 +43,7 @@ Material semantic authoring
 
 旧系统里 `SurfaceData` 同时承载 material class、profile、thickness、curvature、utility 等输入。第四阶段只把这些输入变成可注册、可调试、可被显式消费的资源与语义；它不负责证明最终 SSS 视觉一致。
 
-最小 authoring 只是迁移期 producer，不是最终新材质系统。后续 HoPbr / HoNpr / HoToon 应通过正式 material producer 接口写入这些语义。
+最小 authoring 只是迁移期 producer，不是最终新材质系统。后续 HoNpr 统一材质系统应通过正式 material producer 接口写入这些语义；HoToon 只作为轻量历史参考包。
 
 ## 成功标准
 
@@ -52,4 +52,3 @@ Material semantic authoring
 - SemanticPost 通过 Resource Registry 显式读取新增资源。
 - 新增 shader binding 使用 `_HoUrp*` 命名。
 - 旧 `_lilHoAov*` / `_HoAov*` 只在文档 `LegacyName` / `LegacySource` 中出现。
-

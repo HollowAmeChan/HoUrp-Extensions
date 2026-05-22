@@ -65,11 +65,11 @@
 
 材质侧也已经有新包边界：
 
-- `HoPbr`：未来 PBR 特化 shader 包，目前主要是包骨架。
+- `HoNpr`：未来统一 HoRP 材质 / shader 包；NPR 是主方向，PBR 只作为 `HoStandardSurface` 和 PBR lobe 子集存在，不再拆独立 `HoPbr` 包。`HoToon` 的 URP 半调 toon shader、半调贴图和导入工具已合入这里作为小模块。
 - `HoNpr`：未来 NPR shader 包，目前主要是包骨架。
-- `HoToon`：已有轻量 toon shader，URP 版本包含 `UniversalForward`、`ShadowCaster`、`DepthOnly` 与描边 pass，但它不是新 RP 的完整材质系统。
+- `HoToon`：旧轻量 toon shader 仓库，URP 小模块已迁入 `HoNpr`；独立仓库保留为 Built-in/历史参考。
 
-因此，新 RP 大纲应该服务于这些新包：`HoUrp-Extensions` 先定义 RenderGraph 资源、Feature、语义与调试契约；`HoPbr/HoNpr/HoToon` 或后续材质生成系统再按新契约接入。旧 `lilToon/lilPBR` 只作为能力样本和迁移参照。
+因此，新 RP 大纲应该服务于这些新包：`HoUrp-Extensions` 先定义 RenderGraph 资源、Feature、语义与调试契约；`HoNpr` 作为统一材质系统按新契约接入；`HoToon` 保留为轻量历史参考包。旧 `lilToon/lilPBR` 只作为能力样本和迁移参照。
 
 ### 1.3 HoAOV：已经是多 MRT 语义集合，而不是单张图
 

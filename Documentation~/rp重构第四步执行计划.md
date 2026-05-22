@@ -218,7 +218,7 @@ MaterialSemanticAuthoring
   - materialCustom0_3
 ```
 
-它的定位是迁移期 authoring / test producer，不是最终新材质系统。后续 HoPbr / HoNpr / HoToon 应通过正式 material producer 接口写入这些语义。
+它的定位是迁移期 authoring / test producer，不是最终新材质系统。后续 HoNpr 统一材质系统应通过正式 material producer 接口写入这些语义；HoToon 只作为轻量历史参考包。
 
 ---
 
@@ -333,7 +333,7 @@ SemanticPostProcessRendererFeature
 | 旧材质原生 `HoAOV` pass | 不接 | 新材质 producer 或 legacy validation 阶段 |
 | texture-driven MaterialCustom | 不做 | 新材质系统阶段 |
 | SurfaceData 旧编码视觉一致 | 只保留旧实现参照 | HoSSS 迁移对比阶段 |
-| 材质 inspector UI | 不做 | HoPbr/HoNpr 材质系统 |
+| 材质 inspector UI | 不做 | HoNpr 统一材质系统 |
 | transparent material semantic | 不做 | Transparent / OIT 阶段 |
 
 ---

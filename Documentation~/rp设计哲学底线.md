@@ -263,16 +263,15 @@ Debug 系统必须能：
 当前新体系的包边界应按以下方向理解：
 
 - `HoUrp-Extensions`：URP 扩展、RenderGraph 资源、Feature、语义、调试、合成。
-- `HoPbr`：未来 PBR 材质 / shader 包。
-- `HoNpr`：未来 NPR 材质 / shader 包。
-- `HoToon`：已有轻量 toon shader，可作为简单 shader 参考，但不是完整新材质系统。
+- `HoNpr`：未来统一 HoRP 材质 / shader 包。它承载 NPR 主方向，同时包含 `HoStandardSurface`、PBR lobe、材质语义 producer 等必要基础层；不再拆出独立 `HoPbr` 包。`HoToon` 的 URP 半调 toon shader、半调贴图和导入工具已合入这里作为小模块。
+- `HoToon`：旧轻量 toon shader 仓库，可作为简单 shader 和历史验证参考，但不是完整新材质系统主线。
 - `lilToon-URP-Extensions`：旧 RP 扩展能力来源和迁移参照。
 - `lilToon` / `lilPBR`：旧材质能力来源和迁移参照。
 
 不能做的事情：
 
 - 不能让 `HoUrp-Extensions` 变成旧材质包的附属适配层。
-- 不能让 `HoPbr/HoNpr` 在 RP 契约未清晰前自行定义一套不兼容语义。
+- 不能让 `HoNpr` 在 RP 契约未清晰前自行定义一套不兼容语义。
 - 不能让旧包和新包边界长期混杂。
 
 ---

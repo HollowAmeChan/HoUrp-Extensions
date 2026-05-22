@@ -9,7 +9,7 @@
 | 旧材质原生 `HoAOV` pass | 不接 | 新材质 producer 或 legacy validation 阶段 |
 | texture-driven `Material.Custom0..3` | 不做 | 新材质系统阶段 |
 | SurfaceData 旧视觉一致性 | 只保留旧实现参照，不在第四阶段验收 | HoSSS 迁移对比阶段 |
-| 材质 inspector UI | 不做 | HoPbr / HoNpr 材质系统 |
+| 材质 inspector UI | 不做 | HoNpr 统一材质系统 |
 | transparent material semantic | 不做 | Transparent / OIT 阶段 |
 | alpha clip 与旧 AOV 一致性 | 不做 | AOV material producer 阶段 |
 | Unity 自动化验收 | 未运行，包目录没有独立 Unity project / `.csproj` | 接入 integration project 后跑 batchmode/EditMode/Frame Debugger 验收 |
