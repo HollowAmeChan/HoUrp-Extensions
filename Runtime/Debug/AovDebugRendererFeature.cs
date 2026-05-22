@@ -45,13 +45,18 @@ namespace HoUrp.Extensions.Debugging
             SssCompositeWeight = 27,
             SemanticPostMask = 28,
             PostReceiver = 29,
-            Flag1 = 30,
+            Flag0Reserved = 30,
             Flag2 = 31,
             Flag3 = 32,
             Flag4 = 33,
             Flag5 = 34,
             Flag6 = 35,
-            Flag7 = 36
+            Flag7 = 36,
+            Flag8 = 37,
+            Flag9 = 38,
+            Flag10 = 39,
+            Flag11 = 40,
+            Flag12 = 41
         }
 
         [SerializeField]
@@ -131,9 +136,9 @@ namespace HoUrp.Extensions.Debugging
                     return HoUrpBuiltInNames.DebugViews.AovMask;
                 case AovDebugView.ObjectId:
                     return HoUrpBuiltInNames.DebugViews.AovObjectId;
-                case AovDebugView.PostReceiver:
+                case AovDebugView.Flag0Reserved:
                     return HoUrpBuiltInNames.DebugViews.AovObjectFlag0;
-                case AovDebugView.Flag1:
+                case AovDebugView.PostReceiver:
                     return HoUrpBuiltInNames.DebugViews.AovObjectFlag1;
                 case AovDebugView.Flag2:
                     return HoUrpBuiltInNames.DebugViews.AovObjectFlag2;
@@ -147,6 +152,16 @@ namespace HoUrp.Extensions.Debugging
                     return HoUrpBuiltInNames.DebugViews.AovObjectFlag6;
                 case AovDebugView.Flag7:
                     return HoUrpBuiltInNames.DebugViews.AovObjectFlag7;
+                case AovDebugView.Flag8:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag8;
+                case AovDebugView.Flag9:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag9;
+                case AovDebugView.Flag10:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag10;
+                case AovDebugView.Flag11:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag11;
+                case AovDebugView.Flag12:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag12;
                 case AovDebugView.LinearDepth:
                     return HoUrpBuiltInNames.DebugViews.AovLinearDepth;
                 case AovDebugView.WorldNormal:
@@ -208,9 +223,9 @@ namespace HoUrp.Extensions.Debugging
             {
                 case AovDebugView.ObjectId:
                     return 1;
-                case AovDebugView.PostReceiver:
+                case AovDebugView.Flag0Reserved:
                     return 27;
-                case AovDebugView.Flag1:
+                case AovDebugView.PostReceiver:
                     return 28;
                 case AovDebugView.Flag2:
                     return 29;
@@ -224,6 +239,16 @@ namespace HoUrp.Extensions.Debugging
                     return 33;
                 case AovDebugView.Flag7:
                     return 34;
+                case AovDebugView.Flag8:
+                    return 35;
+                case AovDebugView.Flag9:
+                    return 36;
+                case AovDebugView.Flag10:
+                    return 37;
+                case AovDebugView.Flag11:
+                    return 38;
+                case AovDebugView.Flag12:
+                    return 39;
                 case AovDebugView.LinearDepth:
                     return 2;
                 case AovDebugView.WorldNormal:
@@ -568,6 +593,31 @@ namespace HoUrp.Extensions.Debugging
                 if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag7)
                 {
                     return 34;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag8)
+                {
+                    return 35;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag9)
+                {
+                    return 36;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag10)
+                {
+                    return 37;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag11)
+                {
+                    return 38;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag12)
+                {
+                    return 39;
                 }
 
                 if (id == HoUrpBuiltInNames.DebugViews.AovLinearDepth)

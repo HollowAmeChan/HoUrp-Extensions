@@ -69,6 +69,11 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovObjectFlag5 = "AOV.ObjectFlag5";
             public static readonly HoUrpIdentifier AovObjectFlag6 = "AOV.ObjectFlag6";
             public static readonly HoUrpIdentifier AovObjectFlag7 = "AOV.ObjectFlag7";
+            public static readonly HoUrpIdentifier AovObjectFlag8 = "AOV.ObjectFlag8";
+            public static readonly HoUrpIdentifier AovObjectFlag9 = "AOV.ObjectFlag9";
+            public static readonly HoUrpIdentifier AovObjectFlag10 = "AOV.ObjectFlag10";
+            public static readonly HoUrpIdentifier AovObjectFlag11 = "AOV.ObjectFlag11";
+            public static readonly HoUrpIdentifier AovObjectFlag12 = "AOV.ObjectFlag12";
             public static readonly HoUrpIdentifier AovLinearDepth = "AOV.LinearDepth";
             public static readonly HoUrpIdentifier AovWorldNormal = "AOV.WorldNormal";
             public static readonly HoUrpIdentifier AovObjectCustom0 = "AOV.ObjectCustom0";

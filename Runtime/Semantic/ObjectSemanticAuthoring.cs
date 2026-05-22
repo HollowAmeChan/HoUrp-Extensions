@@ -20,7 +20,8 @@ namespace HoUrp.Extensions.Semantic
     [DisallowMultipleComponent]
     public sealed class ObjectSemanticAuthoring : MonoBehaviour
     {
-        public const int SemanticPostReceiverFlag = 1 << 0;
+        public const int SemanticPostReceiverFlag = 1 << 1;
+        public const int RendererStaticSemanticPostReceiverFeatureFlag = SemanticPostReceiverFlag;
 
         private static readonly List<ObjectSemanticAuthoring> ActiveAuthorings = new List<ObjectSemanticAuthoring>();
         private static readonly List<Renderer> RendererCache = new List<Renderer>();
@@ -33,7 +34,7 @@ namespace HoUrp.Extensions.Semantic
         private bool writesAov = true;
 
         [SerializeField]
-        private bool receivesSemanticPost = true;
+        private bool receivesSemanticPost;
 
         [SerializeField]
         private RendererStaticSemanticBindingMode rendererStaticBindingMode = RendererStaticSemanticBindingMode.PreferRendererUserValue;
@@ -72,41 +73,53 @@ namespace HoUrp.Extensions.Semantic
         private bool custom7Reserved;
 
         [SerializeField]
-        [Range(0, 255)]
+        [Range(0, RendererStaticSemanticValue.V1MaxObjectId)]
         private int objectId = 1;
 
         [SerializeField]
-        [Range(0, 255)]
+        [Range(0, RendererStaticSemanticValue.V1MaxGroupId)]
         private int groupId;
 
         [SerializeField]
-        [Range(0, 255)]
+        [Range(0, RendererStaticSemanticValue.V1MaxObjectFeatureFlags)]
         [HideInInspector]
         private int flags;
 
         [SerializeField]
-        private bool flag0;
+        private bool featureFlag1ReceivesSemanticPost;
 
         [SerializeField]
-        private bool flag1;
+        private bool featureFlag2ReceivesSss;
 
         [SerializeField]
-        private bool flag2;
+        private bool featureFlag3ReceivesCharacterComposite;
 
         [SerializeField]
-        private bool flag3;
+        private bool featureFlag4ReceivesOutline;
 
         [SerializeField]
-        private bool flag4;
+        private bool featureFlag5ReceivesDropShadow;
 
         [SerializeField]
-        private bool flag5;
+        private bool featureFlag6ReceivesStylizedShadow;
 
         [SerializeField]
-        private bool flag6;
+        private bool featureFlag7ReceivesSelectiveImagePost;
 
         [SerializeField]
-        private bool flag7;
+        private bool featureFlag8ReceivesHoShadow;
+
+        [SerializeField]
+        private bool featureFlag9CastsHoShadow;
+
+        [SerializeField]
+        private bool featureFlag10ParticipatesOit;
+
+        [SerializeField]
+        private bool featureFlag11Reserved;
+
+        [SerializeField]
+        private bool featureFlag12Reserved;
 
         private MaterialPropertyBlock propertyBlock;
         private int lastBindingTargetCount;
@@ -135,9 +148,10 @@ namespace HoUrp.Extensions.Semantic
 
         public bool ReceivesSemanticPost
         {
-            get => receivesSemanticPost;
+            get => featureFlag1ReceivesSemanticPost;
             set
             {
+                featureFlag1ReceivesSemanticPost = value;
                 receivesSemanticPost = value;
                 ApplyToRenderers();
             }
@@ -179,7 +193,7 @@ namespace HoUrp.Extensions.Semantic
             get => objectId;
             set
             {
-                objectId = Mathf.Clamp(value, 0, 255);
+                objectId = Mathf.Clamp(value, 0, RendererStaticSemanticValue.V1MaxObjectId);
                 ApplyToRenderers();
             }
         }
@@ -189,7 +203,7 @@ namespace HoUrp.Extensions.Semantic
             get => groupId;
             set
             {
-                groupId = Mathf.Clamp(value, 0, 255);
+                groupId = Mathf.Clamp(value, 0, RendererStaticSemanticValue.V1MaxGroupId);
                 ApplyToRenderers();
             }
         }
@@ -199,7 +213,8 @@ namespace HoUrp.Extensions.Semantic
             get => flags;
             set
             {
-                flags = Mathf.Clamp(value, 0, 255);
+                flags = Mathf.Clamp(value, 0, RendererStaticSemanticValue.V1MaxObjectFeatureFlags)
+                    & ~RendererStaticSemanticValue.V1ReservedFeatureBitMask;
                 UnpackFlags();
                 ApplyToRenderers();
             }
@@ -207,7 +222,9 @@ namespace HoUrp.Extensions.Semantic
 
         public int EffectiveFlags => BuildEffectiveFlags();
 
-        public uint PackedRendererStaticSemantic => BuildRendererStaticSemantic().PackedValue;
+        public uint PackedRendererStaticSemantic => TryBuildRendererStaticSemanticV1(out uint packed) ? packed : 0u;
+
+        public int ObjectFeatureFlags => BuildObjectFeatureFlags();
 
         public int LastBindingTargetCount => lastBindingTargetCount;
 
@@ -242,7 +259,8 @@ namespace HoUrp.Extensions.Semantic
         {
             bool clear = preset == ObjectSemanticPreset.Clear;
             writesAov = !clear;
-            receivesSemanticPost = !clear && preset != ObjectSemanticPreset.Prop;
+            featureFlag1ReceivesSemanticPost = !clear && preset != ObjectSemanticPreset.Prop;
+            receivesSemanticPost = featureFlag1ReceivesSemanticPost;
             maskWeight = clear ? 0.0f : 1.0f;
             objectCustomMask = GetPresetObjectCustomMask(preset);
             UnpackObjectCustomMask();
@@ -252,7 +270,8 @@ namespace HoUrp.Extensions.Semantic
         public void ResetObjectSemantics()
         {
             writesAov = true;
-            receivesSemanticPost = true;
+            receivesSemanticPost = false;
+            featureFlag1ReceivesSemanticPost = false;
             maskWeight = 1.0f;
             objectCustomMask = 0;
             UnpackObjectCustomMask();
@@ -266,7 +285,9 @@ namespace HoUrp.Extensions.Semantic
 
         public void SetObjectCustomBit(int index, bool enabled)
         {
-            SetBit(ref objectCustomMask, index, enabled);
+            int bit = 1 << Mathf.Clamp(index, 0, 7);
+            objectCustomMask = enabled ? objectCustomMask | bit : objectCustomMask & ~bit;
+            objectCustomMask = Mathf.Clamp(objectCustomMask, 0, 255);
             UnpackObjectCustomMask();
             ApplyToRenderers();
         }
@@ -304,20 +325,13 @@ namespace HoUrp.Extensions.Semantic
         private void OnValidate()
         {
             maskWeight = Mathf.Clamp01(maskWeight);
-            if (objectCustomMask != 0 && !HasAnyObjectCustomBit())
-            {
-                UnpackObjectCustomMask();
-            }
 
             objectCustomMask = PackObjectCustomMask();
-            objectId = Mathf.Clamp(objectId, 0, 255);
-            groupId = Mathf.Clamp(groupId, 0, 255);
-            if (flags != 0 && !HasAnyFlagBit())
-            {
-                UnpackFlags();
-            }
+            objectId = Mathf.Clamp(objectId, 0, RendererStaticSemanticValue.V1MaxObjectId);
+            groupId = Mathf.Clamp(groupId, 0, RendererStaticSemanticValue.V1MaxGroupId);
 
             flags = PackFlags();
+            receivesSemanticPost = featureFlag1ReceivesSemanticPost;
             if (isActiveAndEnabled)
             {
                 ApplyToRenderers();
@@ -335,6 +349,7 @@ namespace HoUrp.Extensions.Semantic
             EnsurePropertyBlock();
             objectCustomMask = PackObjectCustomMask();
             flags = PackFlags();
+            receivesSemanticPost = featureFlag1ReceivesSemanticPost;
             int effectiveFlags = BuildEffectiveFlags();
             CollectRenderers();
             for (int i = 0; i < RendererCache.Count; i++)
@@ -446,6 +461,16 @@ namespace HoUrp.Extensions.Semantic
             return new RendererStaticSemanticValue(objectCustomMask, groupId, objectId, BuildEffectiveFlags());
         }
 
+        private bool TryBuildRendererStaticSemanticV1(out uint packed)
+        {
+            return RendererStaticSemanticValue.TryPackV1(
+                objectCustomMask,
+                BuildObjectFeatureFlags(),
+                objectId,
+                groupId,
+                out packed);
+        }
+
         private void ApplyRendererStaticSemanticToTargets()
         {
             lastBindingTargetCount = 0;
@@ -464,7 +489,8 @@ namespace HoUrp.Extensions.Semantic
 
             objectCustomMask = PackObjectCustomMask();
             flags = PackFlags();
-            uint packed = BuildRendererStaticSemantic().PackedValue;
+            receivesSemanticPost = featureFlag1ReceivesSemanticPost;
+            bool hasPacked = TryBuildRendererStaticSemanticV1(out uint packed);
             CollectRenderers();
             for (int i = 0; i < RendererCache.Count; i++)
             {
@@ -475,12 +501,13 @@ namespace HoUrp.Extensions.Semantic
                 }
 
                 lastBindingTargetCount++;
-                if (TrySetRendererUserValue(targetRenderer, packed))
+                if (hasPacked && TrySetRendererUserValue(targetRenderer, packed))
                 {
                     lastRendererUserValueBindingCount++;
                 }
                 else
                 {
+                    ClearRendererStaticSemantic(targetRenderer);
                     lastMaterialPropertyBlockSourceCount++;
                 }
             }
@@ -544,65 +571,64 @@ namespace HoUrp.Extensions.Semantic
             custom7Reserved = HasBit(objectCustomMask, 7);
         }
 
-        private bool HasAnyObjectCustomBit()
-        {
-            return custom0Subject
-                || custom1Face
-                || custom2Hair
-                || custom3Eye
-                || custom4Accessory
-                || custom5Cloth
-                || custom6Prop
-                || custom7Reserved;
-        }
-
         private int PackFlags()
         {
             int packed = 0;
-            if (flag0) packed |= 1 << 0;
-            if (flag1) packed |= 1 << 1;
-            if (flag2) packed |= 1 << 2;
-            if (flag3) packed |= 1 << 3;
-            if (flag4) packed |= 1 << 4;
-            if (flag5) packed |= 1 << 5;
-            if (flag6) packed |= 1 << 6;
-            if (flag7) packed |= 1 << 7;
+            if (featureFlag1ReceivesSemanticPost) packed |= 1 << 1;
+            if (featureFlag2ReceivesSss) packed |= 1 << 2;
+            if (featureFlag3ReceivesCharacterComposite) packed |= 1 << 3;
+            if (featureFlag4ReceivesOutline) packed |= 1 << 4;
+            if (featureFlag5ReceivesDropShadow) packed |= 1 << 5;
+            if (featureFlag6ReceivesStylizedShadow) packed |= 1 << 6;
+            if (featureFlag7ReceivesSelectiveImagePost) packed |= 1 << 7;
+            if (featureFlag8ReceivesHoShadow) packed |= 1 << 8;
+            if (featureFlag9CastsHoShadow) packed |= 1 << 9;
+            if (featureFlag10ParticipatesOit) packed |= 1 << 10;
+            if (featureFlag11Reserved) packed |= 1 << 11;
+            if (featureFlag12Reserved) packed |= 1 << 12;
             return packed;
         }
 
         private int BuildEffectiveFlags()
         {
-            int packed = PackFlags() & ~SemanticPostReceiverFlag;
-            return receivesSemanticPost ? packed | SemanticPostReceiverFlag : packed;
+            return RendererStaticSemanticValue.FeatureFlagsToAovFlags(PackFlags());
+        }
+
+        private int BuildObjectFeatureFlags()
+        {
+            return Mathf.Clamp(PackFlags(), 0, RendererStaticSemanticValue.V1MaxObjectFeatureFlags)
+                & ~RendererStaticSemanticValue.V1ReservedFeatureBitMask;
         }
 
         private void UnpackFlags()
         {
-            flag0 = HasBit(flags, 0);
-            flag1 = HasBit(flags, 1);
-            flag2 = HasBit(flags, 2);
-            flag3 = HasBit(flags, 3);
-            flag4 = HasBit(flags, 4);
-            flag5 = HasBit(flags, 5);
-            flag6 = HasBit(flags, 6);
-            flag7 = HasBit(flags, 7);
-        }
-
-        private bool HasAnyFlagBit()
-        {
-            return flag0 || flag1 || flag2 || flag3 || flag4 || flag5 || flag6 || flag7;
+            flags &= ~RendererStaticSemanticValue.V1ReservedFeatureBitMask;
+            featureFlag1ReceivesSemanticPost = HasBit(flags, 1);
+            receivesSemanticPost = featureFlag1ReceivesSemanticPost;
+            featureFlag2ReceivesSss = HasBit(flags, 2);
+            featureFlag3ReceivesCharacterComposite = HasBit(flags, 3);
+            featureFlag4ReceivesOutline = HasBit(flags, 4);
+            featureFlag5ReceivesDropShadow = HasBit(flags, 5);
+            featureFlag6ReceivesStylizedShadow = HasBit(flags, 6);
+            featureFlag7ReceivesSelectiveImagePost = HasBit(flags, 7);
+            featureFlag8ReceivesHoShadow = HasBit(flags, 8);
+            featureFlag9CastsHoShadow = HasBit(flags, 9);
+            featureFlag10ParticipatesOit = HasBit(flags, 10);
+            featureFlag11Reserved = HasBit(flags, 11);
+            featureFlag12Reserved = HasBit(flags, 12);
         }
 
         private static bool HasBit(int mask, int index)
         {
-            return (mask & (1 << Mathf.Clamp(index, 0, 7))) != 0;
+            return (mask & (1 << Mathf.Clamp(index, 0, 12))) != 0;
         }
 
         private static void SetBit(ref int mask, int index, bool enabled)
         {
-            int bit = 1 << Mathf.Clamp(index, 0, 7);
+            int bit = 1 << Mathf.Clamp(index, 0, 12);
             mask = enabled ? mask | bit : mask & ~bit;
-            mask = Mathf.Clamp(mask, 0, 255);
+            mask = Mathf.Clamp(mask, 0, RendererStaticSemanticValue.V1MaxObjectFeatureFlags)
+                & ~RendererStaticSemanticValue.V1ReservedFeatureBitMask;
         }
     }
 }

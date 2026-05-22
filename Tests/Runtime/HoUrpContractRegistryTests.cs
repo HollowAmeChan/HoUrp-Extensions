@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using HoUrp.Extensions.Capability;
 using HoUrp.Extensions.Core;
 using HoUrp.Extensions.Debugging;
@@ -17,7 +18,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(registry.Features.Count, Is.EqualTo(4));
             Assert.That(registry.Resources.Count, Is.EqualTo(10));
             Assert.That(registry.Semantics.Count, Is.EqualTo(28));
-            Assert.That(registry.DebugViews.Count, Is.EqualTo(38));
+            Assert.That(registry.DebugViews.Count, Is.EqualTo(43));
             Assert.That(registry.Capabilities.Count, Is.EqualTo(5));
         }
 
@@ -91,17 +92,65 @@ namespace HoUrp.Extensions.Tests.Runtime
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
-            DebugViewDefinition postReceiver = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag0);
+            DebugViewDefinition emptyFlag = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag0);
+            DebugViewDefinition postReceiver = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag1);
+            DebugViewDefinition flag2 = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag2);
             DebugViewDefinition flag7 = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag7);
+            DebugViewDefinition flag8 = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag8);
+            DebugViewDefinition flag12 = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag12);
 
+            Assert.That(emptyFlag.Description, Does.Contain("reserved empty"));
+            Assert.That(emptyFlag.Description, Does.Contain("Aov.MaskId.a"));
             Assert.That(postReceiver.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovMaskId));
             Assert.That(postReceiver.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ObjectFlags));
             Assert.That(postReceiver.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
             Assert.That(postReceiver.Description, Does.Contain("SemanticPost receiver gate"));
+            Assert.That(postReceiver.Description, Does.Contain("Aov.MaskId.a"));
+            Assert.That(flag2.Description, Does.Contain("Object.FeatureFlags bit 2"));
             Assert.That(flag7.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovMaskId));
             Assert.That(flag7.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ObjectFlags));
             Assert.That(flag7.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
             Assert.That(flag7.LegacyReference, Is.EqualTo("HoAovDebugMode.ObjectFlag7"));
+            Assert.That(flag8.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovMaskId));
+            Assert.That(flag8.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ObjectFlags));
+            Assert.That(flag8.LegacyReference, Is.EqualTo("HoAovDebugMode.ObjectFlag8"));
+            Assert.That(flag12.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovMaskId));
+            Assert.That(flag12.Description, Does.Contain("bit 12"));
+        }
+
+        [Test]
+        public void AovDebugFeatureMapsObjectFeatureFlagsWithoutDuplicateFlag1View()
+        {
+            Type featureType = typeof(AovDebugRendererFeature);
+            Type viewType = featureType.GetNestedType("AovDebugView", BindingFlags.NonPublic);
+            MethodInfo resolveDebugViewId = featureType.GetMethod("ResolveDebugViewId", BindingFlags.Static | BindingFlags.NonPublic);
+            MethodInfo resolveShaderMode = featureType.GetMethod("ResolveShaderMode", BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(viewType, Is.Not.Null);
+            Assert.That(resolveDebugViewId, Is.Not.Null);
+            Assert.That(resolveShaderMode, Is.Not.Null);
+            Assert.That(Enum.GetNames(viewType), Does.Not.Contain("Flag1"));
+
+            object flag0Reserved = Enum.Parse(viewType, "Flag0Reserved");
+            object postReceiver = Enum.Parse(viewType, "PostReceiver");
+            object flag2 = Enum.Parse(viewType, "Flag2");
+            object flag7 = Enum.Parse(viewType, "Flag7");
+            object flag8 = Enum.Parse(viewType, "Flag8");
+            object flag12 = Enum.Parse(viewType, "Flag12");
+
+            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag0Reserved }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag0));
+            Assert.That(resolveDebugViewId.Invoke(null, new[] { postReceiver }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag1));
+            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag2 }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag2));
+            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag7 }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag7));
+            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag8 }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag8));
+            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag12 }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag12));
+
+            Assert.That(resolveShaderMode.Invoke(null, new[] { flag0Reserved }), Is.EqualTo(27));
+            Assert.That(resolveShaderMode.Invoke(null, new[] { postReceiver }), Is.EqualTo(28));
+            Assert.That(resolveShaderMode.Invoke(null, new[] { flag2 }), Is.EqualTo(29));
+            Assert.That(resolveShaderMode.Invoke(null, new[] { flag7 }), Is.EqualTo(34));
+            Assert.That(resolveShaderMode.Invoke(null, new[] { flag8 }), Is.EqualTo(35));
+            Assert.That(resolveShaderMode.Invoke(null, new[] { flag12 }), Is.EqualTo(39));
         }
 
         [Test]
@@ -318,6 +367,8 @@ namespace HoUrp.Extensions.Tests.Runtime
 
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovMask));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovObjectId));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovObjectFlag8));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovObjectFlag12));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovLinearDepth));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovWorldNormal));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovObjectCustom0));

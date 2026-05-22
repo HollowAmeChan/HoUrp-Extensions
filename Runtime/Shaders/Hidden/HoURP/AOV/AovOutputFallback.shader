@@ -64,10 +64,9 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                 return half(step(0.5, fmod(floor(mask / bitValue), 2.0)));
             }
 
-            float RendererSemanticByteToFloat(uint packedValue, uint shift)
+            bool HasRendererSemanticV1(uint packedValue)
             {
-                uint byteValue = (packedValue >> shift) & 255u;
-                return float(byteValue);
+                return (packedValue & 0x80000000u) != 0u && (((packedValue >> 29u) & 3u) == 1u);
             }
 
             Varyings Vert(Attributes input)
@@ -96,24 +95,30 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                 AovOutput output;
                 half3 encodedNormal = half3(normalWS * 0.5 + 0.5);
                 uint rendererStaticSemantic = unity_RendererUserValue;
-                bool hasRendererStaticSemantic = rendererStaticSemantic != 0u;
-                float objectCustomMask = hasRendererStaticSemantic
-                    ? RendererSemanticByteToFloat(rendererStaticSemantic, 0u)
-                    : round(clamp(_HoUrpObjectCustomMask, 0.0, 255.0));
-                float objectId = hasRendererStaticSemantic
-                    ? RendererSemanticByteToFloat(rendererStaticSemantic, 16u)
-                    : _HoUrpObjectId;
-                float objectGroupId = hasRendererStaticSemantic
-                    ? RendererSemanticByteToFloat(rendererStaticSemantic, 8u)
-                    : _HoUrpObjectGroupId;
-                float objectFlags = hasRendererStaticSemantic
-                    ? RendererSemanticByteToFloat(rendererStaticSemantic, 24u)
-                    : _HoUrpObjectFlags;
+                bool hasRendererStaticSemanticV1 = HasRendererSemanticV1(rendererStaticSemantic);
+                float objectCustomMask = round(clamp(_HoUrpObjectCustomMask, 0.0, 255.0));
+                float objectId = _HoUrpObjectId;
+                float objectGroupId = floor(clamp(_HoUrpObjectGroupId, 0.0, 7.0));
+                float objectFeatureFlags = floor(clamp(_HoUrpObjectFlags, 0.0, 8191.0));
+                float objectFlags = fmod(objectFeatureFlags, 256.0);
+                float objectFeatureFlagsHigh = floor(objectFeatureFlags / 256.0);
+                float objectGroupAndHighFlags = objectGroupId + objectFeatureFlagsHigh * 8.0;
+                if (hasRendererStaticSemanticV1)
+                {
+                    uint featureFlags = ((rendererStaticSemantic >> 8u) & 8191u) & ~1u;
+                    objectCustomMask = float(rendererStaticSemantic & 255u);
+                    objectFlags = float(featureFlags & 255u);
+                    objectFeatureFlagsHigh = float((featureFlags >> 8u) & 31u);
+                    objectId = float((rendererStaticSemantic >> 21u) & 15u);
+                    objectGroupId = float((rendererStaticSemantic >> 25u) & 7u);
+                    objectGroupAndHighFlags = objectGroupId + objectFeatureFlagsHigh * 8.0;
+                }
+
                 half maskWeight = half(saturate(_HoUrpAovMaskWeight));
                 output.maskId = half4(
                     maskWeight,
                     half(saturate(objectId / 255.0)),
-                    half(saturate(objectGroupId / 255.0)),
+                    half(saturate(objectGroupAndHighFlags / 255.0)),
                     half(saturate(objectFlags / 255.0)));
                 output.normalDepth = half4(encodedNormal, half(saturate(linear01Depth)));
                 output.objectCustom0 = half4(

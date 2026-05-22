@@ -62,7 +62,7 @@ namespace HoUrp.Extensions.Core
                 true,
                 "Object Capability UI",
                 "HoPost AOV rules",
-                "Allows an object to participate in semantic post process rules through Object.Flags bit 0."));
+                "Allows an object to participate in semantic post process rules through Object.FeatureFlags bit 1."));
 
             registry.Capabilities.Register(new CapabilityDefinition(
                 HoUrpBuiltInNames.Capabilities.SupportsDebugView,
@@ -121,50 +121,80 @@ namespace HoUrp.Extensions.Core
             RegisterObjectFlagDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag0,
-                "HoAovDebugMode.PostReceiver",
-                "Displays Object.Flags bit 0, reserved as the SemanticPost receiver gate.");
+                "HoAovDebugMode.ObjectFlag0",
+                "Displays Object.FeatureFlags bit 0 as written to Aov.MaskId.a; this bit is reserved empty in RSUV v1 and should stay zero.");
 
             RegisterObjectFlagDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag1,
-                "HoAovDebugMode.ObjectFlag1",
-                "Displays Object.Flags bit 1.");
+                "HoAovDebugMode.PostReceiver",
+                "Displays Object.FeatureFlags bit 1 as written to Aov.MaskId.a; this is the SemanticPost receiver gate.");
 
             RegisterObjectFlagDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag2,
                 "HoAovDebugMode.ObjectFlag2",
-                "Displays Object.Flags bit 2.");
+                "Displays Object.FeatureFlags bit 2 as written to Aov.MaskId.a.");
 
             RegisterObjectFlagDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag3,
                 "HoAovDebugMode.ObjectFlag3",
-                "Displays Object.Flags bit 3.");
+                "Displays Object.FeatureFlags bit 3 as written to Aov.MaskId.a.");
 
             RegisterObjectFlagDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag4,
                 "HoAovDebugMode.ObjectFlag4",
-                "Displays Object.Flags bit 4.");
+                "Displays Object.FeatureFlags bit 4 as written to Aov.MaskId.a.");
 
             RegisterObjectFlagDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag5,
                 "HoAovDebugMode.ObjectFlag5",
-                "Displays Object.Flags bit 5.");
+                "Displays Object.FeatureFlags bit 5 as written to Aov.MaskId.a.");
 
             RegisterObjectFlagDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag6,
                 "HoAovDebugMode.ObjectFlag6",
-                "Displays Object.Flags bit 6.");
+                "Displays Object.FeatureFlags bit 6 as written to Aov.MaskId.a.");
 
             RegisterObjectFlagDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag7,
                 "HoAovDebugMode.ObjectFlag7",
-                "Displays Object.Flags bit 7.");
+                "Displays Object.FeatureFlags bit 7 as written to Aov.MaskId.a.");
+
+            RegisterHighObjectFlagDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectFlag8,
+                "HoAovDebugMode.ObjectFlag8",
+                "Displays Object.FeatureFlags bit 8 as packed into Aov.MaskId.b bit 3.");
+
+            RegisterHighObjectFlagDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectFlag9,
+                "HoAovDebugMode.ObjectFlag9",
+                "Displays Object.FeatureFlags bit 9 as packed into Aov.MaskId.b bit 4.");
+
+            RegisterHighObjectFlagDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectFlag10,
+                "HoAovDebugMode.ObjectFlag10",
+                "Displays Object.FeatureFlags bit 10 as packed into Aov.MaskId.b bit 5.");
+
+            RegisterHighObjectFlagDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectFlag11,
+                "HoAovDebugMode.ObjectFlag11",
+                "Displays Object.FeatureFlags bit 11 as packed into Aov.MaskId.b bit 6.");
+
+            RegisterHighObjectFlagDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovObjectFlag12,
+                "HoAovDebugMode.ObjectFlag12",
+                "Displays Object.FeatureFlags bit 12 as packed into Aov.MaskId.b bit 7.");
 
             registry.DebugViews.Register(new DebugViewDefinition(
                 HoUrpBuiltInNames.DebugViews.AovLinearDepth,
@@ -476,6 +506,25 @@ namespace HoUrp.Extensions.Core
                 description));
         }
 
+        private static void RegisterHighObjectFlagDebugView(
+            HoUrpContractRegistry registry,
+            HoUrpIdentifier debugView,
+            string legacyReference,
+            string description)
+        {
+            registry.DebugViews.Register(new DebugViewDefinition(
+                debugView,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.AovMaskId,
+                HoUrpBuiltInNames.Semantics.ObjectFlags,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<DebugDisplayMode>(DebugDisplayMode.Replace),
+                DebugValueRange.ZeroToOne,
+                HoUrpBuiltInNames.Features.AovOutput,
+                legacyReference,
+                description));
+        }
+
         private static void RegisterMaterialDebugView(
             HoUrpContractRegistry registry,
             HoUrpIdentifier debugView,
@@ -585,7 +634,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.DebugViews.AovObjectId,
                 HoUrpMigrationDecision.KeepConceptRename,
                 "_HoAovFlags",
-                "Object flags written into Aov.MaskId. Bit 0 is reserved as the SemanticPost receiver gate."));
+                "Object feature flags written into Aov.MaskId. Bit 0 is reserved empty; bit 1 is the SemanticPost receiver gate."));
 
             registry.Semantics.Register(new SemanticDefinition(
                 HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
@@ -1123,6 +1172,11 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag5,
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag6,
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag7,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag8,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag9,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag10,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag11,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag12,
                     HoUrpBuiltInNames.DebugViews.AovLinearDepth,
                     HoUrpBuiltInNames.DebugViews.AovWorldNormal,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom0,
@@ -1209,6 +1263,11 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag5,
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag6,
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag7,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag8,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag9,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag10,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag11,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag12,
                     HoUrpBuiltInNames.DebugViews.AovLinearDepth,
                     HoUrpBuiltInNames.DebugViews.AovWorldNormal,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom0,
@@ -1330,6 +1389,11 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag5,
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag6,
                     HoUrpBuiltInNames.DebugViews.AovObjectFlag7,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag8,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag9,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag10,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag11,
+                    HoUrpBuiltInNames.DebugViews.AovObjectFlag12,
                     HoUrpBuiltInNames.DebugViews.AovLinearDepth,
                     HoUrpBuiltInNames.DebugViews.AovWorldNormal,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom0,

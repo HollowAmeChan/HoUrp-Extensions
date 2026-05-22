@@ -51,7 +51,7 @@ Runtime/RenderGraph/HoUrpAovResourceDeclaration.cs
 
 | Source | Domain | 当前写入方式 | 说明 |
 | --- | --- | --- | --- |
-| `ObjectSemanticAuthoring` | Object | MPB | 第九步可增加 RSUV fast path |
+| `ObjectSemanticAuthoring` | Object | RSUV v1 / MPB | RSUV v1 为对象静态语义 fast path，MPB 保留为通用路径 |
 | `MaterialSemanticAuthoring` | Material / Shading | MPB | 第九步不进入 RSUV |
 | Inspector preset | Object / Material | 写 authoring 字段 | preset 不是 ABI |
 
@@ -63,7 +63,7 @@ Scene / Prefab / Authoring-time
 
 ### Renderer Static Semantic
 
-每个 renderer 上可提前绑定的对象语义。旧实现里的 RSUV 属于这一层。
+每个 renderer 上可提前绑定的对象语义。RSUV v1 属于这一层。
 
 第一版字段中，HoAOV 里已经属于对象静态层的值应优先考虑 RSUV fast path；不能提前的材质、几何、着色和派生资源仍留在 AOV pass 或后续 producer 中。
 
@@ -76,7 +76,7 @@ Scene / Prefab / Authoring-time
 | object id | `Object.Id` | `Aov.MaskId.g` | 是 |
 | flags | `Object.Flags` | `Aov.MaskId.a` | 是 |
 
-v1 RSUV 目标不是继续保持 `Object.Id / Object.GroupId / Object.Flags` 三个 byte，而是采用 HoAOV-first Compact：保留 `Object.Custom0-7`，收紧 `Object.Id` 到 4 bit、`Object.GroupId` 到 3 bit，并把释放出的位优先给对象 capability flags。超出 compact 范围时回退 MPB，不截断。
+RSUV v1 采用 HoAOV-first Compact：保留 `Object.Custom0-7`，收紧 `Object.Id` 到 4 bit、`Object.GroupId` 到 3 bit，并把释放出的位优先给对象 capability flags。authoring / Inspector 直接限制到 compact 范围；底层 packer 遇到异常越界输入时拒绝打包，不截断。
 
 生命周期：
 
@@ -135,8 +135,8 @@ Per camera / frame transient, derived after AOV
 - 它们不依赖 camera。
 - 不依赖 depth / normal。
 - 不依赖材质着色结果。
-- 旧 RSUV 已验证这类数据可通过 `unity_RendererUserValue` 输入 shader。
-- 旧 HoAOV/HoPost/HoSSS/角色特化链路已经证明对象区域和对象参与能力比宽 ID 更常被屏幕空间 consumer 使用。
+- 它们可以通过 `unity_RendererUserValue` 在 AOV pass 前进入 shader。
+- 当前 screen-space consumer 已经依赖对象区域和对象参与能力；这些位比宽 ID 更值得优先进入 RSUV。
 
 ### 不应提前到 RSUV
 

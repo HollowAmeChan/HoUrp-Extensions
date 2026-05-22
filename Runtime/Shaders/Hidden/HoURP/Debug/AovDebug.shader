@@ -97,7 +97,7 @@ Shader "Hidden/HoURP/Debug/AovDebug"
             half PickFlagBit(half encodedFlags, int bitIndex)
             {
                 uint flags = (uint)round(saturate(encodedFlags) * 255.0h);
-                uint bit = 1u << (uint)clamp(bitIndex, 0, 7);
+                uint bit = 1u << (uint)clamp(bitIndex, 0, 31);
                 return (flags & bit) != 0u ? 1.0h : 0.0h;
             }
 
@@ -209,6 +209,11 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 {
                     half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(PickFlagBit(maskId.a, _HoUrpAovDebugMode - 27));
+                }
+                else if (_HoUrpAovDebugMode >= 35 && _HoUrpAovDebugMode <= 39)
+                {
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(PickFlagBit(maskId.b, _HoUrpAovDebugMode - 32));
                 }
                 else
                 {
@@ -326,7 +331,7 @@ Shader "Hidden/HoURP/Debug/AovDebug"
             half PickFlagBit(half encodedFlags, int bitIndex)
             {
                 uint flags = (uint)round(saturate(encodedFlags) * 255.0h);
-                uint bit = 1u << (uint)clamp(bitIndex, 0, 7);
+                uint bit = 1u << (uint)clamp(bitIndex, 0, 31);
                 return (flags & bit) != 0u ? 1.0h : 0.0h;
             }
 
@@ -381,8 +386,10 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 if (mode == 24) return PickLabelChar(index, 83u, 83u, 83u, 32u, 68u, 73u, 70u, 70u, 32u, 32u);
                 if (mode == 25) return PickLabelChar(index, 83u, 83u, 83u, 32u, 67u, 77u, 80u, 32u, 87u, 32u);
                 if (mode == 26) return PickLabelChar(index, 80u, 79u, 83u, 84u, 32u, 77u, 65u, 83u, 75u, 32u);
-                if (mode == 27) return PickLabelChar(index, 80u, 79u, 83u, 84u, 32u, 82u, 88u, 32u, 32u, 32u);
-                if (mode >= 28 && mode <= 34) return PickLabelChar(index, 70u, 76u, 65u, 71u, 32u, uint(48 + mode - 27), 32u, 32u, 32u, 32u);
+                if (mode == 27) return PickLabelChar(index, 70u, 76u, 65u, 71u, 32u, 48u, 32u, 32u, 32u, 32u);
+                if (mode == 28) return PickLabelChar(index, 80u, 79u, 83u, 84u, 32u, 82u, 88u, 32u, 32u, 32u);
+                if (mode >= 29 && mode <= 34) return PickLabelChar(index, 70u, 76u, 65u, 71u, 32u, uint(48 + mode - 27), 32u, 32u, 32u, 32u);
+                if (mode >= 35 && mode <= 39) return PickLabelChar(index, 70u, 76u, 65u, 71u, uint(48 + ((mode - 27) / 10)), uint(48 + ((mode - 27) % 10)), 32u, 32u, 32u, 32u);
                 return 32u;
             }
 
@@ -580,6 +587,12 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 {
                     half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugScalar(PickFlagBit(maskId.a, _HoUrpAovDebugMode - 27)), uv);
+                }
+
+                if (_HoUrpAovDebugMode >= 35 && _HoUrpAovDebugMode <= 39)
+                {
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(PickFlagBit(maskId.b, _HoUrpAovDebugMode - 32)), uv);
                 }
 
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);

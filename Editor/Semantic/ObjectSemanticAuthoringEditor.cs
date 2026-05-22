@@ -17,7 +17,6 @@ namespace HoUrp.Extensions.Editor.Semantic
 
         private SerializedProperty includeChildren;
         private SerializedProperty writesAov;
-        private SerializedProperty receivesSemanticPost;
         private SerializedProperty rendererStaticBindingMode;
         private SerializedProperty maskWeight;
         private SerializedProperty objectCustomMask;
@@ -32,20 +31,24 @@ namespace HoUrp.Extensions.Editor.Semantic
         private SerializedProperty custom5Cloth;
         private SerializedProperty custom6Prop;
         private SerializedProperty custom7Reserved;
-        private SerializedProperty flag1;
-        private SerializedProperty flag2;
-        private SerializedProperty flag3;
-        private SerializedProperty flag4;
-        private SerializedProperty flag5;
-        private SerializedProperty flag6;
-        private SerializedProperty flag7;
+        private SerializedProperty featureFlag1ReceivesSemanticPost;
+        private SerializedProperty featureFlag2ReceivesSss;
+        private SerializedProperty featureFlag3ReceivesCharacterComposite;
+        private SerializedProperty featureFlag4ReceivesOutline;
+        private SerializedProperty featureFlag5ReceivesDropShadow;
+        private SerializedProperty featureFlag6ReceivesStylizedShadow;
+        private SerializedProperty featureFlag7ReceivesSelectiveImagePost;
+        private SerializedProperty featureFlag8ReceivesHoShadow;
+        private SerializedProperty featureFlag9CastsHoShadow;
+        private SerializedProperty featureFlag10ParticipatesOit;
+        private SerializedProperty featureFlag11Reserved;
+        private SerializedProperty featureFlag12Reserved;
         private bool showAdvancedIdentity;
 
         private void OnEnable()
         {
             includeChildren = serializedObject.FindProperty("includeChildren");
             writesAov = serializedObject.FindProperty("writesAov");
-            receivesSemanticPost = serializedObject.FindProperty("receivesSemanticPost");
             rendererStaticBindingMode = serializedObject.FindProperty("rendererStaticBindingMode");
             maskWeight = serializedObject.FindProperty("maskWeight");
             objectCustomMask = serializedObject.FindProperty("objectCustomMask");
@@ -60,13 +63,18 @@ namespace HoUrp.Extensions.Editor.Semantic
             custom5Cloth = serializedObject.FindProperty("custom5Cloth");
             custom6Prop = serializedObject.FindProperty("custom6Prop");
             custom7Reserved = serializedObject.FindProperty("custom7Reserved");
-            flag1 = serializedObject.FindProperty("flag1");
-            flag2 = serializedObject.FindProperty("flag2");
-            flag3 = serializedObject.FindProperty("flag3");
-            flag4 = serializedObject.FindProperty("flag4");
-            flag5 = serializedObject.FindProperty("flag5");
-            flag6 = serializedObject.FindProperty("flag6");
-            flag7 = serializedObject.FindProperty("flag7");
+            featureFlag1ReceivesSemanticPost = serializedObject.FindProperty("featureFlag1ReceivesSemanticPost");
+            featureFlag2ReceivesSss = serializedObject.FindProperty("featureFlag2ReceivesSss");
+            featureFlag3ReceivesCharacterComposite = serializedObject.FindProperty("featureFlag3ReceivesCharacterComposite");
+            featureFlag4ReceivesOutline = serializedObject.FindProperty("featureFlag4ReceivesOutline");
+            featureFlag5ReceivesDropShadow = serializedObject.FindProperty("featureFlag5ReceivesDropShadow");
+            featureFlag6ReceivesStylizedShadow = serializedObject.FindProperty("featureFlag6ReceivesStylizedShadow");
+            featureFlag7ReceivesSelectiveImagePost = serializedObject.FindProperty("featureFlag7ReceivesSelectiveImagePost");
+            featureFlag8ReceivesHoShadow = serializedObject.FindProperty("featureFlag8ReceivesHoShadow");
+            featureFlag9CastsHoShadow = serializedObject.FindProperty("featureFlag9CastsHoShadow");
+            featureFlag10ParticipatesOit = serializedObject.FindProperty("featureFlag10ParticipatesOit");
+            featureFlag11Reserved = serializedObject.FindProperty("featureFlag11Reserved");
+            featureFlag12Reserved = serializedObject.FindProperty("featureFlag12Reserved");
         }
 
         public override void OnInspectorGUI()
@@ -79,7 +87,6 @@ namespace HoUrp.Extensions.Editor.Semantic
             EditorGUILayout.LabelField("能力", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(includeChildren, new GUIContent("包含子级 Renderer"));
             EditorGUILayout.PropertyField(writesAov, new GUIContent("写入 AOV"));
-            EditorGUILayout.PropertyField(receivesSemanticPost, new GUIContent("允许 SemanticPost 消费"));
             DrawBindingModeField();
             DrawBindingStatus();
             EditorGUILayout.PropertyField(maskWeight, new GUIContent("遮罩权重"));
@@ -93,8 +100,16 @@ namespace HoUrp.Extensions.Editor.Semantic
             if (showAdvancedIdentity)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(objectId, new GUIContent("对象 ID"));
-                EditorGUILayout.PropertyField(groupId, new GUIContent("分组 ID"));
+                objectId.intValue = EditorGUILayout.IntSlider(
+                    new GUIContent("对象 ID"),
+                    objectId.intValue,
+                    0,
+                    RendererStaticSemanticValue.V1MaxObjectId);
+                groupId.intValue = EditorGUILayout.IntSlider(
+                    new GUIContent("分组 ID"),
+                    groupId.intValue,
+                    0,
+                    RendererStaticSemanticValue.V1MaxGroupId);
                 DrawFlagBits();
                 using (new EditorGUI.DisabledScope(true))
                 {
@@ -178,16 +193,21 @@ namespace HoUrp.Extensions.Editor.Semantic
             EditorGUILayout.LabelField("Flags", EditorStyles.miniBoldLabel);
             using (new EditorGUI.DisabledScope(true))
             {
-                EditorGUILayout.ToggleLeft("SemanticPost 接收者", receivesSemanticPost.boolValue);
+                EditorGUILayout.ToggleLeft("Flag 0 留空", false);
             }
 
-            EditorGUILayout.PropertyField(flag1, new GUIContent("Flag 1"));
-            EditorGUILayout.PropertyField(flag2, new GUIContent("Flag 2"));
-            EditorGUILayout.PropertyField(flag3, new GUIContent("Flag 3"));
-            EditorGUILayout.PropertyField(flag4, new GUIContent("Flag 4"));
-            EditorGUILayout.PropertyField(flag5, new GUIContent("Flag 5"));
-            EditorGUILayout.PropertyField(flag6, new GUIContent("Flag 6"));
-            EditorGUILayout.PropertyField(flag7, new GUIContent("Flag 7"));
+            EditorGUILayout.PropertyField(featureFlag1ReceivesSemanticPost, new GUIContent("Flag 1 SemanticPost 接收"));
+            EditorGUILayout.PropertyField(featureFlag2ReceivesSss, new GUIContent("Flag 2 SSS 接收"));
+            EditorGUILayout.PropertyField(featureFlag3ReceivesCharacterComposite, new GUIContent("Flag 3 角色合成接收"));
+            EditorGUILayout.PropertyField(featureFlag4ReceivesOutline, new GUIContent("Flag 4 轮廓接收"));
+            EditorGUILayout.PropertyField(featureFlag5ReceivesDropShadow, new GUIContent("Flag 5 投影接收"));
+            EditorGUILayout.PropertyField(featureFlag6ReceivesStylizedShadow, new GUIContent("Flag 6 风格化阴影接收"));
+            EditorGUILayout.PropertyField(featureFlag7ReceivesSelectiveImagePost, new GUIContent("Flag 7 选择性后期接收"));
+            EditorGUILayout.PropertyField(featureFlag8ReceivesHoShadow, new GUIContent("Flag 8 HoShadow 接收"));
+            EditorGUILayout.PropertyField(featureFlag9CastsHoShadow, new GUIContent("Flag 9 HoShadow 投射"));
+            EditorGUILayout.PropertyField(featureFlag10ParticipatesOit, new GUIContent("Flag 10 OIT 参与"));
+            EditorGUILayout.PropertyField(featureFlag11Reserved, new GUIContent("Flag 11 预留"));
+            EditorGUILayout.PropertyField(featureFlag12Reserved, new GUIContent("Flag 12 预留"));
         }
 
         private void DrawBindingModeField()
@@ -238,16 +258,19 @@ namespace HoUrp.Extensions.Editor.Semantic
         private int GetEffectiveFlagsPreview()
         {
             int packed = 0;
-            if (flag1.boolValue) packed |= 1 << 1;
-            if (flag2.boolValue) packed |= 1 << 2;
-            if (flag3.boolValue) packed |= 1 << 3;
-            if (flag4.boolValue) packed |= 1 << 4;
-            if (flag5.boolValue) packed |= 1 << 5;
-            if (flag6.boolValue) packed |= 1 << 6;
-            if (flag7.boolValue) packed |= 1 << 7;
-            return receivesSemanticPost.boolValue
-                ? packed | ObjectSemanticAuthoring.SemanticPostReceiverFlag
-                : packed;
+            if (featureFlag1ReceivesSemanticPost.boolValue) packed |= 1 << 1;
+            if (featureFlag2ReceivesSss.boolValue) packed |= 1 << 2;
+            if (featureFlag3ReceivesCharacterComposite.boolValue) packed |= 1 << 3;
+            if (featureFlag4ReceivesOutline.boolValue) packed |= 1 << 4;
+            if (featureFlag5ReceivesDropShadow.boolValue) packed |= 1 << 5;
+            if (featureFlag6ReceivesStylizedShadow.boolValue) packed |= 1 << 6;
+            if (featureFlag7ReceivesSelectiveImagePost.boolValue) packed |= 1 << 7;
+            if (featureFlag8ReceivesHoShadow.boolValue) packed |= 1 << 8;
+            if (featureFlag9CastsHoShadow.boolValue) packed |= 1 << 9;
+            if (featureFlag10ParticipatesOit.boolValue) packed |= 1 << 10;
+            if (featureFlag11Reserved.boolValue) packed |= 1 << 11;
+            if (featureFlag12Reserved.boolValue) packed |= 1 << 12;
+            return packed;
         }
 
         private int GetObjectBitsPreview()

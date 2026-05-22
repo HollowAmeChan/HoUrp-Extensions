@@ -5,13 +5,14 @@
 | 检查 | 期望状态 |
 | --- | --- |
 | AOV 生命周期文档 | 覆盖 `Aov.*`、`Sss.*`、`SemanticPost.Mask` |
-| RSUV pack/unpack tests | 新增并通过 |
-| v0 byte clamp tests | object custom / group / id / flags 均 clamp 到 `0..255`，仅覆盖迁移期 v0 |
-| v1 compact pack/unpack tests | region mask、13-bit feature flags、`ObjectId 0..15`、`GroupId 0..7` 均可解回 |
-| v1 compact overflow tests | `ObjectId > 15` 或 `GroupId > 7` 不截断，触发 MPB fallback |
+| RSUV v1 pack/unpack tests | region mask、13-bit feature flags、`ObjectId 0..15`、`GroupId 0..7` 均可解回 |
+| RSUV v1 overflow tests | 底层 `TryPackV1` 对 `ObjectId > 15` 或 `GroupId > 7` 返回失败，不静默截断 |
 | preset -> RSUV tests | Subject / Hair 等 preset 生成预期 object custom mask |
-| `ReceivesSemanticPost` tests | flags bit0 与 `EffectiveFlags` / packed flags 一致 |
-| object capability flag tests | `WritesAov`、`ReceivesSss`、`ReceivesCharacterComposite` 等进入 v1 feature flags 的预期 bit |
+| `ReceivesSemanticPost` tests | feature flags bit1 与 `EffectiveFlags` / packed flags 一致，bit0 固定为空 |
+| object capability flag tests | bit0 固定为空；`ReceivesSss`、`ReceivesCharacterComposite` 等进入 v1 feature flags 的预期 bit |
+| Inspector Object.Custom0-7 | 所有 custom bit 可全部关闭，隐藏 `ObjectCustomMask` 不反灌旧值 |
+| Inspector ObjectId / GroupId | `ObjectId` UI 上限为 15，`GroupId` UI 上限为 7 |
+| Inspector feature flags | 显示 bit0 空洞和 bit1-12；bit1-12 可全部关闭 |
 | MPB fallback tests | `MaterialPropertyBlockOnly` 路径保持第八步行为 |
 | packed zero convention | 测试或文档明确 shader 侧视为无 RSUV 覆盖 |
 | contract registry tests | object semantics 仍注册到正确 domain/resource/debug view |
@@ -27,14 +28,13 @@ Tests/Runtime/HoUrpRendererStaticSemanticTests.cs
 建议覆盖：
 
 ```csharp
-RendererStaticSemanticValue.Pack(1, 2, 3, 4)
-RendererStaticSemanticValue.FromPacked(...)
-RendererStaticSemanticValue.Pack(-1, 300, 999, 4)
 RendererStaticSemanticValue.TryPackV1(mask: 1, featureFlags: 0x1fff, objectId: 15, groupId: 7, out _)
 RendererStaticSemanticValue.TryPackV1(mask: 1, featureFlags: 0, objectId: 16, groupId: 0, out _)
 RendererStaticSemanticValue.TryPackV1(mask: 1, featureFlags: 0, objectId: 0, groupId: 8, out _)
 ObjectSemanticAuthoring.ApplyPreset(ObjectSemanticPreset.Hair)
 ObjectSemanticAuthoring.ReceivesSemanticPost false/true
+ObjectSemanticAuthoring Object.Custom0-7 all off
+ObjectSemanticAuthoring ObjectId / GroupId clamp to 15 / 7
 ```
 
 ## 手动 Unity 验收
@@ -70,6 +70,7 @@ ObjectSemanticAuthoring.ReceivesSemanticPost false/true
 | C 是 Hair | `SUBJECT` 和 `HAIR` tile 亮，`FACE` 不亮 |
 | B 切换到 MPB-only | AOV 输出不变 |
 | B 切换回 RSUV-preferred | AOV 输出不变 |
+| B 关闭全部 `Object.Custom0-7` | `SUBJECT`、`FACE`、`HAIR` 等 object custom tile 全部变黑 |
 | B 关闭 `ReceivesSemanticPost` | `POST RX` 变黑，`SUBJECT` 仍保持 |
 | B 打开 `ReceivesSemanticPost` | `POST RX` 变亮 |
 | B Clear preset | object custom tile 归零 |
@@ -87,11 +88,11 @@ ObjectSemanticAuthoring.ReceivesSemanticPost false/true
 
 | 操作 | 期望 |
 | --- | --- |
-| 禁用 `ObjectSemanticAuthoring` | RSUV 清零，MPB 清理，AOV 不残留旧 object custom |
+| 禁用 `ObjectSemanticAuthoring` | RSUV 清零，MPB 清理，AOV 不残留 stale object custom |
 | 删除 `ObjectSemanticAuthoring` | 同上 |
 | includeChildren 开启 | 子 renderer 都更新 / 清理 |
 | includeChildren 关闭 | 只影响自身 renderer |
-| 切换 binding mode | 不出现旧 RSUV 覆盖新 MPB 的残留 |
+| 切换 binding mode | 不出现 stale RSUV 覆盖新 MPB 的残留 |
 
 ## Debug 验收
 
@@ -101,9 +102,13 @@ ObjectSemanticAuthoring.ReceivesSemanticPost false/true
 | --- | --- |
 | `AOV.Mask` | mask weight 仍由 MPB/policy 控制 |
 | `AOV.ObjectId` | RSUV 和 MPB 输出一致 |
-| `AOV.ObjectFlag0` / `POST RX` | `ReceivesSemanticPost` gate 一致 |
+| `AOV.ObjectFlag0` / `Flag0Reserved` | bit0 保留空洞恒为 0 |
+| `AOV.ObjectFlag1` / `POST RX` | `ReceivesSemanticPost` gate 一致 |
+| `AOV.ObjectFlag2-7` | low feature flags 与 `Aov.MaskId.a` bit2-7 一致 |
 | `AOV.ObjectCustom0-7` | preset 与 binding mode 无关 |
 | `SemanticPost.Mask` | 只受最终规则和 flag gate 影响 |
+
+`ObjectFeatureFlags.bit8-12` 已进入 authoring / RSUV packed，但当前 `Aov.MaskId.a` 只有 8 bit。第九阶段不要求 AOV Debug 显示 bit8-12；如果后续屏幕空间 consumer 需要这些位，必须先新增显式 `Aov.ObjectFeatureMask` 类资源。
 
 ## 当前代码落地检查
 
@@ -127,7 +132,7 @@ Tests/Runtime/HoUrpRendererStaticSemanticTests.cs
 | `partId` 是否成为正式语义 | 暂映射到 `Object.Id`，后续角色系统再决定 |
 | `Character.Id` / `Character.PartId` | 不在第九阶段新增 |
 | material semantic 是否进入 RSUV | 不进入第一版 |
-| `Object.Id` / `Object.GroupId` 超出 v1 compact 范围 | 不截断，MPB fallback |
+| `Object.Id` / `Object.GroupId` 超出 v1 compact 范围 | Inspector 不允许输入；底层 packer 拒绝异常越界值 |
 | Debug Framework | 等生命周期表稳定后推进 |
 
 ## 风险点

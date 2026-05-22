@@ -84,7 +84,7 @@ Shader "Hidden/HoURP/SemanticPost/AovReadProbe"
             {
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovMaskIdTexture, sampler_PointClamp, uv);
                 uint flags = (uint)round(maskId.a * 255.0h);
-                return maskId.r > 0.0h && (flags & 1u) != 0u;
+                return maskId.r > 0.0h && (flags & 2u) != 0u;
             }
 
             half SampleSource(float2 uv, int source)
@@ -92,10 +92,11 @@ Shader "Hidden/HoURP/SemanticPost/AovReadProbe"
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovMaskIdTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovNormalDepthTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpAovSurfaceDataTexture, sampler_PointClamp, uv);
+                half groupId = half((uint)round(maskId.b * 255.0h) & 7u) / 255.0h;
 
                 if (source == 1) return maskId.r;
                 if (source == 2) return maskId.g;
-                if (source == 3) return maskId.b;
+                if (source == 3) return groupId;
                 if (source == 4) return maskId.a;
                 if (source >= 10 && source <= 17) return SampleObjectCustom(uv, source - 10);
                 if (source == 20) return surfaceData.r;
