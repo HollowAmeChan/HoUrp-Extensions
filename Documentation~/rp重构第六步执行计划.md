@@ -385,3 +385,53 @@ thickness = non-zero
 - Source / Diffusion / Composite 的 RenderGraph 依赖如何显式声明。
 - DebugView 如何找到 SSS 中间资源。
 - 为什么 transmission、profile asset、half-resolution 和旧材质迁移被延后。
+
+---
+
+## 14. 第六阶段实际完成总结
+
+本阶段实际落地的是 `SubsurfaceScattering` 的最小 RenderGraph 闭环，而不是旧 HoSSS 的完整迁移。
+
+已完成：
+
+- 新增 `SubsurfaceScattering` feature descriptor，显式声明消费 AOV 输入并生产 `Sss.Source` / `Sss.Diffusion`。
+- 新增 `HoUrpSssResourceDeclaration`，让 SSS 中间纹理由统一 RenderGraph resource declaration 创建和登记。
+- 新增 `Hidden/HoURP/SSS/SubsurfaceScattering` shader，采用 3 个 pass：
+  - `SssSource`：从 `Aov.MaskId`、`Aov.NormalDepth`、`Aov.SurfaceData`、`Aov.SssSource` 生成 `Sss.Source`。
+  - `SssDiffusion`：读取 `Sss.Source`、AOV normal/surface 和 source color copy，生成 `Sss.Diffusion`。
+  - `SssComposite`：读取 source color copy、`Sss.Diffusion` 和 AOV 边界信息，写回 camera color。
+- 新增 SSS shader property id 与测试覆盖，包括 `SssDiffusionTexture`、`SourceColorTexture` 和 8 槽 profile 参数。
+- `Sss.Source.a` 固定为参与权重，`Sss.Diffusion.a` 固定为最终 composite weight。
+- `SSS.Mask`、`SSS.Source`、`SSS.Diffusion`、`SSS.CompositeWeight` 已进入统一 DebugView / AllRegistered 路径。
+- 迁入旧 HoSSS 的最小 profile 分组思想：8 个运行时 profile 槽位控制 diffusion color、diffusion radius、source preserve 和 thickness scale。
+
+没有完成，也不应算作本阶段范围：
+
+- 未迁移 transmission gather / blur。
+- 未引入 profile asset / registry。
+- 未做 half-resolution、temporal、bilateral filter backend。
+- 未接旧 `HoAOVSSS` LightMode。
+- 未兼容旧 `_lilHoSSS*` / `_HoSSS*` ABI。
+
+## 15. 第六阶段关键调试结论
+
+本阶段暴露了两个 RenderGraph 使用问题。
+
+第一，`RenderGraphUtils.BlitMaterialParameters` 只会自动声明主 source texture。shader 额外采样的 AOV normal/surface/source color 等输入，必须由同一链路显式声明。当前做法是通过独立 RenderGraph pass `UseTexture` 并 `SetGlobalTextureAfterPass` 发布这些输入，确保 shader 读取的资源进入 RenderGraph 依赖。
+
+第二，camera color 不能作为 live render attachment 又通过全局纹理被后续 pass 间接读取。现场错误为：
+
+```text
+In pass 'DrawTransparentObjects' when trying to use resource '_CameraTargetAttachment' ...
+UseTexture is called on a texture that is already used through SetRenderAttachment.
+```
+
+根因是 SSS diffusion 曾把 `resourceData.activeColorTexture` 直接发布为 `_HoUrpSourceColorTexture`。URP 的 `DrawTransparentObjects` pass 会 `UseAllGlobalTextures(true)`，于是透明绘制在写 `_CameraTargetAttachment` 的同时又声明读取同一张 texture。修正方式是：
+
+```text
+activeColorTexture -> explicit color copy -> _HoUrpSourceColorTexture
+```
+
+Diffusion 和 Composite 都读取 copy，Composite 再写回 `activeColorTexture`。后续所有读写 camera color 的 full-screen pass 都按这个规则处理。
+
+`ZBinningJob` safety error 当前按连带错误处理：它出现在 RenderGraph 录制异常之后，优先复测资源冲突是否消失；如果资源冲突修复后仍单独复现，再作为 ForwardLights / job lifecycle 独立问题处理。

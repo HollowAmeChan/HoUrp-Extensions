@@ -22,6 +22,8 @@
 
 这里需要补一条硬底线：新 RP 里的 RenderGraph 不是可选写法，也不是只把代码放进 `RecordRenderGraph()`。每条资源链路都必须严格按 RenderGraph 的读写声明、生命周期和 producer/consumer 关系表达；不能私自创建隐藏 RT 链路，不能依赖全局纹理“刚好已经被前面某个 pass 设置过”，也不能让 shader 采样没有被当前 pass 显式声明或统一资源层登记的输入。
 
+第六阶段 SSS 调试补充了一条更具体的工程约束：全局纹理发布本身也会进入 RenderGraph 依赖。URP 的部分内置 pass 会通过 `UseAllGlobalTextures(true)` 读取当前已发布的全局纹理；如果我们把 `activeColorTexture` 直接发布为 source color，后续透明绘制在把同一张 `_CameraTargetAttachment` 当 render attachment 写入时，会同时形成 texture read 依赖并触发 RenderGraph 校验。后续所有“读 camera color 再写回 camera color”的 pass，都必须先显式 copy camera color，再读取 copy。
+
 ---
 
 ## 1. 当前已经存在的系统（按 2026-05-22 仓库核查修正版）

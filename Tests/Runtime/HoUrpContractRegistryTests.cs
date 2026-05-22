@@ -310,6 +310,9 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.SssDepthTolerance, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssDepthTolerance")));
             Assert.That(HoUrpShaderPropertyIds.SssNormalTolerance, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssNormalTolerance")));
             Assert.That(HoUrpShaderPropertyIds.SssSourcePreserve, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssSourcePreserve")));
+            Assert.That(HoUrpShaderPropertyIds.SssProfileIds, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssProfileIds")));
+            Assert.That(HoUrpShaderPropertyIds.SssProfileDiffusionParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssProfileDiffusionParams")));
+            Assert.That(HoUrpShaderPropertyIds.SssProfileShapeParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssProfileShapeParams")));
         }
 
         [Test]

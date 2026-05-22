@@ -144,6 +144,7 @@ HoAOV 不能再被理解成“一张或一组随手写的后处理辅助图”�
 - 全局纹理只作为必要的 shader binding，不作为资源生命周期管理方式。
 - shader 采样的每一个跨 pass 资源，都必须在对应 RenderGraph pass 中声明为输入或由明确的资源层绑定。
 - 多 pass 链路必须表现为 `producer resource -> consumer resource`，不能表现为私有 RT、隐式全局状态或外部副作用。
+- 如果某个全局纹理会被 URP 内置 pass 通过 `UseAllGlobalTextures(true)` 间接纳入依赖，不能把当前正在作为 render attachment 写入的 camera color 直接发布到这个全局纹理。需要先显式 copy 到独立 TextureHandle，再把 copy 作为 shader 输入发布或绑定。
 
 不能做的事情：
 
@@ -152,6 +153,7 @@ HoAOV 不能再被理解成“一张或一组随手写的后处理辅助图”�
 - 不能绕过资源声明直接依赖某个全局 RT “刚好已经存在”。
 - 不能在 RenderGraph blit / raster pass 里采样没有通过该 pass 声明或统一资源层登记的纹理。
 - 不能为了快速验证效果，临时用 `SetGlobalTexture`、静态缓存、材质属性副作用拼出长期链路；这类代码只能作为明确标注的临时诊断代码，不能进入阶段验收。
+- 不能让同一张 TextureHandle 在一个 pass 中同时通过 `SetRenderAttachment` 写入、又通过 `UseTexture` 或全局纹理依赖被读取；尤其要警惕 `activeColorTexture` / `_CameraTargetAttachment`。
 
 ---
 

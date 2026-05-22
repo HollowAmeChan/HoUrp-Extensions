@@ -42,5 +42,8 @@ namespace HoUrp.Extensions.Core
         public static readonly int SssDepthTolerance = Shader.PropertyToID("_HoUrpSssDepthTolerance");
         public static readonly int SssNormalTolerance = Shader.PropertyToID("_HoUrpSssNormalTolerance");
         public static readonly int SssSourcePreserve = Shader.PropertyToID("_HoUrpSssSourcePreserve");
+        public static readonly int SssProfileIds = Shader.PropertyToID("_HoUrpSssProfileIds");
+        public static readonly int SssProfileDiffusionParams = Shader.PropertyToID("_HoUrpSssProfileDiffusionParams");
+        public static readonly int SssProfileShapeParams = Shader.PropertyToID("_HoUrpSssProfileShapeParams");
     }
 }
