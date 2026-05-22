@@ -32,6 +32,13 @@ namespace HoUrp.Extensions.Semantic
         [SerializeField]
         private Vector4 materialCustom0_3;
 
+        [SerializeField]
+        private Color sssSourceColor = Color.black;
+
+        [SerializeField]
+        [Range(0.0f, 1.0f)]
+        private float sssWeight;
+
         private MaterialPropertyBlock propertyBlock;
 
         public int MaterialClass
@@ -84,6 +91,26 @@ namespace HoUrp.Extensions.Semantic
             }
         }
 
+        public Color SssSourceColor
+        {
+            get => sssSourceColor;
+            set
+            {
+                sssSourceColor = value;
+                ApplyToRenderers();
+            }
+        }
+
+        public float SssWeight
+        {
+            get => sssWeight;
+            set
+            {
+                sssWeight = Mathf.Clamp01(value);
+                ApplyToRenderers();
+            }
+        }
+
         private void Reset()
         {
             ApplyToRenderers();
@@ -110,6 +137,7 @@ namespace HoUrp.Extensions.Semantic
             sssProfile = Mathf.Clamp(sssProfile, 0, 255);
             thickness = Mathf.Clamp01(thickness);
             curvature = Mathf.Clamp(curvature, -1.0f, 1.0f);
+            sssWeight = Mathf.Clamp01(sssWeight);
             if (isActiveAndEnabled)
             {
                 ApplyToRenderers();
@@ -139,6 +167,8 @@ namespace HoUrp.Extensions.Semantic
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.MaterialThickness, thickness);
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.MaterialCurvature, curvature);
                 propertyBlock.SetVector(HoUrpShaderPropertyIds.MaterialCustom0_3, materialCustom0_3);
+                propertyBlock.SetColor(HoUrpShaderPropertyIds.SssSourceColor, sssSourceColor);
+                propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssWeight, sssWeight);
                 targetRenderer.SetPropertyBlock(propertyBlock);
             }
 
@@ -163,6 +193,8 @@ namespace HoUrp.Extensions.Semantic
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.MaterialThickness, 0.0f);
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.MaterialCurvature, 0.0f);
                 propertyBlock.SetVector(HoUrpShaderPropertyIds.MaterialCustom0_3, Vector4.zero);
+                propertyBlock.SetColor(HoUrpShaderPropertyIds.SssSourceColor, Color.black);
+                propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssWeight, 0.0f);
                 targetRenderer.SetPropertyBlock(propertyBlock);
             }
 

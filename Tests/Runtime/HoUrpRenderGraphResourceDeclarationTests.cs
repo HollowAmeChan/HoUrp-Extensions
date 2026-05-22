@@ -92,6 +92,22 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
+        public void SssSourceResourceDescriptorUsesHighPrecisionFormatAndZeroClear()
+        {
+            ResourceDefinition sssSource = HoUrpBuiltInContracts
+                .CreateMinimalAovRegistry()
+                .Resources
+                .Get(HoUrpBuiltInNames.Resources.AovSssSource);
+
+            TextureDesc desc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(sssSource, CreateCameraDescriptor());
+
+            Assert.That(desc.name, Is.EqualTo("Aov.SssSource"));
+            Assert.That(desc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(desc.clearBuffer, Is.True);
+            Assert.That(desc.clearColor, Is.EqualTo(Color.clear));
+        }
+
+        [Test]
         public void ScaledDescriptorRoundsDownButNeverBelowOnePixel()
         {
             ResourceDefinition scaled = new ResourceDefinition(

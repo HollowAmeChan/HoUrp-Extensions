@@ -42,6 +42,7 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                 half4 objectCustom1 : SV_Target3;
                 half4 surfaceData : SV_Target4;
                 half4 materialCustom0 : SV_Target5;
+                half4 sssSource : SV_Target6;
             };
 
             float _HoUrpAovMaskWeight;
@@ -51,6 +52,8 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
             float _HoUrpMaterialThickness;
             float _HoUrpMaterialCurvature;
             float4 _HoUrpMaterialCustom0_3;
+            float4 _HoUrpSssSourceColor;
+            float _HoUrpSssWeight;
 
             half HasMaskBit(float mask, float bitValue)
             {
@@ -102,6 +105,8 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                     half(saturate(_HoUrpMaterialThickness)),
                     half(saturate(_HoUrpMaterialCurvature * 0.5 + 0.5))) * maskWeight;
                 output.materialCustom0 = half4(saturate(_HoUrpMaterialCustom0_3)) * maskWeight;
+                half sssWeight = half(saturate(_HoUrpSssWeight)) * maskWeight;
+                output.sssSource = half4(half3(max(_HoUrpSssSourceColor.rgb, 0.0)) * maskWeight, sssWeight);
                 return output;
             }
             ENDHLSL

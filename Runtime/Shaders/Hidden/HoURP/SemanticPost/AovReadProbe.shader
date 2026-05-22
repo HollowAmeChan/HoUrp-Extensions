@@ -25,6 +25,7 @@ Shader "Hidden/HoURP/SemanticPost/AovReadProbe"
             TEXTURE2D_X(_HoUrpAovObjectCustom4_7Texture);
             TEXTURE2D_X(_HoUrpAovSurfaceDataTexture);
             TEXTURE2D_X(_HoUrpAovMaterialCustom0_3Texture);
+            TEXTURE2D_X(_HoUrpAovSssSourceTexture);
 
             half4 _HoUrpSemanticPostTintColor;
             int _HoUrpSemanticPostObjectCustomChannel;
@@ -73,11 +74,12 @@ Shader "Hidden/HoURP/SemanticPost/AovReadProbe"
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovNormalDepthTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpAovSurfaceDataTexture, sampler_PointClamp, uv);
                 half4 materialCustomValues = SAMPLE_TEXTURE2D_X(_HoUrpAovMaterialCustom0_3Texture, sampler_PointClamp, uv);
+                half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovSssSourceTexture, sampler_PointClamp, uv);
                 half objectCustom = SampleObjectCustom(uv);
                 half thickness = surfaceData.b;
                 half materialCustom = PickChannel(materialCustomValues, clamp(_HoUrpSemanticPostMaterialCustomChannel, 0, 3));
 
-                half semanticWeight = max(max(objectCustom, thickness), materialCustom);
+                half semanticWeight = max(max(max(objectCustom, thickness), materialCustom), sssSource.a);
                 half mask = saturate(max(maskId.r * 0.35h, semanticWeight) * (0.75h + 0.25h * normalDepth.a));
                 color.rgb = lerp(color.rgb, _HoUrpSemanticPostTintColor.rgb, mask * _HoUrpSemanticPostTintColor.a);
                 return color;

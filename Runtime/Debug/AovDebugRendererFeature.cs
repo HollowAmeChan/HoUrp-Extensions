@@ -15,28 +15,30 @@ namespace HoUrp.Extensions.Debugging
     {
         private enum AovDebugView
         {
-            None,
-            Mask,
-            ObjectId,
-            LinearDepth,
-            WorldNormal,
-            ObjectCustom0,
-            ObjectCustom1,
-            ObjectCustom2,
-            ObjectCustom3,
-            ObjectCustom4,
-            ObjectCustom5,
-            ObjectCustom6,
-            ObjectCustom7,
-            MaterialClass,
-            SssProfile,
-            Thickness,
-            Curvature,
-            MaterialCustom0,
-            MaterialCustom1,
-            MaterialCustom2,
-            MaterialCustom3,
-            AllRegistered
+            None = 0,
+            AllRegistered = 21,
+            Mask = 1,
+            ObjectId = 2,
+            LinearDepth = 3,
+            WorldNormal = 4,
+            ObjectCustom0 = 5,
+            ObjectCustom1 = 6,
+            ObjectCustom2 = 7,
+            ObjectCustom3 = 8,
+            ObjectCustom4 = 9,
+            ObjectCustom5 = 10,
+            ObjectCustom6 = 11,
+            ObjectCustom7 = 12,
+            MaterialClass = 13,
+            SssProfile = 14,
+            Thickness = 15,
+            Curvature = 16,
+            MaterialCustom0 = 17,
+            MaterialCustom1 = 18,
+            MaterialCustom2 = 19,
+            MaterialCustom3 = 20,
+            SssSource = 22,
+            SssWeight = 23
         }
 
         [SerializeField]
@@ -152,6 +154,10 @@ namespace HoUrp.Extensions.Debugging
                     return HoUrpBuiltInNames.DebugViews.AovMaterialCustom2;
                 case AovDebugView.MaterialCustom3:
                     return HoUrpBuiltInNames.DebugViews.AovMaterialCustom3;
+                case AovDebugView.SssSource:
+                    return HoUrpBuiltInNames.DebugViews.AovSssSource;
+                case AovDebugView.SssWeight:
+                    return HoUrpBuiltInNames.DebugViews.AovSssWeight;
                 default:
                     return HoUrpBuiltInNames.DebugViews.AovMask;
             }
@@ -199,6 +205,10 @@ namespace HoUrp.Extensions.Debugging
                     return 18;
                 case AovDebugView.MaterialCustom3:
                     return 19;
+                case AovDebugView.SssSource:
+                    return 20;
+                case AovDebugView.SssWeight:
+                    return 21;
                 default:
                     return 0;
             }
@@ -208,7 +218,6 @@ namespace HoUrp.Extensions.Debugging
         {
             private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("HoURP AOV Debug");
             private static readonly MaterialPropertyBlock PropertyBlock = new MaterialPropertyBlock();
-            private const float TilePaddingPixels = 4.0f;
             private readonly HoUrpContractRegistry registry;
             private Material material;
             private HoUrpIdentifier debugViewId;
@@ -287,9 +296,16 @@ namespace HoUrp.Extensions.Debugging
                 TextureHandle destination = resourceData.activeColorTexture;
 
                 List<DebugTile> tiles = new List<DebugTile>(registry.DebugViews.Count);
+                HashSet<string> uniqueViews = new HashSet<string>();
                 foreach (DebugViewDefinition debugView in registry.DebugViews.Definitions)
                 {
                     if (!resources.TryGetTexture(debugView.SourceResource, out TextureHandle sourceTexture))
+                    {
+                        continue;
+                    }
+
+                    string viewKey = debugView.SourceResource.ToString() + "|" + debugView.SourceSemantic.ToString();
+                    if (!uniqueViews.Add(viewKey))
                     {
                         continue;
                     }
@@ -323,9 +339,7 @@ namespace HoUrp.Extensions.Debugging
                             columns,
                             rows,
                             sourceAspect,
-                            targetAspect,
-                            targetWidth,
-                            targetHeight));
+                            targetAspect));
                 }
 
                 using (var builder = renderGraph.AddRasterRenderPass<AllPassData>(
@@ -335,6 +349,7 @@ namespace HoUrp.Extensions.Debugging
                 {
                     passData.material = material;
                     passData.tiles = tiles;
+                    passData.tileGrid = new Vector4(columns, rows, tiles.Count, 0.0f);
 
                     for (int i = 0; i < tiles.Count; i++)
                     {
@@ -355,6 +370,7 @@ namespace HoUrp.Extensions.Debugging
                             PropertyBlock.SetInt(HoUrpShaderPropertyIds.AovDebugTileMode, 1);
                             PropertyBlock.SetInt(HoUrpShaderPropertyIds.AovDebugMode, tile.shaderMode);
                             PropertyBlock.SetVector(HoUrpShaderPropertyIds.AovDebugTileRect, tile.tileRect);
+                            PropertyBlock.SetVector(HoUrpShaderPropertyIds.AovDebugTileGrid, data.tileGrid);
                             context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovDebugSourceTexture, tile.sourceTexture);
                             context.cmd.DrawProcedural(
                                 Matrix4x4.identity,
@@ -408,21 +424,17 @@ namespace HoUrp.Extensions.Debugging
                 int columns,
                 int rows,
                 float sourceAspect,
-                float targetAspect,
-                int targetWidth,
-                int targetHeight)
+                float targetAspect)
             {
                 float cellWidth = 1.0f / columns;
                 float cellHeight = 1.0f / rows;
                 float cellX = column * cellWidth;
                 float cellY = row * cellHeight;
 
-                float paddingX = Mathf.Min(TilePaddingPixels / targetWidth, cellWidth * 0.2f);
-                float paddingY = Mathf.Min(TilePaddingPixels / targetHeight, cellHeight * 0.2f);
-                float innerX = cellX + paddingX;
-                float innerY = cellY + paddingY;
-                float innerWidth = Mathf.Max(0.0001f, cellWidth - paddingX * 2.0f);
-                float innerHeight = Mathf.Max(0.0001f, cellHeight - paddingY * 2.0f);
+                float innerX = cellX;
+                float innerY = cellY;
+                float innerWidth = cellWidth;
+                float innerHeight = cellHeight;
 
                 float desiredNormalizedAspect = Mathf.Max(0.0001f, sourceAspect / Mathf.Max(0.0001f, targetAspect));
                 float innerAspect = innerWidth / innerHeight;
@@ -541,6 +553,16 @@ namespace HoUrp.Extensions.Debugging
                     return 19;
                 }
 
+                if (id == HoUrpBuiltInNames.DebugViews.AovSssSource)
+                {
+                    return 20;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovSssWeight)
+                {
+                    return 21;
+                }
+
                 return 0;
             }
 
@@ -567,6 +589,7 @@ namespace HoUrp.Extensions.Debugging
             {
                 public Material material;
                 public List<DebugTile> tiles;
+                public Vector4 tileGrid;
             }
         }
     }

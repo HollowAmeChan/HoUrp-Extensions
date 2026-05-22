@@ -14,9 +14,11 @@ namespace HoUrp.Extensions.Core
         public static readonly int AovObjectCustom4_7Texture = Shader.PropertyToID("_HoUrpAovObjectCustom4_7Texture");
         public static readonly int AovSurfaceDataTexture = Shader.PropertyToID("_HoUrpAovSurfaceDataTexture");
         public static readonly int AovMaterialCustom0_3Texture = Shader.PropertyToID("_HoUrpAovMaterialCustom0_3Texture");
+        public static readonly int AovSssSourceTexture = Shader.PropertyToID("_HoUrpAovSssSourceTexture");
         public static readonly int AovDebugSourceTexture = Shader.PropertyToID("_HoUrpAovDebugSourceTexture");
         public static readonly int AovDebugTileMode = Shader.PropertyToID("_HoUrpAovDebugTileMode");
         public static readonly int AovDebugTileRect = Shader.PropertyToID("_HoUrpAovDebugTileRect");
+        public static readonly int AovDebugTileGrid = Shader.PropertyToID("_HoUrpAovDebugTileGrid");
         public static readonly int SourceColorTexture = Shader.PropertyToID("_HoUrpSourceColorTexture");
         public static readonly int AovDebugMode = Shader.PropertyToID("_HoUrpAovDebugMode");
         public static readonly int SemanticPostTintColor = Shader.PropertyToID("_HoUrpSemanticPostTintColor");
@@ -28,6 +30,8 @@ namespace HoUrp.Extensions.Core
         public static readonly int MaterialCurvature = Shader.PropertyToID("_HoUrpMaterialCurvature");
         public static readonly int MaterialUtility = Shader.PropertyToID("_HoUrpMaterialUtility");
         public static readonly int MaterialCustom0_3 = Shader.PropertyToID("_HoUrpMaterialCustom0_3");
+        public static readonly int SssSourceColor = Shader.PropertyToID("_HoUrpSssSourceColor");
+        public static readonly int SssWeight = Shader.PropertyToID("_HoUrpSssWeight");
         public static readonly int SemanticPostObjectCustomChannel = Shader.PropertyToID("_HoUrpSemanticPostObjectCustomChannel");
         public static readonly int SemanticPostMaterialCustomChannel = Shader.PropertyToID("_HoUrpSemanticPostMaterialCustomChannel");
     }

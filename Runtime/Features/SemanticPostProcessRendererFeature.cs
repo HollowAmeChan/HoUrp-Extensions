@@ -107,7 +107,8 @@ namespace HoUrp.Extensions.Features
                     || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom0_3, out TextureHandle objectCustom0Texture)
                     || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom4_7, out TextureHandle objectCustom1Texture)
                     || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovSurfaceData, out TextureHandle surfaceDataTexture)
-                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3, out TextureHandle materialCustomTexture))
+                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3, out TextureHandle materialCustomTexture)
+                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovSssSource, out TextureHandle sssSourceTexture))
                 {
                     return;
                 }
@@ -136,6 +137,7 @@ namespace HoUrp.Extensions.Features
                     passData.objectCustom1Texture = objectCustom1Texture;
                     passData.surfaceDataTexture = surfaceDataTexture;
                     passData.materialCustomTexture = materialCustomTexture;
+                    passData.sssSourceTexture = sssSourceTexture;
                     passData.sourceColorTexture = colorCopy;
                     passData.material = material;
                     passData.tintColor = tintColor;
@@ -149,6 +151,7 @@ namespace HoUrp.Extensions.Features
                     builder.UseTexture(objectCustom1Texture, AccessFlags.Read);
                     builder.UseTexture(surfaceDataTexture, AccessFlags.Read);
                     builder.UseTexture(materialCustomTexture, AccessFlags.Read);
+                    builder.UseTexture(sssSourceTexture, AccessFlags.Read);
                     builder.SetRenderAttachment(sourceColor, 0, AccessFlags.Write);
                     builder.AllowPassCulling(false);
                     builder.AllowGlobalStateModification(true);
@@ -162,6 +165,7 @@ namespace HoUrp.Extensions.Features
                         context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovObjectCustom4_7Texture, data.objectCustom1Texture);
                         context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovSurfaceDataTexture, data.surfaceDataTexture);
                         context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovMaterialCustom0_3Texture, data.materialCustomTexture);
+                        context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovSssSourceTexture, data.sssSourceTexture);
                         PropertyBlock.SetColor(HoUrpShaderPropertyIds.SemanticPostTintColor, data.tintColor);
                         PropertyBlock.SetInt(HoUrpShaderPropertyIds.SemanticPostObjectCustomChannel, data.objectCustomChannel);
                         PropertyBlock.SetInt(HoUrpShaderPropertyIds.SemanticPostMaterialCustomChannel, data.materialCustomChannel);
@@ -185,6 +189,7 @@ namespace HoUrp.Extensions.Features
                 public TextureHandle objectCustom1Texture;
                 public TextureHandle surfaceDataTexture;
                 public TextureHandle materialCustomTexture;
+                public TextureHandle sssSourceTexture;
                 public TextureHandle sourceColorTexture;
                 public Material material;
                 public Color tintColor;

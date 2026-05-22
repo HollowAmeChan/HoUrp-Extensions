@@ -32,6 +32,8 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier MaterialCustom1 = "Material.Custom1";
             public static readonly HoUrpIdentifier MaterialCustom2 = "Material.Custom2";
             public static readonly HoUrpIdentifier MaterialCustom3 = "Material.Custom3";
+            public static readonly HoUrpIdentifier ShadingSssSourceColor = "Shading.SssSourceColor";
+            public static readonly HoUrpIdentifier ShadingSssWeight = "Shading.SssWeight";
             public static readonly HoUrpIdentifier GeometryWorldNormal = "Geometry.WorldNormal";
             public static readonly HoUrpIdentifier GeometryLinearDepth = "Geometry.LinearDepth";
         }
@@ -44,6 +46,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovObjectCustom4_7 = "Aov.ObjectCustom4_7";
             public static readonly HoUrpIdentifier AovSurfaceData = "Aov.SurfaceData";
             public static readonly HoUrpIdentifier AovMaterialCustom0_3 = "Aov.MaterialCustom0_3";
+            public static readonly HoUrpIdentifier AovSssSource = "Aov.SssSource";
         }
 
         public static class DebugViews
@@ -69,6 +72,11 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovMaterialCustom1 = "AOV.MaterialCustom1";
             public static readonly HoUrpIdentifier AovMaterialCustom2 = "AOV.MaterialCustom2";
             public static readonly HoUrpIdentifier AovMaterialCustom3 = "AOV.MaterialCustom3";
+            public static readonly HoUrpIdentifier AovSssSource = "AOV.SssSource";
+            public static readonly HoUrpIdentifier AovSssWeight = "AOV.SssWeight";
+            public static readonly HoUrpIdentifier SssProfileId = "SSS.ProfileId";
+            public static readonly HoUrpIdentifier SssThickness = "SSS.Thickness";
+            public static readonly HoUrpIdentifier SssCurvature = "SSS.Curvature";
         }
 
         public static class Capabilities

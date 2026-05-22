@@ -14,9 +14,9 @@ namespace HoUrp.Extensions.Tests.Runtime
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
             Assert.That(registry.Features.Count, Is.EqualTo(3));
-            Assert.That(registry.Resources.Count, Is.EqualTo(6));
-            Assert.That(registry.Semantics.Count, Is.EqualTo(23));
-            Assert.That(registry.DebugViews.Count, Is.EqualTo(20));
+            Assert.That(registry.Resources.Count, Is.EqualTo(7));
+            Assert.That(registry.Semantics.Count, Is.EqualTo(25));
+            Assert.That(registry.DebugViews.Count, Is.EqualTo(25));
             Assert.That(registry.Capabilities.Count, Is.EqualTo(3));
         }
 
@@ -116,6 +116,39 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
+        public void MinimalAovRegistryExposesSssInputResource()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            ResourceDefinition sssSource = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovSssSource);
+
+            Assert.That(sssSource.Kind, Is.EqualTo(ResourceKind.Texture2D));
+            Assert.That(sssSource.Format, Is.EqualTo(ResourceFormatHint.HighPrecisionRgba16Float));
+            Assert.That(sssSource.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.AovOutput));
+            Assert.That(sssSource.LegacyName, Is.EqualTo("_lilHoAovSssTexture"));
+            Assert.That(sssSource.DebugView, Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovSssSource));
+        }
+
+        [Test]
+        public void MinimalAovRegistryLinksSssInputDebugViews()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            DebugViewDefinition sssSource = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovSssSource);
+            DebugViewDefinition sssWeight = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovSssWeight);
+            DebugViewDefinition sssThickness = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.SssThickness);
+
+            Assert.That(sssSource.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovSssSource));
+            Assert.That(sssSource.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ShadingSssSourceColor));
+            Assert.That(sssSource.Range, Is.EqualTo(DebugValueRange.HdrColor));
+            Assert.That(sssWeight.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovSssSource));
+            Assert.That(sssWeight.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ShadingSssWeight));
+            Assert.That(sssWeight.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
+            Assert.That(sssThickness.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovSurfaceData));
+            Assert.That(sssThickness.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.MaterialThickness));
+        }
+
+        [Test]
         public void MaterialUtilityIsRegisteredButNotProducedInPhaseFour()
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
@@ -135,11 +168,13 @@ namespace HoUrp.Extensions.Tests.Runtime
             ResourceDefinition objectCustom0 = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovObjectCustom0_3);
             ResourceDefinition surfaceData = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovSurfaceData);
             ResourceDefinition materialCustom = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3);
+            ResourceDefinition sssSource = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovSssSource);
 
             Assert.That(maskId.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.SemanticPostProcess));
             Assert.That(objectCustom0.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.SemanticPostProcess));
             Assert.That(surfaceData.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.SemanticPostProcess));
             Assert.That(materialCustom.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.SemanticPostProcess));
+            Assert.That(sssSource.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.SemanticPostProcess));
             Assert.That(
                 registry.Features.Get(HoUrpBuiltInNames.Features.SemanticPostProcess).ConsumedResources,
                 Contains.Item(HoUrpBuiltInNames.Resources.AovMaskId));
@@ -152,6 +187,9 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(
                 registry.Features.Get(HoUrpBuiltInNames.Features.SemanticPostProcess).ConsumedResources,
                 Contains.Item(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3));
+            Assert.That(
+                registry.Features.Get(HoUrpBuiltInNames.Features.SemanticPostProcess).ConsumedResources,
+                Contains.Item(HoUrpBuiltInNames.Resources.AovSssSource));
         }
 
         [Test]
@@ -169,6 +207,11 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovObjectCustom7));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovThickness));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovMaterialCustom3));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovSssSource));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovSssWeight));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.SssProfileId));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.SssThickness));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.SssCurvature));
         }
 
         [Test]
@@ -184,8 +227,10 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.AovObjectCustom4_7Texture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovObjectCustom4_7Texture")));
             Assert.That(HoUrpShaderPropertyIds.AovSurfaceDataTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovSurfaceDataTexture")));
             Assert.That(HoUrpShaderPropertyIds.AovMaterialCustom0_3Texture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovMaterialCustom0_3Texture")));
+            Assert.That(HoUrpShaderPropertyIds.AovSssSourceTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovSssSourceTexture")));
             Assert.That(HoUrpShaderPropertyIds.SourceColorTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSourceColorTexture")));
             Assert.That(HoUrpShaderPropertyIds.AovDebugMode, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDebugMode")));
+            Assert.That(HoUrpShaderPropertyIds.AovDebugTileGrid, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDebugTileGrid")));
             Assert.That(HoUrpShaderPropertyIds.SemanticPostTintColor, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSemanticPostTintColor")));
             Assert.That(HoUrpShaderPropertyIds.AovMaskWeight, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovMaskWeight")));
             Assert.That(HoUrpShaderPropertyIds.ObjectCustomMask, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpObjectCustomMask")));
@@ -195,6 +240,8 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.MaterialCurvature, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialCurvature")));
             Assert.That(HoUrpShaderPropertyIds.MaterialUtility, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialUtility")));
             Assert.That(HoUrpShaderPropertyIds.MaterialCustom0_3, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialCustom0_3")));
+            Assert.That(HoUrpShaderPropertyIds.SssSourceColor, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssSourceColor")));
+            Assert.That(HoUrpShaderPropertyIds.SssWeight, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssWeight")));
             Assert.That(HoUrpShaderPropertyIds.SemanticPostObjectCustomChannel, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSemanticPostObjectCustomChannel")));
             Assert.That(HoUrpShaderPropertyIds.SemanticPostMaterialCustomChannel, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSemanticPostMaterialCustomChannel")));
         }
