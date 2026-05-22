@@ -20,6 +20,8 @@
 6. **从 Layer/Tag 这种隐式分类，转向显式能力（Capability）附加**。
 7. **从分散的 feature debug，转向统一的 Debug Domain / Debug Framework**。
 
+这里需要补一条硬底线：新 RP 里的 RenderGraph 不是可选写法，也不是只把代码放进 `RecordRenderGraph()`。每条资源链路都必须严格按 RenderGraph 的读写声明、生命周期和 producer/consumer 关系表达；不能私自创建隐藏 RT 链路，不能依赖全局纹理“刚好已经被前面某个 pass 设置过”，也不能让 shader 采样没有被当前 pass 显式声明或统一资源层登记的输入。
+
 ---
 
 ## 1. 当前已经存在的系统（按 2026-05-22 仓库核查修正版）
@@ -611,6 +613,14 @@ RenderGraph / FrameGraph 的意义是：
 
 你现在已经具备了非常适合迁移到 RenderGraph 的系统规模。但按当前仓库看，重点不是“从零引入 RenderGraph”：AOV、OIT、HoSSS、HoPost、Shoost、HoShadowCast、角色特化都已经有 `RecordRenderGraph` 或 RenderGraph path。
 
+因此后续重构的审查标准不能停留在“是否有 RenderGraph path”，而要检查它是否真的按 RenderGraph 写：
+
+- 每个 pass 的所有输入纹理、输出纹理、buffer 和状态依赖都要显式声明。
+- 每个中间资源都要通过统一资源声明层或 RenderGraph 创建，不能由 Feature 私有维护长期链路。
+- shader 中采样的跨 pass 纹理必须能在 C# pass 声明里找到对应 `UseTexture` / blit source / resource declaration。
+- 允许用全局 shader property 做最终绑定，但不能用全局 property 代替资源生命周期和依赖声明。
+- 临时诊断代码如果用到了绕路绑定，必须在验收前删除或改成正式 RenderGraph 依赖。
+
 真正需要推进的是：
 
 - 统一各 Feature 的资源命名和生命周期规则。
@@ -1182,6 +1192,8 @@ Layer/Tag 的问题是：
 
 把资源生命周期、依赖顺序、临时 RT 复用统一起来。当前不是“有没有 RenderGraph”的问题，而是多个 Feature 的 RenderGraph path 还缺统一资源目录、统一 debug 和统一依赖声明。
 
+这一步必须把“禁止私自创建链路”作为验收项：Feature 之间只能通过登记过的资源和声明过的 pass 依赖连接；不能靠私有 RT、全局纹理副作用、固定执行顺序或 shader 里偷偷采样未声明纹理来完成数据传递。
+
 ### 第七优先级：建立 Capability UI
 
 让对象、材质、灯光、角色的功能都显式可配，而不是靠隐式层和 tag 猜测。`HoAovSubject` / `HoAovGroup` 可以作为第一版对象语义 UI 的基础，而不是推倒重做。
@@ -1274,6 +1286,8 @@ Core/
 负责真正的帧依赖管理。
 
 这里不建议另造一套完全替代 URP RenderGraph 的系统。当前项目已经在 URP 17.x 上实现多条 `RecordRenderGraph` 路径，合理做法是先建立项目自己的 **Feature/Resource 声明层**，再落到 URP RenderGraph。
+
+这个声明层的职责不是包装出第二套私有图，而是约束所有 Feature 严格落到 URP RenderGraph：资源由声明层登记，pass 在 URP RenderGraph 中显式读写，debug 也从同一套登记资源里取数。任何绕开声明层的私有 RT 链路、全局纹理链路或 shader 隐式采样，都应被视为架构违规。
 
 建议职责：
 

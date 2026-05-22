@@ -276,6 +276,54 @@ namespace HoUrp.Extensions.Core
                 "HoAovDebugMode.SssWeight",
                 "Displays Shading.SssWeight from Aov.SssSource.a.");
 
+            registry.DebugViews.Register(new DebugViewDefinition(
+                HoUrpBuiltInNames.DebugViews.SssMask,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.SssSource,
+                HoUrpBuiltInNames.Semantics.ShadingSssWeight,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                new ReadOnlyArray<DebugDisplayMode>(DebugDisplayMode.Replace),
+                DebugValueRange.ZeroToOne,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                "HoSSS.Debug.Mask",
+                "Displays final SSS participation mask from Sss.Source.a."));
+
+            registry.DebugViews.Register(new DebugViewDefinition(
+                HoUrpBuiltInNames.DebugViews.SssSource,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.SssSource,
+                HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                new ReadOnlyArray<DebugDisplayMode>(DebugDisplayMode.Replace),
+                DebugValueRange.HdrColor,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                "HoSSS.Debug.Source",
+                "Displays SSS source color prepared for diffusion."));
+
+            registry.DebugViews.Register(new DebugViewDefinition(
+                HoUrpBuiltInNames.DebugViews.SssDiffusion,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.SssDiffusion,
+                HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                new ReadOnlyArray<DebugDisplayMode>(DebugDisplayMode.Replace),
+                DebugValueRange.HdrColor,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                "HoSSS.Debug.Diffusion",
+                "Displays diffused SSS color before camera composite."));
+
+            registry.DebugViews.Register(new DebugViewDefinition(
+                HoUrpBuiltInNames.DebugViews.SssCompositeWeight,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.SssDiffusion,
+                HoUrpBuiltInNames.Semantics.ShadingSssCompositeWeight,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                new ReadOnlyArray<DebugDisplayMode>(DebugDisplayMode.Replace),
+                DebugValueRange.ZeroToOne,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                "HoSSS.Debug.CompositeWeight",
+                "Displays SSS composite weight from Sss.Diffusion.a."));
+
             RegisterMaterialDebugView(
                 registry,
                 HoUrpBuiltInNames.DebugViews.SssProfileId,
@@ -377,6 +425,13 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Features.DebugComposite
             };
 
+            HoUrpIdentifier[] sssInputConsumers =
+            {
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                HoUrpBuiltInNames.Features.SemanticPostProcess,
+                HoUrpBuiltInNames.Features.DebugComposite
+            };
+
             registry.Semantics.Register(new SemanticDefinition(
                 HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
                 HoUrpDomain.Object,
@@ -384,7 +439,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpPassStage.GeometrySemanticAov,
                 HoUrpLifetime.PerCamera,
                 HoUrpBuiltInNames.Features.AovOutput,
-                new ReadOnlyArray<HoUrpIdentifier>(consumers),
+                new ReadOnlyArray<HoUrpIdentifier>(sssInputConsumers),
                 HoUrpBuiltInNames.DebugViews.AovMask,
                 HoUrpMigrationDecision.KeepConceptRename,
                 "_HoAovMaskWeight",
@@ -436,7 +491,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpPassStage.GeometrySemanticAov,
                 HoUrpLifetime.PerCamera,
                 HoUrpBuiltInNames.Features.AovOutput,
-                new ReadOnlyArray<HoUrpIdentifier>(consumers),
+                new ReadOnlyArray<HoUrpIdentifier>(sssInputConsumers),
                 HoUrpBuiltInNames.DebugViews.AovWorldNormal,
                 HoUrpMigrationDecision.KeepConceptRename,
                 "_lilHoAovNormalDepthTexture",
@@ -449,7 +504,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpPassStage.GeometrySemanticAov,
                 HoUrpLifetime.PerCamera,
                 HoUrpBuiltInNames.Features.AovOutput,
-                new ReadOnlyArray<HoUrpIdentifier>(consumers),
+                new ReadOnlyArray<HoUrpIdentifier>(sssInputConsumers),
                 HoUrpBuiltInNames.DebugViews.AovLinearDepth,
                 HoUrpMigrationDecision.KeepConceptRename,
                 "_lilHoAovNormalDepthTexture",
@@ -517,7 +572,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.Byte,
                 HoUrpBuiltInNames.DebugViews.AovMaterialClass,
                 "_HoAovMaterialClass",
-                "Material class written into Aov.SurfaceData.");
+                "Material class written into Aov.SurfaceData.",
+                false);
 
             RegisterMaterialSemantic(
                 registry,
@@ -525,7 +581,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.Byte,
                 HoUrpBuiltInNames.DebugViews.AovSssProfile,
                 "_HoSSSProfileId",
-                "SSS profile id written into Aov.SurfaceData.");
+                "SSS profile id written into Aov.SurfaceData.",
+                true);
 
             RegisterMaterialSemantic(
                 registry,
@@ -533,7 +590,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.NormalizedFloat,
                 HoUrpBuiltInNames.DebugViews.AovThickness,
                 "_HoAovThickness",
-                "Material thickness written into Aov.SurfaceData.");
+                "Material thickness written into Aov.SurfaceData.",
+                true);
 
             RegisterMaterialSemantic(
                 registry,
@@ -541,7 +599,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.SignedNormalizedFloat,
                 HoUrpBuiltInNames.DebugViews.AovCurvature,
                 "_HoAovCurvature",
-                "Material curvature written into Aov.SurfaceData.");
+                "Material curvature written into Aov.SurfaceData.",
+                true);
 
             RegisterMaterialSemantic(
                 registry,
@@ -549,7 +608,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.NormalizedFloat,
                 HoUrpBuiltInNames.DebugViews.None,
                 "_HoAovUtility",
-                "Registered material utility semantic. Phase four does not produce a stable resource channel for it.");
+                "Registered material utility semantic. Phase four does not produce a stable resource channel for it.",
+                false);
 
             RegisterMaterialSemantic(
                 registry,
@@ -557,7 +617,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.NormalizedFloat,
                 HoUrpBuiltInNames.DebugViews.AovMaterialCustom0,
                 "_HoAovCustomValues0.x",
-                "Material custom semantic channel 0.");
+                "Material custom semantic channel 0.",
+                false);
 
             RegisterMaterialSemantic(
                 registry,
@@ -565,7 +626,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.NormalizedFloat,
                 HoUrpBuiltInNames.DebugViews.AovMaterialCustom1,
                 "_HoAovCustomValues0.y",
-                "Material custom semantic channel 1.");
+                "Material custom semantic channel 1.",
+                false);
 
             RegisterMaterialSemantic(
                 registry,
@@ -573,7 +635,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.NormalizedFloat,
                 HoUrpBuiltInNames.DebugViews.AovMaterialCustom2,
                 "_HoAovCustomValues0.z",
-                "Material custom semantic channel 2.");
+                "Material custom semantic channel 2.",
+                false);
 
             RegisterMaterialSemantic(
                 registry,
@@ -581,7 +644,8 @@ namespace HoUrp.Extensions.Core
                 SemanticFormat.NormalizedFloat,
                 HoUrpBuiltInNames.DebugViews.AovMaterialCustom3,
                 "_HoAovCustomValues0.w",
-                "Material custom semantic channel 3.");
+                "Material custom semantic channel 3.",
+                false);
 
             RegisterShadingSemantic(
                 registry,
@@ -598,6 +662,32 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.DebugViews.AovSssWeight,
                 "_lilHoAovSssTexture.a",
                 "SSS participation weight encoded into Aov.SssSource.a.");
+
+            registry.Semantics.Register(new SemanticDefinition(
+                HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
+                HoUrpDomain.Shading,
+                SemanticFormat.Float3,
+                HoUrpPassStage.ScreenSss,
+                HoUrpLifetime.PerCamera,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                new ReadOnlyArray<HoUrpIdentifier>(HoUrpBuiltInNames.Features.DebugComposite),
+                HoUrpBuiltInNames.DebugViews.SssDiffusion,
+                HoUrpMigrationDecision.KeepConceptRename,
+                "_lilHoSSSDiffusedTexture.rgb",
+                "Diffused SSS color encoded into Sss.Diffusion.rgb."));
+
+            registry.Semantics.Register(new SemanticDefinition(
+                HoUrpBuiltInNames.Semantics.ShadingSssCompositeWeight,
+                HoUrpDomain.Shading,
+                SemanticFormat.NormalizedFloat,
+                HoUrpPassStage.ScreenSss,
+                HoUrpLifetime.PerCamera,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                new ReadOnlyArray<HoUrpIdentifier>(HoUrpBuiltInNames.Features.DebugComposite),
+                HoUrpBuiltInNames.DebugViews.SssCompositeWeight,
+                HoUrpMigrationDecision.KeepConceptRename,
+                "_lilHoSSSDiffusedTexture.a",
+                "SSS composite weight encoded into Sss.Diffusion.a."));
         }
 
         private static void RegisterObjectCustomSemantic(
@@ -633,13 +723,21 @@ namespace HoUrp.Extensions.Core
             SemanticFormat format,
             HoUrpIdentifier debugView,
             string legacySource,
-            string description)
+            string description,
+            bool consumedBySss)
         {
-            HoUrpIdentifier[] consumers =
-            {
-                HoUrpBuiltInNames.Features.SemanticPostProcess,
-                HoUrpBuiltInNames.Features.DebugComposite
-            };
+            HoUrpIdentifier[] consumers = consumedBySss
+                ? new[]
+                {
+                    HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                    HoUrpBuiltInNames.Features.SemanticPostProcess,
+                    HoUrpBuiltInNames.Features.DebugComposite
+                }
+                : new[]
+                {
+                    HoUrpBuiltInNames.Features.SemanticPostProcess,
+                    HoUrpBuiltInNames.Features.DebugComposite
+                };
 
             registry.Semantics.Register(new SemanticDefinition(
                 semantic,
@@ -665,6 +763,7 @@ namespace HoUrp.Extensions.Core
         {
             HoUrpIdentifier[] consumers =
             {
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
                 HoUrpBuiltInNames.Features.SemanticPostProcess,
                 HoUrpBuiltInNames.Features.DebugComposite
             };
@@ -691,6 +790,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
                 HoUrpBuiltInNames.Features.AovOutput,
                 new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SubsurfaceScattering,
                     HoUrpBuiltInNames.Features.SemanticPostProcess,
                     HoUrpBuiltInNames.Features.DebugComposite),
                 ResourceFormatHint.MaskRgba8,
@@ -707,6 +807,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                 HoUrpBuiltInNames.Features.AovOutput,
                 new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SubsurfaceScattering,
                     HoUrpBuiltInNames.Features.SemanticPostProcess,
                     HoUrpBuiltInNames.Features.DebugComposite),
                 ResourceFormatHint.HighPrecisionRgba16Float,
@@ -755,6 +856,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Semantics.MaterialClass,
                 HoUrpBuiltInNames.Features.AovOutput,
                 new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SubsurfaceScattering,
                     HoUrpBuiltInNames.Features.SemanticPostProcess,
                     HoUrpBuiltInNames.Features.DebugComposite),
                 ResourceFormatHint.HighPrecisionRgba16Float,
@@ -787,6 +889,7 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
                 HoUrpBuiltInNames.Features.AovOutput,
                 new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SubsurfaceScattering,
                     HoUrpBuiltInNames.Features.SemanticPostProcess,
                     HoUrpBuiltInNames.Features.DebugComposite),
                 ResourceFormatHint.HighPrecisionRgba16Float,
@@ -796,6 +899,36 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.DebugViews.AovSssSource,
                 "_lilHoAovSssTexture",
                 "Packed SSS input source color and participation weight."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.SssSource,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.DebugComposite),
+                ResourceFormatHint.HighPrecisionRgba16Float,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearZero,
+                HoUrpBuiltInNames.DebugViews.SssSource,
+                "_lilHoSSSSourceTexture",
+                "Prepared SSS source color and participation mask."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.SssDiffusion,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.DebugComposite),
+                ResourceFormatHint.HighPrecisionRgba16Float,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearZero,
+                HoUrpBuiltInNames.DebugViews.SssDiffusion,
+                "_lilHoSSSDiffusedTexture",
+                "Diffused SSS color and composite weight."));
         }
 
         private static void RegisterFeatures(HoUrpContractRegistry registry)
@@ -945,6 +1078,42 @@ namespace HoUrp.Extensions.Core
                 "Minimum read-only AOV consumer for semantic post processing."));
 
             registry.Features.Register(new FeatureDescriptor(
+                HoUrpBuiltInNames.Features.SubsurfaceScattering,
+                HoUrpDomain.Shading,
+                HoUrpPassStage.ScreenSss,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Resources.SssSource,
+                    HoUrpBuiltInNames.Resources.SssDiffusion),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Resources.AovMaskId,
+                    HoUrpBuiltInNames.Resources.AovNormalDepth,
+                    HoUrpBuiltInNames.Resources.AovSurfaceData,
+                    HoUrpBuiltInNames.Resources.AovSssSource),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
+                    HoUrpBuiltInNames.Semantics.ShadingSssCompositeWeight),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
+                    HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
+                    HoUrpBuiltInNames.Semantics.GeometryLinearDepth,
+                    HoUrpBuiltInNames.Semantics.MaterialSssProfile,
+                    HoUrpBuiltInNames.Semantics.MaterialThickness,
+                    HoUrpBuiltInNames.Semantics.MaterialCurvature,
+                    HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
+                    HoUrpBuiltInNames.Semantics.ShadingSssWeight),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Capabilities.RequiresAov,
+                    HoUrpBuiltInNames.Capabilities.SupportsDebugView),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.DebugViews.SssMask,
+                    HoUrpBuiltInNames.DebugViews.SssSource,
+                    HoUrpBuiltInNames.DebugViews.SssDiffusion,
+                    HoUrpBuiltInNames.DebugViews.SssCompositeWeight),
+                HoUrpMigrationDecision.KeepConceptRename,
+                "Runtime/SubsurfaceScattering/HoSubsurfaceScatteringRendererFeature.cs",
+                "Minimum screen-space SSS source, diffusion, and composite feature."));
+
+            registry.Features.Register(new FeatureDescriptor(
                 HoUrpBuiltInNames.Features.DebugComposite,
                 HoUrpDomain.Debug,
                 HoUrpPassStage.DebugComposite,
@@ -956,7 +1125,9 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
                     HoUrpBuiltInNames.Resources.AovSurfaceData,
                     HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
-                    HoUrpBuiltInNames.Resources.AovSssSource),
+                    HoUrpBuiltInNames.Resources.AovSssSource,
+                    HoUrpBuiltInNames.Resources.SssSource,
+                    HoUrpBuiltInNames.Resources.SssDiffusion),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
@@ -979,6 +1150,8 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Semantics.MaterialCustom3,
                     HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
                     HoUrpBuiltInNames.Semantics.ShadingSssWeight,
+                    HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
+                    HoUrpBuiltInNames.Semantics.ShadingSssCompositeWeight,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(
@@ -1006,6 +1179,10 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovMaterialCustom3,
                     HoUrpBuiltInNames.DebugViews.AovSssSource,
                     HoUrpBuiltInNames.DebugViews.AovSssWeight,
+                    HoUrpBuiltInNames.DebugViews.SssMask,
+                    HoUrpBuiltInNames.DebugViews.SssSource,
+                    HoUrpBuiltInNames.DebugViews.SssDiffusion,
+                    HoUrpBuiltInNames.DebugViews.SssCompositeWeight,
                     HoUrpBuiltInNames.DebugViews.SssProfileId,
                     HoUrpBuiltInNames.DebugViews.SssThickness,
                     HoUrpBuiltInNames.DebugViews.SssCurvature),

@@ -5,6 +5,7 @@ namespace HoUrp.Extensions.Core
         public static class Features
         {
             public static readonly HoUrpIdentifier AovOutput = "AovOutput";
+            public static readonly HoUrpIdentifier SubsurfaceScattering = "SubsurfaceScattering";
             public static readonly HoUrpIdentifier SemanticPostProcess = "SemanticPostProcess";
             public static readonly HoUrpIdentifier DebugComposite = "DebugComposite";
         }
@@ -34,6 +35,8 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier MaterialCustom3 = "Material.Custom3";
             public static readonly HoUrpIdentifier ShadingSssSourceColor = "Shading.SssSourceColor";
             public static readonly HoUrpIdentifier ShadingSssWeight = "Shading.SssWeight";
+            public static readonly HoUrpIdentifier ShadingSssDiffusionColor = "Shading.SssDiffusionColor";
+            public static readonly HoUrpIdentifier ShadingSssCompositeWeight = "Shading.SssCompositeWeight";
             public static readonly HoUrpIdentifier GeometryWorldNormal = "Geometry.WorldNormal";
             public static readonly HoUrpIdentifier GeometryLinearDepth = "Geometry.LinearDepth";
         }
@@ -47,6 +50,8 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovSurfaceData = "Aov.SurfaceData";
             public static readonly HoUrpIdentifier AovMaterialCustom0_3 = "Aov.MaterialCustom0_3";
             public static readonly HoUrpIdentifier AovSssSource = "Aov.SssSource";
+            public static readonly HoUrpIdentifier SssSource = "Sss.Source";
+            public static readonly HoUrpIdentifier SssDiffusion = "Sss.Diffusion";
         }
 
         public static class DebugViews
@@ -74,6 +79,10 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovMaterialCustom3 = "AOV.MaterialCustom3";
             public static readonly HoUrpIdentifier AovSssSource = "AOV.SssSource";
             public static readonly HoUrpIdentifier AovSssWeight = "AOV.SssWeight";
+            public static readonly HoUrpIdentifier SssMask = "SSS.Mask";
+            public static readonly HoUrpIdentifier SssSource = "SSS.Source";
+            public static readonly HoUrpIdentifier SssDiffusion = "SSS.Diffusion";
+            public static readonly HoUrpIdentifier SssCompositeWeight = "SSS.CompositeWeight";
             public static readonly HoUrpIdentifier SssProfileId = "SSS.ProfileId";
             public static readonly HoUrpIdentifier SssThickness = "SSS.Thickness";
             public static readonly HoUrpIdentifier SssCurvature = "SSS.Curvature";

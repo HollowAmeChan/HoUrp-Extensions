@@ -134,18 +134,24 @@ HoAOV 不能再被理解成“一张或一组随手写的后处理辅助图”�
 
 旧 `ScriptableRenderPass` / compatibility path 可以作为行为参照，但不应成为新包长期双路径维护目标。
 
+这里的 RenderGraph-first 不是“有 `RecordRenderGraph()` 就算完成”，而是必须严格按 RenderGraph 的资源声明、读写关系和生命周期模型来写。Feature 不能私自创建一条隐藏链路，也不能靠全局纹理、执行顺序或某个 RT “刚好存在”来维持跨 pass / 跨 Feature 数据流。
+
 必须坚持：
 
 - pass 明确声明读写资源。
 - 临时 RT 生命周期交给 RenderGraph 或统一资源层。
 - 跨 Feature 依赖显式化。
 - 全局纹理只作为必要的 shader binding，不作为资源生命周期管理方式。
+- shader 采样的每一个跨 pass 资源，都必须在对应 RenderGraph pass 中声明为输入或由明确的资源层绑定。
+- 多 pass 链路必须表现为 `producer resource -> consumer resource`，不能表现为私有 RT、隐式全局状态或外部副作用。
 
 不能做的事情：
 
 - 不能继续每个 Feature 自己维护一套临时 RT、copy、blur、debug 资源。
 - 不能因为旧实现有 compatibility path，就让新包也长期维护双路径。
 - 不能绕过资源声明直接依赖某个全局 RT “刚好已经存在”。
+- 不能在 RenderGraph blit / raster pass 里采样没有通过该 pass 声明或统一资源层登记的纹理。
+- 不能为了快速验证效果，临时用 `SetGlobalTexture`、静态缓存、材质属性副作用拼出长期链路；这类代码只能作为明确标注的临时诊断代码，不能进入阶段验收。
 
 ---
 

@@ -38,7 +38,11 @@ namespace HoUrp.Extensions.Debugging
             MaterialCustom2 = 19,
             MaterialCustom3 = 20,
             SssSource = 22,
-            SssWeight = 23
+            SssWeight = 23,
+            SssMask = 24,
+            SssPreparedSource = 25,
+            SssDiffusion = 26,
+            SssCompositeWeight = 27
         }
 
         [SerializeField]
@@ -158,6 +162,14 @@ namespace HoUrp.Extensions.Debugging
                     return HoUrpBuiltInNames.DebugViews.AovSssSource;
                 case AovDebugView.SssWeight:
                     return HoUrpBuiltInNames.DebugViews.AovSssWeight;
+                case AovDebugView.SssMask:
+                    return HoUrpBuiltInNames.DebugViews.SssMask;
+                case AovDebugView.SssPreparedSource:
+                    return HoUrpBuiltInNames.DebugViews.SssSource;
+                case AovDebugView.SssDiffusion:
+                    return HoUrpBuiltInNames.DebugViews.SssDiffusion;
+                case AovDebugView.SssCompositeWeight:
+                    return HoUrpBuiltInNames.DebugViews.SssCompositeWeight;
                 default:
                     return HoUrpBuiltInNames.DebugViews.AovMask;
             }
@@ -209,6 +221,14 @@ namespace HoUrp.Extensions.Debugging
                     return 20;
                 case AovDebugView.SssWeight:
                     return 21;
+                case AovDebugView.SssMask:
+                    return 22;
+                case AovDebugView.SssPreparedSource:
+                    return 23;
+                case AovDebugView.SssDiffusion:
+                    return 24;
+                case AovDebugView.SssCompositeWeight:
+                    return 25;
                 default:
                     return 0;
             }
@@ -561,6 +581,26 @@ namespace HoUrp.Extensions.Debugging
                 if (id == HoUrpBuiltInNames.DebugViews.AovSssWeight)
                 {
                     return 21;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.SssMask)
+                {
+                    return 22;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.SssSource)
+                {
+                    return 23;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.SssDiffusion)
+                {
+                    return 24;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.SssCompositeWeight)
+                {
+                    return 25;
                 }
 
                 return 0;

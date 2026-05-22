@@ -108,6 +108,28 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
+        public void SssIntermediateResourceDescriptorsUseHighPrecisionFormatAndZeroClear()
+        {
+            var resources = HoUrpBuiltInContracts
+                .CreateMinimalAovRegistry()
+                .Resources;
+            ResourceDefinition sssSource = resources.Get(HoUrpBuiltInNames.Resources.SssSource);
+            ResourceDefinition sssDiffusion = resources.Get(HoUrpBuiltInNames.Resources.SssDiffusion);
+
+            TextureDesc sourceDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(sssSource, CreateCameraDescriptor());
+            TextureDesc diffusionDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(sssDiffusion, CreateCameraDescriptor());
+
+            Assert.That(sourceDesc.name, Is.EqualTo("Sss.Source"));
+            Assert.That(sourceDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(sourceDesc.clearBuffer, Is.True);
+            Assert.That(sourceDesc.clearColor, Is.EqualTo(Color.clear));
+            Assert.That(diffusionDesc.name, Is.EqualTo("Sss.Diffusion"));
+            Assert.That(diffusionDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(diffusionDesc.clearBuffer, Is.True);
+            Assert.That(diffusionDesc.clearColor, Is.EqualTo(Color.clear));
+        }
+
+        [Test]
         public void ScaledDescriptorRoundsDownButNeverBelowOnePixel()
         {
             ResourceDefinition scaled = new ResourceDefinition(

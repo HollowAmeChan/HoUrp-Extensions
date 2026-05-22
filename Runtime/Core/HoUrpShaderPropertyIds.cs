@@ -7,6 +7,7 @@ namespace HoUrp.Extensions.Core
         public const string AovOutputFallbackShaderName = "Hidden/HoURP/AOV/AovOutputFallback";
         public const string AovDebugShaderName = "Hidden/HoURP/Debug/AovDebug";
         public const string SemanticPostAovReadProbeShaderName = "Hidden/HoURP/SemanticPost/AovReadProbe";
+        public const string SubsurfaceScatteringShaderName = "Hidden/HoURP/SSS/SubsurfaceScattering";
 
         public static readonly int AovMaskIdTexture = Shader.PropertyToID("_HoUrpAovMaskIdTexture");
         public static readonly int AovNormalDepthTexture = Shader.PropertyToID("_HoUrpAovNormalDepthTexture");
@@ -15,6 +16,8 @@ namespace HoUrp.Extensions.Core
         public static readonly int AovSurfaceDataTexture = Shader.PropertyToID("_HoUrpAovSurfaceDataTexture");
         public static readonly int AovMaterialCustom0_3Texture = Shader.PropertyToID("_HoUrpAovMaterialCustom0_3Texture");
         public static readonly int AovSssSourceTexture = Shader.PropertyToID("_HoUrpAovSssSourceTexture");
+        public static readonly int SssSourceTexture = Shader.PropertyToID("_HoUrpSssSourceTexture");
+        public static readonly int SssDiffusionTexture = Shader.PropertyToID("_HoUrpSssDiffusionTexture");
         public static readonly int AovDebugSourceTexture = Shader.PropertyToID("_HoUrpAovDebugSourceTexture");
         public static readonly int AovDebugTileMode = Shader.PropertyToID("_HoUrpAovDebugTileMode");
         public static readonly int AovDebugTileRect = Shader.PropertyToID("_HoUrpAovDebugTileRect");
@@ -34,5 +37,10 @@ namespace HoUrp.Extensions.Core
         public static readonly int SssWeight = Shader.PropertyToID("_HoUrpSssWeight");
         public static readonly int SemanticPostObjectCustomChannel = Shader.PropertyToID("_HoUrpSemanticPostObjectCustomChannel");
         public static readonly int SemanticPostMaterialCustomChannel = Shader.PropertyToID("_HoUrpSemanticPostMaterialCustomChannel");
+        public static readonly int SssStrength = Shader.PropertyToID("_HoUrpSssStrength");
+        public static readonly int SssRadius = Shader.PropertyToID("_HoUrpSssRadius");
+        public static readonly int SssDepthTolerance = Shader.PropertyToID("_HoUrpSssDepthTolerance");
+        public static readonly int SssNormalTolerance = Shader.PropertyToID("_HoUrpSssNormalTolerance");
+        public static readonly int SssSourcePreserve = Shader.PropertyToID("_HoUrpSssSourcePreserve");
     }
 }
