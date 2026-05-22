@@ -416,6 +416,32 @@
 
 它不关心对象是谁，只关心图像如何被处理。
 
+这一域需要特别补一条资源设计：**纯图像域默认不应该按 effect / layer 数量线性增长 RT 数量，而应该由统一的 ImageChain 以双缓冲方式执行**。
+
+典型形式是：
+
+```text
+ImageChain.Read  = 当前图像
+ImageChain.Write = 另一张同规格工作纹理
+
+pass 0: Read -> Write
+swap
+pass 1: Read -> Write
+swap
+pass 2: Read -> Write
+swap
+```
+
+这和 RenderGraph-first 不冲突。RenderGraph 仍然看到每个 pass 的显式读写关系；区别只是资源声明层把一组线性 image-space pass 约束到少量可复用工作纹理，而不是让每个 pass 都创建一张新的全屏 transient texture。这样能显著降低 Shoost final image stack、简单色彩链路、锐化、VHS/CRT、色差、颗粒、tone map、简单 blur 等链路的内存峰值和资源 churn。
+
+需要额外资源的 image effect 必须显式升级资源类型，而不是绕开 ImageChain：
+
+- 多分辨率 bloom / pyramid：申请 pyramid pool。
+- 迭代 blur / separable blur：申请局部 ping-pong pair，可按分辨率缩放。
+- temporal / history：申请 persistent history。
+- 需要原图参与最终合成：声明 `OriginalSource` pin。
+- 需要 AOV / depth / normal：声明为 Semantic / Geometry 输入，不能继续伪装成纯 ImageDomain。
+
 ---
 
 ### 4.6 Composite Domain
@@ -598,6 +624,27 @@ RSUV 最好和 Object Domain / Material Domain / Shading Domain 一起进入统�
 - Bloom、SSS、SSR、DoF、AO、Volumetric 都能复用同一套滤波基础设施
 - 资源和算法更统一
 - 调试和替换更容易
+
+这里还应该拆出一个比 FilterGraph 更基础的概念：**ImageChain 双缓冲执行器**。
+
+FilterGraph 解决的是“如何滤波”：blur、downsample、upsample、temporal、edge-aware、pyramid 等算法。ImageChain 解决的是“纯图像 pass 如何连续写下去而不浪费资源”。大量 Shoost / ImagePost layer 并不需要独立输出资源，它们只是把当前图像变成下一张图像。对这类 pass，默认执行模型应该是：
+
+```text
+ImageChain.Begin(cameraColorCopy or imported source)
+ImageChain.AddPass(effect0)
+ImageChain.AddPass(effect1)
+ImageChain.AddPass(effect2)
+ImageChain.End(write back to camera color or final output)
+```
+
+内部只需要 `Image.WorkA` / `Image.WorkB` 两张同规格工作纹理，必要时加一个 `Image.Original` copy。每个 pass 仍然在 RenderGraph 中显式声明读 `WorkA` 写 `WorkB`，然后交换读写角色。
+
+这能避免旧实现里常见的两种浪费：
+
+- RenderGraph 路径中每个 layer 都 `CreateTexture`，导致同尺寸全屏 transient 数量随 layer 增长。
+- Feature 自己维护 `TempA/TempB/TempC`，但资源命名、debug、生命周期和跨 Feature 复用无法统一。
+
+原则上，纯图像域先走 ImageChain；只有当 effect 需要多分辨率、历史帧、分支合成、original source、AOV/depth/normal 或多输出时，才向 FilterGraph / ResourceRegistry 申请额外资源。
 
 ---
 
@@ -1189,12 +1236,15 @@ Layer/Tag 的问题是：
 
 - 统一 Blur / Downsample / Upsample / Temporal / Bilateral
 - 让 HoSSS、Shoost Glow/IrisBlur/RGBBlur、HoPost DoF、未来 AO/SSR/水体共享底层能力
+- 同步定义 ImageDomain 的 ImageChain 双缓冲执行模型：纯图像 pass 默认复用 `Image.WorkA` / `Image.WorkB`，只有声明过的多分辨率、历史帧、original source、AOV/depth/normal 或多输出需求才能额外申请资源
 
 ### 第六优先级：收敛 RenderGraph 资源管理
 
 把资源生命周期、依赖顺序、临时 RT 复用统一起来。当前不是“有没有 RenderGraph”的问题，而是多个 Feature 的 RenderGraph path 还缺统一资源目录、统一 debug 和统一依赖声明。
 
 这一步必须把“禁止私自创建链路”作为验收项：Feature 之间只能通过登记过的资源和声明过的 pass 依赖连接；不能靠私有 RT、全局纹理副作用、固定执行顺序或 shader 里偷偷采样未声明纹理来完成数据传递。
+
+对纯图像域还要增加一个验收项：线性 image stack 的中间全屏资源数量不能随 layer 数量增长。RenderGraph 中可以有多个 pass，但它们应通过统一 ImageChain 的读写交换来表达，而不是每层创建独占同规格 RT。
 
 ### 第七优先级：迁移语义后处理层
 
@@ -1704,6 +1754,68 @@ Filter/
 
 ---
 
+## 20.10.1 ImageChain / 纯图像域双缓冲
+
+`ImageDomain` 需要一个比具体滤波算法更底层的执行器，用来承载纯图像空间的线性 pass 链。建议称为 `ImageChain` 或 `ImagePostChain`。
+
+职责：
+
+- 管理当前图像的 read/write 工作纹理。
+- 提供 `WorkA` / `WorkB` 双缓冲。
+- 在每个 RenderGraph pass 后交换 read/write。
+- 在需要时提供一次显式 `OriginalSource` copy。
+- 把最终结果交还给 camera color / final output。
+- 向 Debug Framework 暴露当前 image pass、read/write 资源和 swap 状态。
+
+推荐结构：
+
+```text
+Image/
+├── ImageChain
+├── ImageChainContext
+├── ImagePassDescriptor
+├── ImageWorkTexturePool
+├── ImageOriginalSource
+└── ImageDebugView
+```
+
+基础执行模型：
+
+```text
+Begin(source)
+  WorkA = copy/import source
+  WorkB = same descriptor transient
+
+For each pure image pass:
+  Read  = current
+  Write = alternate
+  Record pass(Read -> Write)
+  Swap()
+
+End()
+  Publish current as Image.Final
+  Copy/alias to camera color when required
+```
+
+这套机制主要服务 Shoost / ImagePost 这类 final image stack。它不替代 HoPost、HoSSS、OIT、角色特化或任何语义合成模块；这些模块如果读取 AOV、depth、normal、object id、material id 或 profile，就必须声明对应 Semantic / Geometry 输入。
+
+允许申请额外资源的例外：
+
+- `Pyramid`：多分辨率 bloom、Kawase chain、mipmap-like down/up sample。
+- `History`：TAA、temporal accumulation、motion trail。
+- `Branch`：一个 pass 同时需要 original source 和 filtered result。
+- `MultiOutput`：MRT 或多个逻辑输出。
+- `SemanticInput`：AOV / depth / normal / mask 参与决策，此时不再是纯 ImageDomain。
+
+验收标准：
+
+- 线性纯图像 pass 数量增加时，全分辨率工作 RT 不应按 pass 数量增长。
+- 每个 pass 的 source / destination 仍必须在 RenderGraph 中显式声明。
+- `WorkA` / `WorkB` 不能作为长期公共资源发布，只能作为 frame transient 工作区。
+- Debug view 应能显示 ImageChain 当前 pass 的 read/write handle 和最终输出来源。
+
+---
+
 ## 20.11 推荐统一的 Filter API
 
 例如：
@@ -1720,6 +1832,24 @@ FilterRequest
     TemporalMode
 }
 ```
+
+纯图像 pass 不应该直接从 `FilterRequest` 开始。更合理的是先声明 `ImagePassDescriptor`：
+
+```cpp
+ImagePassDescriptor
+{
+    Name
+    Input = ImageChain.Current
+    Output = ImageChain.Next
+    Shader
+    PassIndex
+    NeedsOriginalSource
+    ExtraInputs
+    DebugView
+}
+```
+
+当 `ImagePassDescriptor` 发现自己需要 blur、pyramid、history 或 edge-aware 采样时，再向 FilterGraph 发出 `FilterRequest`。这样可以把“普通线性图像变换”和“真正需要额外滤波资源的算法”分开，避免每个简单 layer 都变成一次资源分配。
 
 这样：
 
@@ -1981,6 +2111,8 @@ Composite Participation
 - Blur RT
 - Temp Semantic
 - Intermediate Lighting
+- ImageChain WorkA / WorkB
+- ImageChain OriginalSource copy
 
 ---
 

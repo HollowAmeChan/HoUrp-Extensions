@@ -188,11 +188,29 @@ HoPost 和 Shoost 的边界要清楚：
 
 Shoost 可以轻量使用 AOV composite，但不能变成第二套 HoPost。
 
+纯 `ImageDomain` 链路还必须有自己的资源策略：默认按统一的双缓冲 / ping-pong image chain 执行，而不是每个 image effect 或每个 layer 各自创建一张同尺寸中间 RT。线性的全屏图像 pass 应该只表达为：
+
+```text
+ImageChain.Read -> pass -> ImageChain.Write -> swap
+```
+
+这样可以让 Bloom、色彩、VHS、CRT、锐化、色差、FilmGrain、ToneMap、简单 Blur 等纯图像域效果共享少量 frame transient 资源，并由 RenderGraph / 统一资源层负责别名、生命周期和 debug 观察。
+
+允许脱离双缓冲的情况必须显式声明，例如：
+
+- 需要多分辨率金字塔。
+- 需要历史帧或 temporal accumulation。
+- 需要同时保留 original source 和 filtered result。
+- 需要多 MRT、mask、depth/normal、AOV 或其它语义输入。
+- 需要长期缓存或跨帧资源。
+
 不能做的事情：
 
 - 不能把所有后期都塞进一个万能 stack。
 - 不能让最终画面风格栈反过来定义对象/材质语义。
 - 不能让语义 mask 规则散落在各个 shader 中。
+- 不能让纯图像域每个 pass 默认分配独占全屏 RT；只有声明过的例外链路才能申请额外资源。
+- 不能把双缓冲的两个工作纹理发布成长期公共语义资源；它们只是 ImageDomain 当前链的 frame transient 工作区。
 
 ---
 
