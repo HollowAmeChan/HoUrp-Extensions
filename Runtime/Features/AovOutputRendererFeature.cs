@@ -91,6 +91,9 @@ namespace HoUrp.Extensions.Features
                 {
                     fallbackMaterial = CoreUtils.CreateEngineMaterial(fallbackShader);
                     fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.AovMaskWeight, 1.0f);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.ObjectId, 1.0f);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.ObjectGroupId, 0.0f);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.ObjectFlags, 0.0f);
                     fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.ObjectCustomMask, 0.0f);
                     fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.MaterialClass, 0.0f);
                     fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.MaterialSssProfile, 0.0f);

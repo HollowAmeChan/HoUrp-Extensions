@@ -94,6 +94,13 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 return values.r;
             }
 
+            half PickFlagBit(half encodedFlags, int bitIndex)
+            {
+                uint flags = (uint)round(saturate(encodedFlags) * 255.0h);
+                uint bit = 1u << (uint)clamp(bitIndex, 0, 7);
+                return (flags & bit) != 0u ? 1.0h : 0.0h;
+            }
+
             half VisualizeLinearDepth01(half linearDepth)
             {
                 return saturate(sqrt(saturate(linearDepth)));
@@ -197,6 +204,11 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 {
                     half4 semanticPostMask = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(max(max(semanticPostMask.r, semanticPostMask.g), max(semanticPostMask.b, semanticPostMask.a)));
+                }
+                else if (_HoUrpAovDebugMode >= 27 && _HoUrpAovDebugMode <= 34)
+                {
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(PickFlagBit(maskId.a, _HoUrpAovDebugMode - 27));
                 }
                 else
                 {
@@ -311,6 +323,13 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 return values.r;
             }
 
+            half PickFlagBit(half encodedFlags, int bitIndex)
+            {
+                uint flags = (uint)round(saturate(encodedFlags) * 255.0h);
+                uint bit = 1u << (uint)clamp(bitIndex, 0, 7);
+                return (flags & bit) != 0u ? 1.0h : 0.0h;
+            }
+
             half VisualizeLinearDepth01(half linearDepth)
             {
                 return saturate(sqrt(saturate(linearDepth)));
@@ -342,7 +361,14 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 if (mode == 1) return PickLabelChar(index, 79u, 66u, 74u, 69u, 67u, 84u, 32u, 73u, 68u, 32u);
                 if (mode == 2) return PickLabelChar(index, 68u, 69u, 80u, 84u, 72u, 32u, 32u, 32u, 32u, 32u);
                 if (mode == 3) return PickLabelChar(index, 78u, 79u, 82u, 77u, 65u, 76u, 32u, 32u, 32u, 32u);
-                if (mode >= 4 && mode <= 11) return PickLabelChar(index, 79u, 66u, 74u, 32u, 67u, uint(48 + mode - 4), 32u, 32u, 32u, 32u);
+                if (mode == 4) return PickLabelChar(index, 83u, 85u, 66u, 74u, 69u, 67u, 84u, 32u, 32u, 32u);
+                if (mode == 5) return PickLabelChar(index, 70u, 65u, 67u, 69u, 32u, 32u, 32u, 32u, 32u, 32u);
+                if (mode == 6) return PickLabelChar(index, 72u, 65u, 73u, 82u, 32u, 32u, 32u, 32u, 32u, 32u);
+                if (mode == 7) return PickLabelChar(index, 69u, 89u, 69u, 32u, 32u, 32u, 32u, 32u, 32u, 32u);
+                if (mode == 8) return PickLabelChar(index, 65u, 67u, 67u, 69u, 83u, 83u, 32u, 32u, 32u, 32u);
+                if (mode == 9) return PickLabelChar(index, 67u, 76u, 79u, 84u, 72u, 32u, 32u, 32u, 32u, 32u);
+                if (mode == 10) return PickLabelChar(index, 80u, 82u, 79u, 80u, 32u, 32u, 32u, 32u, 32u, 32u);
+                if (mode == 11) return PickLabelChar(index, 82u, 69u, 83u, 69u, 82u, 86u, 69u, 68u, 32u, 32u);
                 if (mode == 12) return PickLabelChar(index, 77u, 65u, 84u, 32u, 67u, 76u, 65u, 83u, 83u, 32u);
                 if (mode == 13) return PickLabelChar(index, 83u, 83u, 83u, 32u, 80u, 82u, 79u, 70u, 32u, 32u);
                 if (mode == 14) return PickLabelChar(index, 84u, 72u, 73u, 67u, 75u, 32u, 32u, 32u, 32u, 32u);
@@ -355,6 +381,8 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 if (mode == 24) return PickLabelChar(index, 83u, 83u, 83u, 32u, 68u, 73u, 70u, 70u, 32u, 32u);
                 if (mode == 25) return PickLabelChar(index, 83u, 83u, 83u, 32u, 67u, 77u, 80u, 32u, 87u, 32u);
                 if (mode == 26) return PickLabelChar(index, 80u, 79u, 83u, 84u, 32u, 77u, 65u, 83u, 75u, 32u);
+                if (mode == 27) return PickLabelChar(index, 80u, 79u, 83u, 84u, 32u, 82u, 88u, 32u, 32u, 32u);
+                if (mode >= 28 && mode <= 34) return PickLabelChar(index, 70u, 76u, 65u, 71u, 32u, uint(48 + mode - 27), 32u, 32u, 32u, 32u);
                 return 32u;
             }
 
@@ -393,6 +421,8 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 if (c == 85u) { if (row == 6u) return 14u; return 17u; }
                 if (c == 86u) { if (row <= 4u) return 17u; if (row == 5u) return 10u; return 4u; }
                 if (c == 87u) { if (row == 6u) return 10u; if (row >= 3u) return 21u; return 17u; }
+                if (c == 88u) { if (row == 0u || row == 6u) return 17u; if (row == 1u || row == 5u) return 10u; if (row == 2u || row == 4u) return 4u; return 4u; }
+                if (c == 89u) { if (row <= 2u) return 17u; if (row == 3u) return 10u; return 4u; }
                 return 0u;
             }
 
@@ -544,6 +574,12 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 {
                     half4 semanticPostMask = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugScalar(max(max(semanticPostMask.r, semanticPostMask.g), max(semanticPostMask.b, semanticPostMask.a))), uv);
+                }
+
+                if (_HoUrpAovDebugMode >= 27 && _HoUrpAovDebugMode <= 34)
+                {
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(PickFlagBit(maskId.a, _HoUrpAovDebugMode - 27)), uv);
                 }
 
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);

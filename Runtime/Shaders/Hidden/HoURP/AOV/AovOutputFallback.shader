@@ -46,6 +46,9 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
             };
 
             float _HoUrpAovMaskWeight;
+            float _HoUrpObjectId;
+            float _HoUrpObjectGroupId;
+            float _HoUrpObjectFlags;
             float _HoUrpObjectCustomMask;
             float _HoUrpMaterialClass;
             float _HoUrpMaterialSssProfile;
@@ -87,7 +90,11 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                 half3 encodedNormal = half3(normalWS * 0.5 + 0.5);
                 float objectCustomMask = round(clamp(_HoUrpObjectCustomMask, 0.0, 255.0));
                 half maskWeight = half(saturate(_HoUrpAovMaskWeight));
-                output.maskId = half4(maskWeight, 1.0h / 255.0h, 0.0h, 0.0h);
+                output.maskId = half4(
+                    maskWeight,
+                    half(saturate(_HoUrpObjectId / 255.0)),
+                    half(saturate(_HoUrpObjectGroupId / 255.0)),
+                    half(saturate(_HoUrpObjectFlags / 255.0)));
                 output.normalDepth = half4(encodedNormal, half(saturate(linear01Depth)));
                 output.objectCustom0 = half4(
                     HasMaskBit(objectCustomMask, 1.0),

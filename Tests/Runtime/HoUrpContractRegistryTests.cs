@@ -1,4 +1,5 @@
 using System;
+using HoUrp.Extensions.Capability;
 using HoUrp.Extensions.Core;
 using HoUrp.Extensions.Debugging;
 using HoUrp.Extensions.Resources;
@@ -16,8 +17,8 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(registry.Features.Count, Is.EqualTo(4));
             Assert.That(registry.Resources.Count, Is.EqualTo(10));
             Assert.That(registry.Semantics.Count, Is.EqualTo(28));
-            Assert.That(registry.DebugViews.Count, Is.EqualTo(30));
-            Assert.That(registry.Capabilities.Count, Is.EqualTo(3));
+            Assert.That(registry.DebugViews.Count, Is.EqualTo(38));
+            Assert.That(registry.Capabilities.Count, Is.EqualTo(5));
         }
 
         [Test]
@@ -76,9 +77,31 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(custom2.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovObjectCustom0_3));
             Assert.That(custom2.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ObjectCustom2));
             Assert.That(custom2.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
+            Assert.That(custom2.LegacyReference, Is.EqualTo("HoAovDebugMode.Hair"));
+            Assert.That(custom2.Description, Does.Contain("Hair object semantic bit"));
             Assert.That(custom5.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovObjectCustom4_7));
             Assert.That(custom5.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ObjectCustom5));
             Assert.That(custom5.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
+            Assert.That(custom5.LegacyReference, Is.EqualTo("HoAovDebugMode.Cloth"));
+            Assert.That(custom5.Description, Does.Contain("Cloth object semantic bit"));
+        }
+
+        [Test]
+        public void MinimalAovRegistryLinksObjectFlagDebugViews()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            DebugViewDefinition postReceiver = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag0);
+            DebugViewDefinition flag7 = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag7);
+
+            Assert.That(postReceiver.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovMaskId));
+            Assert.That(postReceiver.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ObjectFlags));
+            Assert.That(postReceiver.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
+            Assert.That(postReceiver.Description, Does.Contain("SemanticPost receiver gate"));
+            Assert.That(flag7.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovMaskId));
+            Assert.That(flag7.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ObjectFlags));
+            Assert.That(flag7.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
+            Assert.That(flag7.LegacyReference, Is.EqualTo("HoAovDebugMode.ObjectFlag7"));
         }
 
         [Test]
@@ -218,6 +241,21 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
+        public void MinimalAovRegistryRegistersObjectCapabilityUiEntries()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            var writesAov = registry.Capabilities.Get(HoUrpBuiltInNames.Capabilities.WritesAov);
+            var writesObjectCustom = registry.Capabilities.Get(HoUrpBuiltInNames.Capabilities.WritesObjectCustom);
+            var receivesSemanticPost = registry.Capabilities.Get(HoUrpBuiltInNames.Capabilities.ReceivesSemanticPost);
+
+            Assert.That(writesAov.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Object));
+            Assert.That(writesObjectCustom.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Object));
+            Assert.That(receivesSemanticPost.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Object));
+            Assert.That(receivesSemanticPost.Affects, Is.EqualTo("SemanticPostProcess masks"));
+        }
+
+        [Test]
         public void MinimalAovRegistryLinksSubsurfaceScatteringFeature()
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
@@ -321,6 +359,9 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.AovDebugTileGrid, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDebugTileGrid")));
             Assert.That(HoUrpShaderPropertyIds.SemanticPostTintColor, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSemanticPostTintColor")));
             Assert.That(HoUrpShaderPropertyIds.AovMaskWeight, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovMaskWeight")));
+            Assert.That(HoUrpShaderPropertyIds.ObjectId, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpObjectId")));
+            Assert.That(HoUrpShaderPropertyIds.ObjectGroupId, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpObjectGroupId")));
+            Assert.That(HoUrpShaderPropertyIds.ObjectFlags, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpObjectFlags")));
             Assert.That(HoUrpShaderPropertyIds.ObjectCustomMask, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpObjectCustomMask")));
             Assert.That(HoUrpShaderPropertyIds.MaterialClass, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialClass")));
             Assert.That(HoUrpShaderPropertyIds.MaterialSssProfile, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialSssProfile")));

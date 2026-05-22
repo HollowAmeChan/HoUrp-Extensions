@@ -61,6 +61,14 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier None = "Debug.None";
             public static readonly HoUrpIdentifier AovMask = "AOV.Mask";
             public static readonly HoUrpIdentifier AovObjectId = "AOV.ObjectId";
+            public static readonly HoUrpIdentifier AovObjectFlag0 = "AOV.ObjectFlag0";
+            public static readonly HoUrpIdentifier AovObjectFlag1 = "AOV.ObjectFlag1";
+            public static readonly HoUrpIdentifier AovObjectFlag2 = "AOV.ObjectFlag2";
+            public static readonly HoUrpIdentifier AovObjectFlag3 = "AOV.ObjectFlag3";
+            public static readonly HoUrpIdentifier AovObjectFlag4 = "AOV.ObjectFlag4";
+            public static readonly HoUrpIdentifier AovObjectFlag5 = "AOV.ObjectFlag5";
+            public static readonly HoUrpIdentifier AovObjectFlag6 = "AOV.ObjectFlag6";
+            public static readonly HoUrpIdentifier AovObjectFlag7 = "AOV.ObjectFlag7";
             public static readonly HoUrpIdentifier AovLinearDepth = "AOV.LinearDepth";
             public static readonly HoUrpIdentifier AovWorldNormal = "AOV.WorldNormal";
             public static readonly HoUrpIdentifier AovObjectCustom0 = "AOV.ObjectCustom0";
@@ -94,6 +102,8 @@ namespace HoUrp.Extensions.Core
         public static class Capabilities
         {
             public static readonly HoUrpIdentifier WritesAov = "WritesAov";
+            public static readonly HoUrpIdentifier WritesObjectCustom = "WritesObjectCustom";
+            public static readonly HoUrpIdentifier ReceivesSemanticPost = "ReceivesSemanticPost";
             public static readonly HoUrpIdentifier RequiresAov = "RequiresAov";
             public static readonly HoUrpIdentifier SupportsDebugView = "SupportsDebugView";
         }

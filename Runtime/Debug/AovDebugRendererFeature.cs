@@ -21,14 +21,14 @@ namespace HoUrp.Extensions.Debugging
             ObjectId = 2,
             LinearDepth = 3,
             WorldNormal = 4,
-            ObjectCustom0 = 5,
-            ObjectCustom1 = 6,
-            ObjectCustom2 = 7,
-            ObjectCustom3 = 8,
-            ObjectCustom4 = 9,
-            ObjectCustom5 = 10,
-            ObjectCustom6 = 11,
-            ObjectCustom7 = 12,
+            Subject = 5,
+            Face = 6,
+            Hair = 7,
+            Eye = 8,
+            Accessory = 9,
+            Cloth = 10,
+            Prop = 11,
+            Reserved = 12,
             MaterialClass = 13,
             SssProfile = 14,
             Thickness = 15,
@@ -43,7 +43,15 @@ namespace HoUrp.Extensions.Debugging
             SssPreparedSource = 25,
             SssDiffusion = 26,
             SssCompositeWeight = 27,
-            SemanticPostMask = 28
+            SemanticPostMask = 28,
+            PostReceiver = 29,
+            Flag1 = 30,
+            Flag2 = 31,
+            Flag3 = 32,
+            Flag4 = 33,
+            Flag5 = 34,
+            Flag6 = 35,
+            Flag7 = 36
         }
 
         [SerializeField]
@@ -123,25 +131,41 @@ namespace HoUrp.Extensions.Debugging
                     return HoUrpBuiltInNames.DebugViews.AovMask;
                 case AovDebugView.ObjectId:
                     return HoUrpBuiltInNames.DebugViews.AovObjectId;
+                case AovDebugView.PostReceiver:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag0;
+                case AovDebugView.Flag1:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag1;
+                case AovDebugView.Flag2:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag2;
+                case AovDebugView.Flag3:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag3;
+                case AovDebugView.Flag4:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag4;
+                case AovDebugView.Flag5:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag5;
+                case AovDebugView.Flag6:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag6;
+                case AovDebugView.Flag7:
+                    return HoUrpBuiltInNames.DebugViews.AovObjectFlag7;
                 case AovDebugView.LinearDepth:
                     return HoUrpBuiltInNames.DebugViews.AovLinearDepth;
                 case AovDebugView.WorldNormal:
                     return HoUrpBuiltInNames.DebugViews.AovWorldNormal;
-                case AovDebugView.ObjectCustom0:
+                case AovDebugView.Subject:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom0;
-                case AovDebugView.ObjectCustom1:
+                case AovDebugView.Face:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom1;
-                case AovDebugView.ObjectCustom2:
+                case AovDebugView.Hair:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom2;
-                case AovDebugView.ObjectCustom3:
+                case AovDebugView.Eye:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom3;
-                case AovDebugView.ObjectCustom4:
+                case AovDebugView.Accessory:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom4;
-                case AovDebugView.ObjectCustom5:
+                case AovDebugView.Cloth:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom5;
-                case AovDebugView.ObjectCustom6:
+                case AovDebugView.Prop:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom6;
-                case AovDebugView.ObjectCustom7:
+                case AovDebugView.Reserved:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom7;
                 case AovDebugView.MaterialClass:
                     return HoUrpBuiltInNames.DebugViews.AovMaterialClass;
@@ -184,25 +208,41 @@ namespace HoUrp.Extensions.Debugging
             {
                 case AovDebugView.ObjectId:
                     return 1;
+                case AovDebugView.PostReceiver:
+                    return 27;
+                case AovDebugView.Flag1:
+                    return 28;
+                case AovDebugView.Flag2:
+                    return 29;
+                case AovDebugView.Flag3:
+                    return 30;
+                case AovDebugView.Flag4:
+                    return 31;
+                case AovDebugView.Flag5:
+                    return 32;
+                case AovDebugView.Flag6:
+                    return 33;
+                case AovDebugView.Flag7:
+                    return 34;
                 case AovDebugView.LinearDepth:
                     return 2;
                 case AovDebugView.WorldNormal:
                     return 3;
-                case AovDebugView.ObjectCustom0:
+                case AovDebugView.Subject:
                     return 4;
-                case AovDebugView.ObjectCustom1:
+                case AovDebugView.Face:
                     return 5;
-                case AovDebugView.ObjectCustom2:
+                case AovDebugView.Hair:
                     return 6;
-                case AovDebugView.ObjectCustom3:
+                case AovDebugView.Eye:
                     return 7;
-                case AovDebugView.ObjectCustom4:
+                case AovDebugView.Accessory:
                     return 8;
-                case AovDebugView.ObjectCustom5:
+                case AovDebugView.Cloth:
                     return 9;
-                case AovDebugView.ObjectCustom6:
+                case AovDebugView.Prop:
                     return 10;
-                case AovDebugView.ObjectCustom7:
+                case AovDebugView.Reserved:
                     return 11;
                 case AovDebugView.MaterialClass:
                     return 12;
@@ -329,7 +369,9 @@ namespace HoUrp.Extensions.Debugging
                         continue;
                     }
 
-                    string viewKey = debugView.SourceResource.ToString() + "|" + debugView.SourceSemantic.ToString();
+                    string viewKey = debugView.SourceSemantic == HoUrpBuiltInNames.Semantics.ObjectFlags
+                        ? debugView.Id.ToString()
+                        : debugView.SourceResource.ToString() + "|" + debugView.SourceSemantic.ToString();
                     if (!uniqueViews.Add(viewKey))
                     {
                         continue;
@@ -486,6 +528,46 @@ namespace HoUrp.Extensions.Debugging
                 if (id == HoUrpBuiltInNames.DebugViews.AovObjectId)
                 {
                     return 1;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag0)
+                {
+                    return 27;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag1)
+                {
+                    return 28;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag2)
+                {
+                    return 29;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag3)
+                {
+                    return 30;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag4)
+                {
+                    return 31;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag5)
+                {
+                    return 32;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag6)
+                {
+                    return 33;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovObjectFlag7)
+                {
+                    return 34;
                 }
 
                 if (id == HoUrpBuiltInNames.DebugViews.AovLinearDepth)

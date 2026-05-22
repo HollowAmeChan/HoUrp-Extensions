@@ -27,6 +27,9 @@ namespace HoUrp.Extensions.Core
         public static readonly int AovDebugMode = Shader.PropertyToID("_HoUrpAovDebugMode");
         public static readonly int SemanticPostTintColor = Shader.PropertyToID("_HoUrpSemanticPostTintColor");
         public static readonly int AovMaskWeight = Shader.PropertyToID("_HoUrpAovMaskWeight");
+        public static readonly int ObjectId = Shader.PropertyToID("_HoUrpObjectId");
+        public static readonly int ObjectGroupId = Shader.PropertyToID("_HoUrpObjectGroupId");
+        public static readonly int ObjectFlags = Shader.PropertyToID("_HoUrpObjectFlags");
         public static readonly int ObjectCustomMask = Shader.PropertyToID("_HoUrpObjectCustomMask");
         public static readonly int MaterialClass = Shader.PropertyToID("_HoUrpMaterialClass");
         public static readonly int MaterialSssProfile = Shader.PropertyToID("_HoUrpMaterialSssProfile");

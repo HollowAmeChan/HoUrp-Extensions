@@ -296,7 +296,7 @@ namespace HoUrp.Extensions.Features
                     new SemanticPostRule
                     {
                         enabled = true,
-                        source = SemanticPostRuleSource.MaskWeight,
+                        source = SemanticPostRuleSource.ObjectCustom0,
                         op = SemanticPostRuleOperator.Greater,
                         combine = SemanticPostRuleCombine.Replace,
                         range = new Vector2(0.01f, 1.0f)

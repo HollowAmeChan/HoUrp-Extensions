@@ -80,6 +80,13 @@ Shader "Hidden/HoURP/SemanticPost/AovReadProbe"
                 return PickChannel(values, clamp(channel, 0, 3));
             }
 
+            bool AllowsSemanticPost(float2 uv)
+            {
+                half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovMaskIdTexture, sampler_PointClamp, uv);
+                uint flags = (uint)round(maskId.a * 255.0h);
+                return maskId.r > 0.0h && (flags & 1u) != 0u;
+            }
+
             half SampleSource(float2 uv, int source)
             {
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovMaskIdTexture, sampler_PointClamp, uv);
@@ -151,6 +158,11 @@ Shader "Hidden/HoURP/SemanticPost/AovReadProbe"
             half EvaluateLayerMask(float2 uv, int layer)
             {
                 if (_HoUrpSemanticPostLayerParams[layer].x <= 0.0)
+                {
+                    return 0.0h;
+                }
+
+                if (!AllowsSemanticPost(uv))
                 {
                     return 0.0h;
                 }

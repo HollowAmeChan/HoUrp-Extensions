@@ -4,13 +4,13 @@
 
 | 检查 | 状态 |
 | --- | --- |
-| capability registry count / link tests | 待补 |
-| object preset mapping tests | 待补 |
-| material preset mapping tests | 待补 |
-| authoring clamp tests | 待补 |
-| shader property mapping tests | 视新增字段决定 |
+| capability registry count / link tests | 已补：`WritesObjectCustom` / `ReceivesSemanticPost` |
+| object preset mapping tests | 已补：Subject / Face / Hair / Eye / Accessory / Cloth / Prop / Clear |
+| material preset mapping tests | 已补：SkinSss / Clear |
+| authoring clamp tests | 已补：object byte / mask weight / material range |
+| shader property mapping tests | 已补：ObjectId / ObjectGroupId / ObjectFlags |
 | editor asmdef compile | 待 Unity 验证 |
-| `git diff --check` | 待跑 |
+| `git diff --check` | 已跑：仅 LF/CRLF warning |
 
 ## 手动 Unity 验收
 
@@ -45,10 +45,18 @@ SemanticPost 验收：
 
 | 场景 | 期望 |
 | --- | --- |
-| Object Subject + SemanticPost MaskWeight rule | `POST MASK` 显示对象 |
+| Object Subject + SemanticPost ObjectCustom0 rule | `POST MASK` 显示对象 |
 | Object Hair + Custom2 rule | 只命中 hair preset 对象 |
 | Material Skin + SSS rule | 只命中 SSS 权重区域 |
 | AllRegistered | AOV / SSS / POST MASK tile 一致更新 |
+
+当前代码状态：
+
+- `ObjectSemanticAuthoring` 已增加 `WritesAov` / `ReceivesSemanticPost` / `ObjectId` / `GroupId` / `Flags` 和对象 preset helper。
+- `MaterialSemanticAuthoring` 已增加材质 preset helper 和 custom channel clamp。
+- `AovOutputFallback` 已写出 ObjectId / GroupId / Flags 到 `Aov.MaskId.gba`。
+- `SemanticPostProcess` 默认 rule 已改为 `ObjectCustom0`，与 Subject preset 对齐。
+- 已新增 `ObjectSemanticAuthoringEditor` / `MaterialSemanticAuthoringEditor`。
 
 ## 风险点
 
