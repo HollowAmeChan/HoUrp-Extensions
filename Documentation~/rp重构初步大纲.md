@@ -2,6 +2,8 @@
 
 > 这是对我们前面关于 HOAOV、RSUV、后处理、语义域划分、几何/形变/着色/合成边界、UI/交互设计、Debug 层设计等讨论的系统整理。
 
+> 开始新的 RP / 材质 / RenderFeature 重构对话前，先引用 `Documentation~/rp设计哲学底线.md`。需要查旧代码入口时，再引用 `Documentation~/旧实现快速定位索引.md`。
+
 ---
 
 ## 0. 这次讨论的核心结论
