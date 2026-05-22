@@ -4,13 +4,13 @@
 
 | 检查 | 状态 |
 | --- | --- |
-| registry count / link tests | 待实现后补充 |
-| `Aov.SurfaceData` resource descriptor tests | 待实现后补充 |
-| `Aov.MaterialCustom0_3` resource descriptor tests | 待实现后补充 |
-| shader property mapping tests | 待实现后补充 |
-| DebugView source/channel mapping tests | 待实现后补充 |
-| SemanticPost consumed resource declaration tests | 待实现后补充 |
-| `git diff --check` | 规划阶段通过后更新 |
+| registry count / link tests | 已补充测试 |
+| `Aov.SurfaceData` resource descriptor tests | 已补充测试 |
+| `Aov.MaterialCustom0_3` resource descriptor tests | 已补充测试 |
+| shader property mapping tests | 已补充测试 |
+| DebugView source/channel mapping tests | 已补充测试 |
+| SemanticPost consumed resource declaration tests | 已补充测试 |
+| `git diff --check` | 通过 |
 | Unity batchmode / EditMode tests | 当前包目录没有独立 Unity project / `.csproj` |
 
 ## 手动 Unity 验收
@@ -50,15 +50,22 @@ materialCustom0 = 1
 
 | 条件 | 状态 |
 | --- | --- |
-| `Aov.SurfaceData` 已注册 | 待实现 |
-| `Aov.MaterialCustom0_3` 已注册 | 待实现 |
-| `Material.Class` / `Material.SssProfile` / `Material.Thickness` / `Material.Curvature` 已注册 | 待实现 |
-| `Material.Custom0..3` 已注册 | 待实现 |
-| `Material.Utility` 有明确未决或生产判定 | 待实现 |
-| AovOutput 显式写新增材质语义 MRT | 待实现 |
-| DebugView 能映射到新增 resource/channel | 待实现 |
-| SemanticPost 显式读取新增资源 | 待实现 |
-| 不依赖旧 `_lilHoAov*` / `_HoAov*` 逻辑名 | 待实现 |
-| 不修改 `lilToon` / `lilPBR` | 待实现 |
-| 未决项已登记 | 待实现 |
+| `Aov.SurfaceData` 已注册 | 通过 |
+| `Aov.MaterialCustom0_3` 已注册 | 通过 |
+| `Material.Class` / `Material.SssProfile` / `Material.Thickness` / `Material.Curvature` 已注册 | 通过 |
+| `Material.Custom0..3` 已注册 | 通过 |
+| `Material.Utility` 有明确未决或生产判定 | 通过，已注册但第四阶段不生产稳定 resource channel |
+| AovOutput 显式写新增材质语义 MRT | 通过 |
+| DebugView 能映射到新增 resource/channel | 通过 |
+| SemanticPost 显式读取新增资源 | 通过 |
+| 不依赖旧 `_lilHoAov*` / `_HoAov*` 逻辑名 | 通过，旧名只在 legacy 字段和文档中保留 |
+| 不修改 `lilToon` / `lilPBR` | 通过 |
+| 未决项已登记 | 通过 |
 
+## 本轮已知限制
+
+- 未运行 Unity batchmode / EditMode tests；当前目录是 Unity package，没有独立 Unity project / `.csproj`。
+- 未做 RenderDoc 自动截帧。
+- 未创建 package sample scene。
+- `Material.Utility` 本阶段只注册，不写入 `Aov.SurfaceData` 或 `Aov.MaterialCustom0_3`。
+- 旧 `SurfaceData` / HoSSS 视觉一致性不在第四阶段验收范围内。

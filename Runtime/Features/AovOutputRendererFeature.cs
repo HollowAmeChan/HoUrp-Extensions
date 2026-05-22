@@ -92,6 +92,11 @@ namespace HoUrp.Extensions.Features
                     fallbackMaterial = CoreUtils.CreateEngineMaterial(fallbackShader);
                     fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.AovMaskWeight, 1.0f);
                     fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.ObjectCustomMask, 0.0f);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.MaterialClass, 0.0f);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.MaterialSssProfile, 0.0f);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.MaterialThickness, 0.0f);
+                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.MaterialCurvature, 0.0f);
+                    fallbackMaterial.SetVector(HoUrpShaderPropertyIds.MaterialCustom0_3, Vector4.zero);
                 }
             }
 
@@ -125,6 +130,8 @@ namespace HoUrp.Extensions.Features
                 TextureHandle normalDepthTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovNormalDepth);
                 TextureHandle objectCustom0Texture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom0_3);
                 TextureHandle objectCustom1Texture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom4_7);
+                TextureHandle surfaceDataTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovSurfaceData);
+                TextureHandle materialCustomTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3);
 
                 FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.opaque, layerMask);
                 DrawingSettings drawingSettings = RenderingUtils.CreateDrawingSettings(
@@ -150,6 +157,8 @@ namespace HoUrp.Extensions.Features
                     passData.normalDepthTexture = normalDepthTexture;
                     passData.objectCustom0Texture = objectCustom0Texture;
                     passData.objectCustom1Texture = objectCustom1Texture;
+                    passData.surfaceDataTexture = surfaceDataTexture;
+                    passData.materialCustomTexture = materialCustomTexture;
                     passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
 
                     if (!passData.rendererList.IsValid())
@@ -162,6 +171,8 @@ namespace HoUrp.Extensions.Features
                     builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.ReadWrite);
                     builder.SetRenderAttachment(objectCustom0Texture, 2, AccessFlags.ReadWrite);
                     builder.SetRenderAttachment(objectCustom1Texture, 3, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachment(surfaceDataTexture, 4, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachment(materialCustomTexture, 5, AccessFlags.ReadWrite);
 
                     if (resourceData.activeDepthTexture.IsValid())
                     {
@@ -176,6 +187,8 @@ namespace HoUrp.Extensions.Features
                         _ = data.normalDepthTexture;
                         _ = data.objectCustom0Texture;
                         _ = data.objectCustom1Texture;
+                        _ = data.surfaceDataTexture;
+                        _ = data.materialCustomTexture;
                         context.cmd.DrawRendererList(data.rendererList);
                     });
                 }
@@ -187,6 +200,8 @@ namespace HoUrp.Extensions.Features
                 public TextureHandle normalDepthTexture;
                 public TextureHandle objectCustom0Texture;
                 public TextureHandle objectCustom1Texture;
+                public TextureHandle surfaceDataTexture;
+                public TextureHandle materialCustomTexture;
                 public RendererListHandle rendererList;
             }
         }

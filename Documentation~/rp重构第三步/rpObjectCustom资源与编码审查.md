@@ -13,12 +13,14 @@
 
 ```text
 Aov.MaskId           clear = (0, 0, 0, 0)
-Aov.NormalDepth      clear = (0, 0, 0, 0)
+Aov.NormalDepth      clear = (0, 0, 0, 1)
 Aov.ObjectCustom0_3  clear = (0, 0, 0, 0)
 Aov.ObjectCustom4_7  clear = (0, 0, 0, 0)
 ```
 
-`Aov.NormalDepth` 的 `(0, 0, 0, 0)` 表示 no geometry / sky / undefined，不表示合法世界法线。Debug 和 consumer 不应该把天空解释成默认 normal，例如 `(0.5, 0.5, 1, 1)`。
+`Aov.NormalDepth` 的 `(0, 0, 0, 1)` 表示 no geometry / sky / undefined：RGB 是 invalid normal，A 是 far depth。Debug 和 consumer 不应该把天空解释成默认 normal，例如 `(0.5, 0.5, 1, 1)`。
+
+`NormalDepth.a` 存的是 linear 0..1 depth，near -> 0、far -> 1。没有几何覆盖时也按 far depth 处理为 1；法线有效性由 RGB 是否为 zero 判断。
 
 清理入口放在资源声明层：`HoUrpRenderGraphTextureDescFactory` 根据 `ResourceClearPolicy` 设置 `TextureDesc.clearBuffer` / `TextureDesc.clearColor`。AOV Output pass 只负责绘制几何，并用 `ReadWrite` attachment 保留资源初始 clear 值作为天空/未绘制区域。
 

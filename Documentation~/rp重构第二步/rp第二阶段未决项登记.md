@@ -3,7 +3,7 @@
 | Item | 本阶段处理方式 | 后续阶段 |
 | --- | --- | --- |
 | Object ID / Group ID / Flags 来源 | fallback shader 写常量 | Object semantic authoring / Capability UI |
-| Depth exact encoding | 先写 normalized depth | 扩到 SSS / SurfaceData 前复核 linear eye depth |
+| Depth exact encoding | 已收敛为 `Linear01Depth(positionCS.z / positionCS.w, _ZBufferParams)`；no geometry / sky clear 为 `(0,0,0,1)`，即 invalid normal + far depth | 需要真实 eye depth 时新增明确编码或 `Aov.Depth` |
 | Alpha clip 一致性 | 不做 | 新材质 producer pass 阶段 |
 | Transparent AOV | 不做 | Transparent / OIT AOV 阶段 |
 | 旧材质 `HoAOV` pass 接入 | 不做 | 新材质系统或 legacy validation |

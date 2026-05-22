@@ -55,6 +55,24 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 return half4(value, value, value, 1.0h);
             }
 
+            half4 DebugIdColor(half encodedId)
+            {
+                uint id = (uint)round(saturate(encodedId) * 255.0h);
+                if (id == 0u)
+                {
+                    return half4(0.0h, 0.0h, 0.0h, 1.0h);
+                }
+
+                uint hash = id * 747796405u + 2891336453u;
+                hash = ((hash >> ((hash >> 28u) + 4u)) ^ hash) * 277803737u;
+                hash = (hash >> 22u) ^ hash;
+                half3 color = half3(
+                    half((float)(hash & 255u) / 255.0),
+                    half((float)((hash >> 8u) & 255u) / 255.0),
+                    half((float)((hash >> 16u) & 255u) / 255.0));
+                return half4(saturate(color * 0.75h + 0.25h), 1.0h);
+            }
+
             half PickChannel(half4 values, int channel)
             {
                 if (channel == 1)
@@ -75,30 +93,34 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 return values.r;
             }
 
+            half VisualizeLinearDepth01(half linearDepth)
+            {
+                return saturate(sqrt(saturate(linearDepth)));
+            }
+
+            bool HasValidNormal(half4 normalDepth)
+            {
+                return dot(abs(normalDepth.rgb), half3(1.0h, 1.0h, 1.0h)) > 0.0h;
+            }
+
             half4 ResolveDebugColor(float2 uv)
             {
                 if (_HoUrpAovDebugMode == 1)
                 {
                     half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    half objectId = saturate(maskId.g * 255.0h);
-                    return DebugScalar(objectId);
+                    return DebugIdColor(maskId.g);
                 }
 
                 if (_HoUrpAovDebugMode == 2)
                 {
                     half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    if (dot(abs(normalDepth), half4(1.0h, 1.0h, 1.0h, 1.0h)) <= 0.0h)
-                    {
-                        return half4(0.0h, 0.0h, 0.0h, 0.0h);
-                    }
-
-                    return DebugScalar(normalDepth.a);
+                    return DebugScalar(VisualizeLinearDepth01(normalDepth.a));
                 }
 
                 if (_HoUrpAovDebugMode == 3)
                 {
                     half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    if (dot(abs(normalDepth), half4(1.0h, 1.0h, 1.0h, 1.0h)) <= 0.0h)
+                    if (!HasValidNormal(normalDepth))
                     {
                         return half4(0.0h, 0.0h, 0.0h, 0.0h);
                     }
@@ -116,6 +138,29 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 {
                     half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
                     return DebugScalar(PickChannel(objectCustom, _HoUrpAovDebugMode - 8));
+                }
+
+                if (_HoUrpAovDebugMode >= 12 && _HoUrpAovDebugMode <= 15)
+                {
+                    half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half value = PickChannel(surfaceData, _HoUrpAovDebugMode - 12);
+                    if (_HoUrpAovDebugMode == 12 || _HoUrpAovDebugMode == 13)
+                    {
+                        return DebugIdColor(value);
+                    }
+
+                    if (_HoUrpAovDebugMode == 15)
+                    {
+                        value = saturate(value);
+                    }
+
+                    return DebugScalar(value);
+                }
+
+                if (_HoUrpAovDebugMode >= 16 && _HoUrpAovDebugMode <= 19)
+                {
+                    half4 materialCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    return DebugScalar(PickChannel(materialCustom, _HoUrpAovDebugMode - 16));
                 }
 
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
@@ -187,6 +232,24 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 return half4(value, value, value, 1.0h);
             }
 
+            half4 DebugIdColor(half encodedId)
+            {
+                uint id = (uint)round(saturate(encodedId) * 255.0h);
+                if (id == 0u)
+                {
+                    return half4(0.0h, 0.0h, 0.0h, 1.0h);
+                }
+
+                uint hash = id * 747796405u + 2891336453u;
+                hash = ((hash >> ((hash >> 28u) + 4u)) ^ hash) * 277803737u;
+                hash = (hash >> 22u) ^ hash;
+                half3 color = half3(
+                    half((float)(hash & 255u) / 255.0),
+                    half((float)((hash >> 8u) & 255u) / 255.0),
+                    half((float)((hash >> 16u) & 255u) / 255.0));
+                return half4(saturate(color * 0.75h + 0.25h), 1.0h);
+            }
+
             half PickChannel(half4 values, int channel)
             {
                 if (channel == 1)
@@ -207,6 +270,16 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 return values.r;
             }
 
+            half VisualizeLinearDepth01(half linearDepth)
+            {
+                return saturate(sqrt(saturate(linearDepth)));
+            }
+
+            bool HasValidNormal(half4 normalDepth)
+            {
+                return dot(abs(normalDepth.rgb), half3(1.0h, 1.0h, 1.0h)) > 0.0h;
+            }
+
             half4 FragTile(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -215,25 +288,19 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 if (_HoUrpAovDebugMode == 1)
                 {
                     half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    half objectId = saturate(maskId.g * 255.0h);
-                    return DebugScalar(objectId);
+                    return DebugIdColor(maskId.g);
                 }
 
                 if (_HoUrpAovDebugMode == 2)
                 {
                     half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    if (dot(abs(normalDepth), half4(1.0h, 1.0h, 1.0h, 1.0h)) <= 0.0h)
-                    {
-                        return half4(0.0h, 0.0h, 0.0h, 0.0h);
-                    }
-
-                    return DebugScalar(normalDepth.a);
+                    return DebugScalar(VisualizeLinearDepth01(normalDepth.a));
                 }
 
                 if (_HoUrpAovDebugMode == 3)
                 {
                     half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    if (dot(abs(normalDepth), half4(1.0h, 1.0h, 1.0h, 1.0h)) <= 0.0h)
+                    if (!HasValidNormal(normalDepth))
                     {
                         return half4(0.0h, 0.0h, 0.0h, 0.0h);
                     }
@@ -251,6 +318,29 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 {
                     half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
                     return DebugScalar(PickChannel(objectCustom, _HoUrpAovDebugMode - 8));
+                }
+
+                if (_HoUrpAovDebugMode >= 12 && _HoUrpAovDebugMode <= 15)
+                {
+                    half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half value = PickChannel(surfaceData, _HoUrpAovDebugMode - 12);
+                    if (_HoUrpAovDebugMode == 12 || _HoUrpAovDebugMode == 13)
+                    {
+                        return DebugIdColor(value);
+                    }
+
+                    if (_HoUrpAovDebugMode == 15)
+                    {
+                        value = saturate(value);
+                    }
+
+                    return DebugScalar(value);
+                }
+
+                if (_HoUrpAovDebugMode >= 16 && _HoUrpAovDebugMode <= 19)
+                {
+                    half4 materialCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    return DebugScalar(PickChannel(materialCustom, _HoUrpAovDebugMode - 16));
                 }
 
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);

@@ -40,10 +40,17 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                 half4 normalDepth : SV_Target1;
                 half4 objectCustom0 : SV_Target2;
                 half4 objectCustom1 : SV_Target3;
+                half4 surfaceData : SV_Target4;
+                half4 materialCustom0 : SV_Target5;
             };
 
             float _HoUrpAovMaskWeight;
             float _HoUrpObjectCustomMask;
+            float _HoUrpMaterialClass;
+            float _HoUrpMaterialSssProfile;
+            float _HoUrpMaterialThickness;
+            float _HoUrpMaterialCurvature;
+            float4 _HoUrpMaterialCustom0_3;
 
             half HasMaskBit(float mask, float bitValue)
             {
@@ -71,19 +78,14 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
 
                 float3 normalWS = normalize(input.normalWS);
                 float rawDepth = input.depthZW.x / max(input.depthZW.y, 1.0e-6);
-
-                #if UNITY_REVERSED_Z
-                float normalizedDepth = 1.0 - rawDepth;
-                #else
-                float normalizedDepth = rawDepth;
-                #endif
+                float linear01Depth = Linear01Depth(rawDepth, _ZBufferParams);
 
                 AovOutput output;
                 half3 encodedNormal = half3(normalWS * 0.5 + 0.5);
                 float objectCustomMask = round(clamp(_HoUrpObjectCustomMask, 0.0, 255.0));
                 half maskWeight = half(saturate(_HoUrpAovMaskWeight));
                 output.maskId = half4(maskWeight, 1.0h / 255.0h, 0.0h, 0.0h);
-                output.normalDepth = half4(encodedNormal, half(saturate(normalizedDepth)));
+                output.normalDepth = half4(encodedNormal, half(saturate(linear01Depth)));
                 output.objectCustom0 = half4(
                     HasMaskBit(objectCustomMask, 1.0),
                     HasMaskBit(objectCustomMask, 2.0),
@@ -94,6 +96,12 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                     HasMaskBit(objectCustomMask, 32.0),
                     HasMaskBit(objectCustomMask, 64.0),
                     HasMaskBit(objectCustomMask, 128.0)) * maskWeight;
+                output.surfaceData = half4(
+                    half(saturate(_HoUrpMaterialClass / 255.0)),
+                    half(saturate(_HoUrpMaterialSssProfile / 255.0)),
+                    half(saturate(_HoUrpMaterialThickness)),
+                    half(saturate(_HoUrpMaterialCurvature * 0.5 + 0.5))) * maskWeight;
+                output.materialCustom0 = half4(saturate(_HoUrpMaterialCustom0_3)) * maskWeight;
                 return output;
             }
             ENDHLSL

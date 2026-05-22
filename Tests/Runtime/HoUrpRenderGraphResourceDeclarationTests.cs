@@ -32,7 +32,7 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
-        public void NormalDepthResourceDescriptorUsesHighPrecisionFormatAndZeroClear()
+        public void NormalDepthResourceDescriptorUsesHighPrecisionFormatAndFarDepthClear()
         {
             ResourceDefinition normalDepth = HoUrpBuiltInContracts
                 .CreateMinimalAovRegistry()
@@ -44,7 +44,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(desc.name, Is.EqualTo("Aov.NormalDepth"));
             Assert.That(desc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
             Assert.That(desc.clearBuffer, Is.True);
-            Assert.That(desc.clearColor, Is.EqualTo(Color.clear));
+            Assert.That(desc.clearColor, Is.EqualTo(new Color(0.0f, 0.0f, 0.0f, 1.0f)));
         }
 
         [Test]
@@ -67,6 +67,28 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(desc1.format, Is.EqualTo(GraphicsFormat.R8G8B8A8_UNorm));
             Assert.That(desc1.clearBuffer, Is.True);
             Assert.That(desc1.clearColor, Is.EqualTo(Color.clear));
+        }
+
+        [Test]
+        public void MaterialSemanticResourceDescriptorsUseHighPrecisionFormatAndZeroClear()
+        {
+            var resources = HoUrpBuiltInContracts
+                .CreateMinimalAovRegistry()
+                .Resources;
+            ResourceDefinition surfaceData = resources.Get(HoUrpBuiltInNames.Resources.AovSurfaceData);
+            ResourceDefinition materialCustom = resources.Get(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3);
+
+            TextureDesc surfaceDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(surfaceData, CreateCameraDescriptor());
+            TextureDesc customDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(materialCustom, CreateCameraDescriptor());
+
+            Assert.That(surfaceDesc.name, Is.EqualTo("Aov.SurfaceData"));
+            Assert.That(surfaceDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(surfaceDesc.clearBuffer, Is.True);
+            Assert.That(surfaceDesc.clearColor, Is.EqualTo(Color.clear));
+            Assert.That(customDesc.name, Is.EqualTo("Aov.MaterialCustom0_3"));
+            Assert.That(customDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(customDesc.clearBuffer, Is.True);
+            Assert.That(customDesc.clearColor, Is.EqualTo(Color.clear));
         }
 
         [Test]

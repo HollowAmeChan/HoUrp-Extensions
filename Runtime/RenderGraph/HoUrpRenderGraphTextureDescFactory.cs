@@ -134,6 +134,8 @@ namespace HoUrp.Extensions.RenderGraph
             {
                 case ResourceClearPolicy.ClearNeutralNormal:
                     return new Color(0.5f, 0.5f, 1.0f, 1.0f);
+                case ResourceClearPolicy.ClearInvalidNormalFarDepth:
+                    return new Color(0.0f, 0.0f, 0.0f, 1.0f);
                 case ResourceClearPolicy.ClearBlack:
                     return Color.black;
                 case ResourceClearPolicy.ClearTransparentBlack:

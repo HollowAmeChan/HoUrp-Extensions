@@ -35,3 +35,7 @@ DebugViewRegistry
 ## 输出模式
 
 第一版只做 Replace。Overlay / split / capture 是后续 Debug Framework 范围。
+
+`AOV / Linear Depth` 的资源值是 linear 0..1 depth。Debug 显示允许做 `sqrt(depth)` 可视化拉伸，避免常见场景在远裁剪很大时几乎全黑；这不改变资源编码。天空/未覆盖区域 clear 为 depth 1，所以显示为白。
+
+ID 类 DebugView 允许做稳定 hash 伪随机色显示，优先覆盖 `AOV / Object ID`、后续材质类 ID / profile ID 等同类视图。随机色只影响 Debug 显示，不改变 AOV 编码。

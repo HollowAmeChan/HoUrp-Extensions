@@ -25,6 +25,10 @@ namespace HoUrp.Extensions.Features
         [Range(0, 7)]
         private int objectCustomChannel;
 
+        [SerializeField]
+        [Range(0, 3)]
+        private int materialCustomChannel;
+
         private SemanticPostProcessReadPass readPass;
         private Material readProbeMaterial;
 
@@ -48,7 +52,7 @@ namespace HoUrp.Extensions.Features
                 return;
             }
 
-            readPass.Setup(readProbeMaterial, tintColor, objectCustomChannel);
+            readPass.Setup(readProbeMaterial, tintColor, objectCustomChannel, materialCustomChannel);
             renderer.EnqueuePass(readPass);
         }
 
@@ -73,6 +77,7 @@ namespace HoUrp.Extensions.Features
             private Material material;
             private Color tintColor;
             private int objectCustomChannel;
+            private int materialCustomChannel;
 
             public SemanticPostProcessReadPass()
             {
@@ -80,11 +85,12 @@ namespace HoUrp.Extensions.Features
                 requiresIntermediateTexture = true;
             }
 
-            public void Setup(Material material, Color tintColor, int objectCustomChannel)
+            public void Setup(Material material, Color tintColor, int objectCustomChannel, int materialCustomChannel)
             {
                 this.material = material;
                 this.tintColor = tintColor;
                 this.objectCustomChannel = Mathf.Clamp(objectCustomChannel, 0, 7);
+                this.materialCustomChannel = Mathf.Clamp(materialCustomChannel, 0, 3);
                 requiresIntermediateTexture = true;
             }
 
@@ -99,7 +105,9 @@ namespace HoUrp.Extensions.Features
                 if (!resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovMaskId, out TextureHandle maskIdTexture)
                     || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovNormalDepth, out TextureHandle normalDepthTexture)
                     || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom0_3, out TextureHandle objectCustom0Texture)
-                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom4_7, out TextureHandle objectCustom1Texture))
+                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom4_7, out TextureHandle objectCustom1Texture)
+                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovSurfaceData, out TextureHandle surfaceDataTexture)
+                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3, out TextureHandle materialCustomTexture))
                 {
                     return;
                 }
@@ -126,16 +134,21 @@ namespace HoUrp.Extensions.Features
                     passData.normalDepthTexture = normalDepthTexture;
                     passData.objectCustom0Texture = objectCustom0Texture;
                     passData.objectCustom1Texture = objectCustom1Texture;
+                    passData.surfaceDataTexture = surfaceDataTexture;
+                    passData.materialCustomTexture = materialCustomTexture;
                     passData.sourceColorTexture = colorCopy;
                     passData.material = material;
                     passData.tintColor = tintColor;
                     passData.objectCustomChannel = objectCustomChannel;
+                    passData.materialCustomChannel = materialCustomChannel;
 
                     builder.UseTexture(colorCopy, AccessFlags.Read);
                     builder.UseTexture(maskIdTexture, AccessFlags.Read);
                     builder.UseTexture(normalDepthTexture, AccessFlags.Read);
                     builder.UseTexture(objectCustom0Texture, AccessFlags.Read);
                     builder.UseTexture(objectCustom1Texture, AccessFlags.Read);
+                    builder.UseTexture(surfaceDataTexture, AccessFlags.Read);
+                    builder.UseTexture(materialCustomTexture, AccessFlags.Read);
                     builder.SetRenderAttachment(sourceColor, 0, AccessFlags.Write);
                     builder.AllowPassCulling(false);
                     builder.AllowGlobalStateModification(true);
@@ -147,8 +160,11 @@ namespace HoUrp.Extensions.Features
                         context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovNormalDepthTexture, data.normalDepthTexture);
                         context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovObjectCustom0_3Texture, data.objectCustom0Texture);
                         context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovObjectCustom4_7Texture, data.objectCustom1Texture);
+                        context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovSurfaceDataTexture, data.surfaceDataTexture);
+                        context.cmd.SetGlobalTexture(HoUrpShaderPropertyIds.AovMaterialCustom0_3Texture, data.materialCustomTexture);
                         PropertyBlock.SetColor(HoUrpShaderPropertyIds.SemanticPostTintColor, data.tintColor);
                         PropertyBlock.SetInt(HoUrpShaderPropertyIds.SemanticPostObjectCustomChannel, data.objectCustomChannel);
+                        PropertyBlock.SetInt(HoUrpShaderPropertyIds.SemanticPostMaterialCustomChannel, data.materialCustomChannel);
                         context.cmd.DrawProcedural(
                             Matrix4x4.identity,
                             data.material,
@@ -167,10 +183,13 @@ namespace HoUrp.Extensions.Features
                 public TextureHandle normalDepthTexture;
                 public TextureHandle objectCustom0Texture;
                 public TextureHandle objectCustom1Texture;
+                public TextureHandle surfaceDataTexture;
+                public TextureHandle materialCustomTexture;
                 public TextureHandle sourceColorTexture;
                 public Material material;
                 public Color tintColor;
                 public int objectCustomChannel;
+                public int materialCustomChannel;
             }
         }
     }

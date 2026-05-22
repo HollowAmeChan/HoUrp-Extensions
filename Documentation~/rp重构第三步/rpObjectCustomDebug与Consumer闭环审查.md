@@ -33,7 +33,7 @@ Replace
 
 shader 只采样 `_HoUrpAovObjectCustom0_3Texture` / `_HoUrpAovObjectCustom4_7Texture`，不读旧全局名。
 
-`AOV.WorldNormal` / `AOV.LinearDepth` debug 对 `Aov.NormalDepth == (0, 0, 0, 0)` 按空值处理，输出透明黑。天空球和未绘制区域没有几何法线，不能用中性法线或任何默认颜色伪装成有效 AOV。
+`AOV.LinearDepth` debug 对天空/未覆盖区域按 far depth 显示为白。`AOV.WorldNormal` debug 对 `Aov.NormalDepth.rgb == (0, 0, 0)` 按 invalid normal 处理，输出黑。天空球和未绘制区域没有几何法线，不能用中性法线或任何默认颜色伪装成有效 AOV。
 
 `AllRegistered` 第一版用于同时验收所有已注册 AOV view：
 

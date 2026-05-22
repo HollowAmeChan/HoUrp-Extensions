@@ -28,6 +28,14 @@ namespace HoUrp.Extensions.Debugging
             ObjectCustom5,
             ObjectCustom6,
             ObjectCustom7,
+            MaterialClass,
+            SssProfile,
+            Thickness,
+            Curvature,
+            MaterialCustom0,
+            MaterialCustom1,
+            MaterialCustom2,
+            MaterialCustom3,
             AllRegistered
         }
 
@@ -128,6 +136,22 @@ namespace HoUrp.Extensions.Debugging
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom6;
                 case AovDebugView.ObjectCustom7:
                     return HoUrpBuiltInNames.DebugViews.AovObjectCustom7;
+                case AovDebugView.MaterialClass:
+                    return HoUrpBuiltInNames.DebugViews.AovMaterialClass;
+                case AovDebugView.SssProfile:
+                    return HoUrpBuiltInNames.DebugViews.AovSssProfile;
+                case AovDebugView.Thickness:
+                    return HoUrpBuiltInNames.DebugViews.AovThickness;
+                case AovDebugView.Curvature:
+                    return HoUrpBuiltInNames.DebugViews.AovCurvature;
+                case AovDebugView.MaterialCustom0:
+                    return HoUrpBuiltInNames.DebugViews.AovMaterialCustom0;
+                case AovDebugView.MaterialCustom1:
+                    return HoUrpBuiltInNames.DebugViews.AovMaterialCustom1;
+                case AovDebugView.MaterialCustom2:
+                    return HoUrpBuiltInNames.DebugViews.AovMaterialCustom2;
+                case AovDebugView.MaterialCustom3:
+                    return HoUrpBuiltInNames.DebugViews.AovMaterialCustom3;
                 default:
                     return HoUrpBuiltInNames.DebugViews.AovMask;
             }
@@ -159,6 +183,22 @@ namespace HoUrp.Extensions.Debugging
                     return 10;
                 case AovDebugView.ObjectCustom7:
                     return 11;
+                case AovDebugView.MaterialClass:
+                    return 12;
+                case AovDebugView.SssProfile:
+                    return 13;
+                case AovDebugView.Thickness:
+                    return 14;
+                case AovDebugView.Curvature:
+                    return 15;
+                case AovDebugView.MaterialCustom0:
+                    return 16;
+                case AovDebugView.MaterialCustom1:
+                    return 17;
+                case AovDebugView.MaterialCustom2:
+                    return 18;
+                case AovDebugView.MaterialCustom3:
+                    return 19;
                 default:
                     return 0;
             }
@@ -459,6 +499,46 @@ namespace HoUrp.Extensions.Debugging
                 if (id == HoUrpBuiltInNames.DebugViews.AovObjectCustom7)
                 {
                     return 11;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovMaterialClass)
+                {
+                    return 12;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovSssProfile)
+                {
+                    return 13;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovThickness)
+                {
+                    return 14;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovCurvature)
+                {
+                    return 15;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovMaterialCustom0)
+                {
+                    return 16;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovMaterialCustom1)
+                {
+                    return 17;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovMaterialCustom2)
+                {
+                    return 18;
+                }
+
+                if (id == HoUrpBuiltInNames.DebugViews.AovMaterialCustom3)
+                {
+                    return 19;
                 }
 
                 return 0;

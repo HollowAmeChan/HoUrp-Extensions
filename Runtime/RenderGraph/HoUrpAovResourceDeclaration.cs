@@ -41,6 +41,20 @@ namespace HoUrp.Extensions.RenderGraph
                 registry,
                 HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
                 cameraTextureDescriptor);
+
+            DeclareRequiredTexture(
+                renderGraph,
+                resources,
+                registry,
+                HoUrpBuiltInNames.Resources.AovSurfaceData,
+                cameraTextureDescriptor);
+
+            DeclareRequiredTexture(
+                renderGraph,
+                resources,
+                registry,
+                HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
+                cameraTextureDescriptor);
         }
 
         private static void DeclareRequiredTexture(

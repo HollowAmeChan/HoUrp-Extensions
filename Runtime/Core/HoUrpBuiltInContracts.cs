@@ -185,6 +185,78 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Semantics.ObjectCustom7,
                 "HoAovDebugMode.ObjectCustom7",
                 "Displays Object.Custom7 from Aov.ObjectCustom4_7.");
+
+            RegisterMaterialDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovMaterialClass,
+                HoUrpBuiltInNames.Resources.AovSurfaceData,
+                HoUrpBuiltInNames.Semantics.MaterialClass,
+                DebugValueRange.Byte,
+                "HoAovDebugMode.MaterialClass",
+                "Displays Material.Class from Aov.SurfaceData.");
+
+            RegisterMaterialDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovSssProfile,
+                HoUrpBuiltInNames.Resources.AovSurfaceData,
+                HoUrpBuiltInNames.Semantics.MaterialSssProfile,
+                DebugValueRange.Byte,
+                "HoAovDebugMode.SssProfile",
+                "Displays Material.SssProfile from Aov.SurfaceData.");
+
+            RegisterMaterialDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovThickness,
+                HoUrpBuiltInNames.Resources.AovSurfaceData,
+                HoUrpBuiltInNames.Semantics.MaterialThickness,
+                DebugValueRange.ZeroToOne,
+                "HoAovDebugMode.Thickness",
+                "Displays Material.Thickness from Aov.SurfaceData.");
+
+            RegisterMaterialDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovCurvature,
+                HoUrpBuiltInNames.Resources.AovSurfaceData,
+                HoUrpBuiltInNames.Semantics.MaterialCurvature,
+                DebugValueRange.MinusOneToOne,
+                "HoAovDebugMode.Curvature",
+                "Displays Material.Curvature from Aov.SurfaceData.");
+
+            RegisterMaterialDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom0,
+                HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
+                HoUrpBuiltInNames.Semantics.MaterialCustom0,
+                DebugValueRange.ZeroToOne,
+                "HoAovDebugMode.MaterialCustom0",
+                "Displays Material.Custom0 from Aov.MaterialCustom0_3.");
+
+            RegisterMaterialDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom1,
+                HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
+                HoUrpBuiltInNames.Semantics.MaterialCustom1,
+                DebugValueRange.ZeroToOne,
+                "HoAovDebugMode.MaterialCustom1",
+                "Displays Material.Custom1 from Aov.MaterialCustom0_3.");
+
+            RegisterMaterialDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom2,
+                HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
+                HoUrpBuiltInNames.Semantics.MaterialCustom2,
+                DebugValueRange.ZeroToOne,
+                "HoAovDebugMode.MaterialCustom2",
+                "Displays Material.Custom2 from Aov.MaterialCustom0_3.");
+
+            RegisterMaterialDebugView(
+                registry,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom3,
+                HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
+                HoUrpBuiltInNames.Semantics.MaterialCustom3,
+                DebugValueRange.ZeroToOne,
+                "HoAovDebugMode.MaterialCustom3",
+                "Displays Material.Custom3 from Aov.MaterialCustom0_3.");
         }
 
         private static void RegisterObjectCustomDebugView(
@@ -203,6 +275,28 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Features.AovOutput,
                 new ReadOnlyArray<DebugDisplayMode>(DebugDisplayMode.Replace),
                 DebugValueRange.ZeroToOne,
+                HoUrpBuiltInNames.Features.AovOutput,
+                legacyReference,
+                description));
+        }
+
+        private static void RegisterMaterialDebugView(
+            HoUrpContractRegistry registry,
+            HoUrpIdentifier debugView,
+            HoUrpIdentifier resource,
+            HoUrpIdentifier semantic,
+            DebugValueRange range,
+            string legacyReference,
+            string description)
+        {
+            registry.DebugViews.Register(new DebugViewDefinition(
+                debugView,
+                HoUrpDomain.Debug,
+                resource,
+                semantic,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<DebugDisplayMode>(DebugDisplayMode.Replace),
+                range,
                 HoUrpBuiltInNames.Features.AovOutput,
                 legacyReference,
                 description));
@@ -349,6 +443,78 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.DebugViews.AovObjectCustom7,
                 "_lilHoAovObjectCustom4_7Texture.a",
                 "Object custom semantic channel 7.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialClass,
+                SemanticFormat.Byte,
+                HoUrpBuiltInNames.DebugViews.AovMaterialClass,
+                "_HoAovMaterialClass",
+                "Material class written into Aov.SurfaceData.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialSssProfile,
+                SemanticFormat.Byte,
+                HoUrpBuiltInNames.DebugViews.AovSssProfile,
+                "_HoSSSProfileId",
+                "SSS profile id written into Aov.SurfaceData.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialThickness,
+                SemanticFormat.NormalizedFloat,
+                HoUrpBuiltInNames.DebugViews.AovThickness,
+                "_HoAovThickness",
+                "Material thickness written into Aov.SurfaceData.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialCurvature,
+                SemanticFormat.SignedNormalizedFloat,
+                HoUrpBuiltInNames.DebugViews.AovCurvature,
+                "_HoAovCurvature",
+                "Material curvature written into Aov.SurfaceData.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialUtility,
+                SemanticFormat.NormalizedFloat,
+                HoUrpBuiltInNames.DebugViews.None,
+                "_HoAovUtility",
+                "Registered material utility semantic. Phase four does not produce a stable resource channel for it.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialCustom0,
+                SemanticFormat.NormalizedFloat,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom0,
+                "_HoAovCustomValues0.x",
+                "Material custom semantic channel 0.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialCustom1,
+                SemanticFormat.NormalizedFloat,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom1,
+                "_HoAovCustomValues0.y",
+                "Material custom semantic channel 1.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialCustom2,
+                SemanticFormat.NormalizedFloat,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom2,
+                "_HoAovCustomValues0.z",
+                "Material custom semantic channel 2.");
+
+            RegisterMaterialSemantic(
+                registry,
+                HoUrpBuiltInNames.Semantics.MaterialCustom3,
+                SemanticFormat.NormalizedFloat,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom3,
+                "_HoAovCustomValues0.w",
+                "Material custom semantic channel 3.");
         }
 
         private static void RegisterObjectCustomSemantic(
@@ -369,6 +535,34 @@ namespace HoUrp.Extensions.Core
                 HoUrpDomain.Object,
                 SemanticFormat.NormalizedFloat,
                 HoUrpPassStage.GeometrySemanticAov,
+                HoUrpLifetime.PerCamera,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<HoUrpIdentifier>(consumers),
+                debugView,
+                HoUrpMigrationDecision.KeepConceptRename,
+                legacySource,
+                description));
+        }
+
+        private static void RegisterMaterialSemantic(
+            HoUrpContractRegistry registry,
+            HoUrpIdentifier semantic,
+            SemanticFormat format,
+            HoUrpIdentifier debugView,
+            string legacySource,
+            string description)
+        {
+            HoUrpIdentifier[] consumers =
+            {
+                HoUrpBuiltInNames.Features.SemanticPostProcess,
+                HoUrpBuiltInNames.Features.DebugComposite
+            };
+
+            registry.Semantics.Register(new SemanticDefinition(
+                semantic,
+                HoUrpDomain.Material,
+                format,
+                HoUrpPassStage.MaterialShadingSemanticAov,
                 HoUrpLifetime.PerCamera,
                 HoUrpBuiltInNames.Features.AovOutput,
                 new ReadOnlyArray<HoUrpIdentifier>(consumers),
@@ -407,10 +601,10 @@ namespace HoUrp.Extensions.Core
                 ResourceFormatHint.HighPrecisionRgba16Float,
                 ResourceScale.Full,
                 HoUrpLifetime.PerCamera,
-                ResourceClearPolicy.ClearZero,
+                ResourceClearPolicy.ClearInvalidNormalFarDepth,
                 HoUrpBuiltInNames.DebugViews.AovWorldNormal,
                 "_lilHoAovNormalDepthTexture",
-                "High precision normal/depth AOV resource. Zero clear means no geometry."));
+                "High precision normal/depth AOV resource. Clear is invalid normal with far depth."));
 
             registry.Resources.Register(new ResourceDefinition(
                 HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
@@ -443,6 +637,38 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
                 "_lilHoAovObjectCustom4_7Texture",
                 "Packed object custom channels 4-7."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.AovSurfaceData,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.MaterialClass,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SemanticPostProcess,
+                    HoUrpBuiltInNames.Features.DebugComposite),
+                ResourceFormatHint.HighPrecisionRgba16Float,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearZero,
+                HoUrpBuiltInNames.DebugViews.AovMaterialClass,
+                "_lilHoAovSurfaceDataTexture",
+                "Packed material class/profile/thickness/curvature AOV resource."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.MaterialCustom0,
+                HoUrpBuiltInNames.Features.AovOutput,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Features.SemanticPostProcess,
+                    HoUrpBuiltInNames.Features.DebugComposite),
+                ResourceFormatHint.HighPrecisionRgba16Float,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearZero,
+                HoUrpBuiltInNames.DebugViews.AovMaterialCustom0,
+                "_lilHoAovCustom0_3Texture",
+                "Packed material custom channels 0-3."));
         }
 
         private static void RegisterFeatures(HoUrpContractRegistry registry)
@@ -455,7 +681,9 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Resources.AovMaskId,
                     HoUrpBuiltInNames.Resources.AovNormalDepth,
                     HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
-                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7),
+                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
+                    HoUrpBuiltInNames.Resources.AovSurfaceData,
+                    HoUrpBuiltInNames.Resources.AovMaterialCustom0_3),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
@@ -470,6 +698,14 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Semantics.ObjectCustom5,
                     HoUrpBuiltInNames.Semantics.ObjectCustom6,
                     HoUrpBuiltInNames.Semantics.ObjectCustom7,
+                    HoUrpBuiltInNames.Semantics.MaterialClass,
+                    HoUrpBuiltInNames.Semantics.MaterialSssProfile,
+                    HoUrpBuiltInNames.Semantics.MaterialThickness,
+                    HoUrpBuiltInNames.Semantics.MaterialCurvature,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom0,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom1,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom2,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom3,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(),
@@ -488,10 +724,18 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom5,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom6,
-                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7),
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialClass,
+                    HoUrpBuiltInNames.DebugViews.AovSssProfile,
+                    HoUrpBuiltInNames.DebugViews.AovThickness,
+                    HoUrpBuiltInNames.DebugViews.AovCurvature,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom0,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom1,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom2,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom3),
                 HoUrpMigrationDecision.KeepConceptRename,
                 "Runtime/AOV/HoAovRendererFeature.cs",
-                "Minimum AOV contract for mask/id, normal/depth, and object custom resources."));
+                "Minimum AOV contract for object, geometry, and phase-four material semantic resources."));
 
             registry.Features.Register(new FeatureDescriptor(
                 HoUrpBuiltInNames.Features.SemanticPostProcess,
@@ -502,7 +746,9 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Resources.AovMaskId,
                     HoUrpBuiltInNames.Resources.AovNormalDepth,
                     HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
-                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7),
+                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
+                    HoUrpBuiltInNames.Resources.AovSurfaceData,
+                    HoUrpBuiltInNames.Resources.AovMaterialCustom0_3),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
@@ -517,6 +763,14 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Semantics.ObjectCustom5,
                     HoUrpBuiltInNames.Semantics.ObjectCustom6,
                     HoUrpBuiltInNames.Semantics.ObjectCustom7,
+                    HoUrpBuiltInNames.Semantics.MaterialClass,
+                    HoUrpBuiltInNames.Semantics.MaterialSssProfile,
+                    HoUrpBuiltInNames.Semantics.MaterialThickness,
+                    HoUrpBuiltInNames.Semantics.MaterialCurvature,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom0,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom1,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom2,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom3,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(
@@ -534,7 +788,15 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom5,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom6,
-                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7),
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialClass,
+                    HoUrpBuiltInNames.DebugViews.AovSssProfile,
+                    HoUrpBuiltInNames.DebugViews.AovThickness,
+                    HoUrpBuiltInNames.DebugViews.AovCurvature,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom0,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom1,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom2,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom3),
                 HoUrpMigrationDecision.KeepConceptRename,
                 "Runtime/HoPostProcessing/HoPostProcessRendererFeature.cs",
                 "Minimum read-only AOV consumer for semantic post processing."));
@@ -548,7 +810,9 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Resources.AovMaskId,
                     HoUrpBuiltInNames.Resources.AovNormalDepth,
                     HoUrpBuiltInNames.Resources.AovObjectCustom0_3,
-                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7),
+                    HoUrpBuiltInNames.Resources.AovObjectCustom4_7,
+                    HoUrpBuiltInNames.Resources.AovSurfaceData,
+                    HoUrpBuiltInNames.Resources.AovMaterialCustom0_3),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
@@ -561,6 +825,14 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Semantics.ObjectCustom5,
                     HoUrpBuiltInNames.Semantics.ObjectCustom6,
                     HoUrpBuiltInNames.Semantics.ObjectCustom7,
+                    HoUrpBuiltInNames.Semantics.MaterialClass,
+                    HoUrpBuiltInNames.Semantics.MaterialSssProfile,
+                    HoUrpBuiltInNames.Semantics.MaterialThickness,
+                    HoUrpBuiltInNames.Semantics.MaterialCurvature,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom0,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom1,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom2,
+                    HoUrpBuiltInNames.Semantics.MaterialCustom3,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(
@@ -577,7 +849,15 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom4,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom5,
                     HoUrpBuiltInNames.DebugViews.AovObjectCustom6,
-                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7),
+                    HoUrpBuiltInNames.DebugViews.AovObjectCustom7,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialClass,
+                    HoUrpBuiltInNames.DebugViews.AovSssProfile,
+                    HoUrpBuiltInNames.DebugViews.AovThickness,
+                    HoUrpBuiltInNames.DebugViews.AovCurvature,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom0,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom1,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom2,
+                    HoUrpBuiltInNames.DebugViews.AovMaterialCustom3),
                 HoUrpMigrationDecision.Replace,
                 "old per-feature debug passes",
                 "Central debug composite owner for registered debug views."));

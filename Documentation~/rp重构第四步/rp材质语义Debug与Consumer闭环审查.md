@@ -38,7 +38,7 @@ MaterialCustom3
 Replace
 ```
 
-显示结果为对应 channel 灰度图。ID/profile 类通道可先按 normalized grayscale 显示，后续 Debug Framework 再加 palette / label。
+显示结果默认为对应 channel 灰度图。ID/profile 类通道，例如 `MaterialClass` 和 `SssProfile`，使用稳定 hash 伪随机色显示，便于区分不同 ID；这只影响 Debug，不改变资源编码。
 
 ## AllRegistered
 
@@ -70,4 +70,3 @@ Replace
 - `AOV.MaterialCustom0` DebugView 能显示非零 authoring 值。
 - SemanticPost 的画面变化来自显式读取 `Aov.SurfaceData` / `Aov.MaterialCustom0_3`。
 - 禁止通过旧 `_lilHoAovCustom0_3Texture` 或 `_lilHoAovSurfaceDataTexture` 读取。
-
