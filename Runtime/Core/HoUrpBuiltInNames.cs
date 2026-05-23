@@ -9,6 +9,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier ScreenPost = "ScreenPost";
             public static readonly HoUrpIdentifier ImagePost = "ImagePost";
             public static readonly HoUrpIdentifier TransparentOit = "TransparentOit";
+            public static readonly HoUrpIdentifier ShadowCast = "ShadowCast";
             public static readonly HoUrpIdentifier GeneratedMaterial = "GeneratedMaterial";
             public static readonly HoUrpIdentifier DebugComposite = "DebugComposite";
         }
@@ -71,6 +72,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier TransparentCoverage = "Transparent.Coverage";
             public static readonly HoUrpIdentifier OitAccumulationInput = "OIT.AccumulationInput";
             public static readonly HoUrpIdentifier OitRevealageInput = "OIT.RevealageInput";
+            public static readonly HoUrpIdentifier ShadowCastAttenuation = "ShadowCast.Attenuation";
         }
 
         public static class Resources
@@ -88,6 +90,8 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier OitAccumulation = "Oit.Accumulation";
             public static readonly HoUrpIdentifier OitRevealage = "Oit.Revealage";
             public static readonly HoUrpIdentifier OitCompositeSource = "Oit.CompositeSource";
+            public static readonly HoUrpIdentifier ShadowCastAtlas = "ShadowCast.Atlas";
+            public static readonly HoUrpIdentifier ShadowCastSecondDirectionalAtlas = "ShadowCast.SecondDirectionalAtlas";
         }
 
         public static class DebugViews
@@ -137,6 +141,9 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier SssCurvature = "SSS.Curvature";
             public static readonly HoUrpIdentifier OitAccumulation = "OIT.Accumulation";
             public static readonly HoUrpIdentifier OitRevealage = "OIT.Revealage";
+            public static readonly HoUrpIdentifier ShadowCastAtlas = "ShadowCast.Atlas";
+            public static readonly HoUrpIdentifier ShadowCastSecondDirectionalAtlas = "ShadowCast.SecondDirectionalAtlas";
+            public static readonly HoUrpIdentifier ShadowCastAttenuation = "ShadowCast.Attenuation";
         }
 
         public static class Capabilities

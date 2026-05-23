@@ -500,6 +500,34 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Features.TransparentOit,
                 "WeightedOIT.Revealage",
                 "Displays the weighted OIT revealage buffer owned by TransparentOit."));
+
+            registry.DebugViews.Register(new DebugViewDefinition(
+                HoUrpBuiltInNames.DebugViews.ShadowCastAtlas,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.ShadowCastAtlas,
+                HoUrpBuiltInNames.Semantics.ShadowCastAttenuation,
+                HoUrpBuiltInNames.Features.ShadowCast,
+                new ReadOnlyArray<DebugDisplayMode>(
+                    DebugDisplayMode.Replace,
+                    DebugDisplayMode.ChannelInspect),
+                DebugValueRange.Depth,
+                HoUrpBuiltInNames.Features.ShadowCast,
+                "HoShadowCast.Debug.Atlas",
+                "Displays the HoURP ShadowCast punctual atlas."));
+
+            registry.DebugViews.Register(new DebugViewDefinition(
+                HoUrpBuiltInNames.DebugViews.ShadowCastSecondDirectionalAtlas,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.ShadowCastSecondDirectionalAtlas,
+                HoUrpBuiltInNames.Semantics.ShadowCastAttenuation,
+                HoUrpBuiltInNames.Features.ShadowCast,
+                new ReadOnlyArray<DebugDisplayMode>(
+                    DebugDisplayMode.Replace,
+                    DebugDisplayMode.ChannelInspect),
+                DebugValueRange.Depth,
+                HoUrpBuiltInNames.Features.ShadowCast,
+                "HoShadowCast.Debug.SecondDirectionalAtlas",
+                "Displays the HoURP ShadowCast second-directional atlas."));
         }
 
         private static void RegisterObjectCustomDebugView(
@@ -1066,6 +1094,11 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.Features.TransparentOit,
                 HoUrpBuiltInNames.Features.DebugComposite
             };
+            HoUrpIdentifier[] shadowCastAndDebug =
+            {
+                HoUrpBuiltInNames.Features.ShadowCast,
+                HoUrpBuiltInNames.Features.DebugComposite
+            };
 
             registry.Resources.Register(new ResourceDefinition(
                 HoUrpBuiltInNames.Resources.AovMaskId,
@@ -1270,6 +1303,34 @@ namespace HoUrp.Extensions.Core
                 HoUrpBuiltInNames.DebugViews.None,
                 string.Empty,
                 "Camera color copy used as the OIT composite source."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.ShadowCastAtlas,
+                ResourceKind.DepthTexture,
+                HoUrpBuiltInNames.Semantics.ShadowCastAttenuation,
+                HoUrpBuiltInNames.Features.ShadowCast,
+                new ReadOnlyArray<HoUrpIdentifier>(shadowCastAndDebug),
+                ResourceFormatHint.Depth,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearWhite,
+                HoUrpBuiltInNames.DebugViews.ShadowCastAtlas,
+                string.Empty,
+                "Depth atlas containing HoURP ShadowCast spot and point-light slices."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.ShadowCastSecondDirectionalAtlas,
+                ResourceKind.DepthTexture,
+                HoUrpBuiltInNames.Semantics.ShadowCastAttenuation,
+                HoUrpBuiltInNames.Features.ShadowCast,
+                new ReadOnlyArray<HoUrpIdentifier>(shadowCastAndDebug),
+                ResourceFormatHint.Depth,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearWhite,
+                HoUrpBuiltInNames.DebugViews.ShadowCastSecondDirectionalAtlas,
+                string.Empty,
+                "Depth atlas containing HoURP ShadowCast extra directional-light cascades."));
 
         }
 
@@ -1492,6 +1553,26 @@ namespace HoUrp.Extensions.Core
                 "Stage-twelve TransparentOit runtime owner for weighted OIT accumulation, revealage, and composite resources."));
 
             registry.Features.Register(new FeatureDescriptor(
+                HoUrpBuiltInNames.Features.ShadowCast,
+                HoUrpDomain.Shadow,
+                HoUrpPassStage.ShadowLightingPrepass,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Resources.ShadowCastAtlas,
+                    HoUrpBuiltInNames.Resources.ShadowCastSecondDirectionalAtlas),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Semantics.ShadowCastAttenuation),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Capabilities.SupportsDebugView),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.DebugViews.ShadowCastAtlas,
+                    HoUrpBuiltInNames.DebugViews.ShadowCastSecondDirectionalAtlas),
+                HoUrpMigrationDecision.KeepConceptRename,
+                "Runtime/ShadowCast/HoShadowCastRendererFeature.cs",
+                "Stage-thirteen ShadowCast runtime owner for spot/point atlases, extra directional cascades, and receiver attenuation."));
+
+            registry.Features.Register(new FeatureDescriptor(
                 HoUrpBuiltInNames.Features.SubsurfaceScattering,
                 HoUrpDomain.Shading,
                 HoUrpPassStage.ScreenSss,
@@ -1541,7 +1622,9 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
                     HoUrpBuiltInNames.Resources.AovSssSource,
                     HoUrpBuiltInNames.Resources.SssSource,
-                    HoUrpBuiltInNames.Resources.SssDiffusion),
+                    HoUrpBuiltInNames.Resources.SssDiffusion,
+                    HoUrpBuiltInNames.Resources.ShadowCastAtlas,
+                    HoUrpBuiltInNames.Resources.ShadowCastSecondDirectionalAtlas),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,

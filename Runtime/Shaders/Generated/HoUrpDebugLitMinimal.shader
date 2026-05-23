@@ -37,6 +37,7 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.hollow.hourp-extensions/Runtime/Shaders/ShaderLibrary/HoUrpMaterialSurface.hlsl"
+            #include "Packages/com.hollow.hourp-extensions/Runtime/Shaders/ShaderLibrary/HoUrpShadowCastSampling.hlsl"
 
             struct Attributes
             {
@@ -48,7 +49,8 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
-                half3 normalWS : TEXCOORD0;
+                float3 positionWS : TEXCOORD0;
+                half3 normalWS : TEXCOORD1;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -66,6 +68,7 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
                 VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
                 VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS);
                 output.positionCS = positionInputs.positionCS;
+                output.positionWS = positionInputs.positionWS;
                 output.normalWS = NormalizeNormalPerVertex(normalInputs.normalWS);
                 return output;
             }
@@ -77,7 +80,8 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
                 HoUrpSurfaceData surface = HoUrpCreateSurfaceData(_HoUrpBaseColor.rgb, _HoUrpBaseColor.a, input.normalWS);
                 clip(0.5h - half(_HoUrpOitActive * _HoUrpSupportsOit * _HoUrpParticipatesOit));
                 half ndotl = saturate(dot(normalize(surface.normalWS), normalize(half3(0.3h, 0.6h, 0.7h))));
-                half3 debugLighting = surface.baseColor * (0.25h + 0.75h * ndotl);
+                half shadowAttenuation = HoUrpSampleShadowCastAttenuation(input.positionWS, surface.normalWS);
+                half3 debugLighting = surface.baseColor * (0.25h + 0.75h * ndotl) * shadowAttenuation;
                 return half4(debugLighting, surface.alpha);
             }
             ENDHLSL
@@ -203,6 +207,7 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.hollow.hourp-extensions/Runtime/Shaders/ShaderLibrary/HoUrpMaterialSurface.hlsl"
             #include "Packages/com.hollow.hourp-extensions/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl"
+            #include "Packages/com.hollow.hourp-extensions/Runtime/Shaders/ShaderLibrary/HoUrpShadowCastSampling.hlsl"
 
             struct Attributes
             {
@@ -214,7 +219,8 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
-                half3 normalWS : TEXCOORD0;
+                float3 positionWS : TEXCOORD0;
+                half3 normalWS : TEXCOORD1;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -237,6 +243,7 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
                 VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
                 VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS);
                 output.positionCS = positionInputs.positionCS;
+                output.positionWS = positionInputs.positionWS;
                 output.normalWS = NormalizeNormalPerVertex(normalInputs.normalWS);
                 return output;
             }
@@ -252,7 +259,8 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
                     half(_HoUrpParticipatesOit));
                 transparentData.alpha *= transparentData.supportsOit * transparentData.participatesOit;
                 half ndotl = saturate(dot(normalize(surface.normalWS), normalize(half3(0.3h, 0.6h, 0.7h))));
-                transparentData.color = surface.baseColor * (0.25h + 0.75h * ndotl);
+                half shadowAttenuation = HoUrpSampleShadowCastAttenuation(input.positionWS, surface.normalWS);
+                transparentData.color = surface.baseColor * (0.25h + 0.75h * ndotl) * shadowAttenuation;
 
                 HoUrpOitAccumulationData accumulation = HoUrpEncodeOitAccumulation(transparentData);
                 OitOutput output;

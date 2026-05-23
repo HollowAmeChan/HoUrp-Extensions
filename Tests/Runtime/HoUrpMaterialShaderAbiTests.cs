@@ -11,6 +11,8 @@ namespace HoUrp.Extensions.Tests.Runtime
         private const string PackageRoot = "Packages/com.hollow.hourp-extensions";
         private const string ShaderPath = PackageRoot + "/Runtime/Shaders/Generated/HoUrpDebugLitMinimal.shader";
         private const string OitCompositeShaderPath = PackageRoot + "/Runtime/Shaders/Hidden/HoURP/OIT/WeightedComposite.shader";
+        private const string ShadowCastSamplingPath = PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpShadowCastSampling.hlsl";
+        private const string ShadowCastDebugPath = PackageRoot + "/Runtime/Shaders/Hidden/HoURP/ShadowCast/Debug.shader";
 
         [Test]
         public void MaterialShaderAbiIncludeFilesExist()
@@ -19,6 +21,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(File.Exists(ToAbsolutePath(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialAov.hlsl")), Is.True);
             Assert.That(File.Exists(ToAbsolutePath(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl")), Is.True);
             Assert.That(File.Exists(ToAbsolutePath(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpObjectSemantic.hlsl")), Is.True);
+            Assert.That(File.Exists(ToAbsolutePath(ShadowCastSamplingPath)), Is.True);
         }
 
         [Test]
@@ -35,9 +38,11 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(shaderText, Does.Contain("\"LightMode\" = \"HoUrpOitAccumulation\""));
             Assert.That(shaderText, Does.Contain("Name \"ShadowCaster\""));
             Assert.That(shaderText, Does.Contain("\"LightMode\" = \"ShadowCaster\""));
+            Assert.That(shaderText, Does.Contain("HoUrpShadowCastSampling.hlsl"));
+            Assert.That(shaderText, Does.Contain("HoUrpSampleShadowCastAttenuation"));
             Assert.That(shaderText, Does.Contain("HoUrpTransparentOutputData"));
             Assert.That(shaderText, Does.Contain("HoUrpOitAccumulationData"));
-            Assert.That(shaderText, Does.Contain("transparentData.color = surface.baseColor * (0.25h + 0.75h * ndotl);"));
+            Assert.That(shaderText, Does.Contain("transparentData.color = surface.baseColor * (0.25h + 0.75h * ndotl) * shadowAttenuation;"));
             Assert.That(ReadPackageText(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl"), Does.Contain("weightedColor"));
             Assert.That(ReadPackageText(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl"), Does.Contain("weightedAlpha"));
             Assert.That(ReadPackageText(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl"), Does.Contain("_HoUrpOitWeight"));
@@ -94,6 +99,21 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(shaderText, Does.Contain("_HoUrpOitRevealageTexture"));
             Assert.That(shaderText, Does.Not.Contain("_lilOIT"));
             Assert.That(shaderText, Does.Not.Contain("Hidden/lilToon/URP/WeightedOITComposite"));
+        }
+
+        [Test]
+        public void ShadowCastSamplingShaderUsesNewRuntimeAbiOnly()
+        {
+            string samplingText = ReadPackageText(ShadowCastSamplingPath);
+            string debugText = ReadPackageText(ShadowCastDebugPath);
+
+            Assert.That(samplingText, Does.Contain("HoUrpSampleShadowCastAttenuation"));
+            Assert.That(samplingText, Does.Contain("_HoUrpShadowCastAtlas"));
+            Assert.That(samplingText, Does.Contain("_HoUrpShadowCastSecondDirectionalAtlas"));
+            Assert.That(samplingText, Does.Contain("HoUrpSampleShadowCastPunctual"));
+            Assert.That(samplingText, Does.Contain("HoUrpSampleShadowCastSecondDirectional"));
+            Assert.That(samplingText, Does.Not.Contain("_HoShadowCast"));
+            Assert.That(debugText, Does.Contain("Shader \"Hidden/HoURP/ShadowCast/Debug\""));
         }
 
         [Test]

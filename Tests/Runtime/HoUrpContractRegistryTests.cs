@@ -18,10 +18,10 @@ namespace HoUrp.Extensions.Tests.Runtime
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
-            Assert.That(registry.Features.Count, Is.EqualTo(7));
-            Assert.That(registry.Resources.Count, Is.EqualTo(10));
-            Assert.That(registry.Semantics.Count, Is.EqualTo(33));
-            Assert.That(registry.DebugViews.Count, Is.EqualTo(43));
+            Assert.That(registry.Features.Count, Is.EqualTo(8));
+            Assert.That(registry.Resources.Count, Is.EqualTo(15));
+            Assert.That(registry.Semantics.Count, Is.EqualTo(34));
+            Assert.That(registry.DebugViews.Count, Is.EqualTo(45));
             Assert.That(registry.Capabilities.Count, Is.EqualTo(7));
         }
 
