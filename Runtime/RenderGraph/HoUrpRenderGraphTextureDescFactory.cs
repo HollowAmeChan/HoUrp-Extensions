@@ -138,6 +138,8 @@ namespace HoUrp.Extensions.RenderGraph
                     return new Color(0.0f, 0.0f, 0.0f, 1.0f);
                 case ResourceClearPolicy.ClearBlack:
                     return Color.black;
+                case ResourceClearPolicy.ClearWhite:
+                    return Color.white;
                 case ResourceClearPolicy.ClearTransparentBlack:
                 case ResourceClearPolicy.ClearZero:
                     return Color.clear;

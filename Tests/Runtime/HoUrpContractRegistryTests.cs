@@ -364,10 +364,51 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(transparentAlpha.Consumers, Contains.Item(HoUrpBuiltInNames.Features.AovOutput));
             Assert.That(oitAccumulation.Producer, Is.EqualTo(HoUrpBuiltInNames.Features.GeneratedMaterial));
             Assert.That(oitAccumulation.Format, Is.EqualTo(SemanticFormat.Float4));
+            Assert.That(oitAccumulation.Consumers, Contains.Item(HoUrpBuiltInNames.Features.TransparentOit));
             Assert.That(supportsOit.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Material));
             Assert.That(participatesOit.OwnerKind, Is.EqualTo(CapabilityOwnerKind.Material));
-            Assert.That(registry.Resources.TryGet(HoUrpIdentifier.From("Oit.Accumulation"), out _), Is.False);
-            Assert.That(registry.Resources.TryGet(HoUrpIdentifier.From("Oit.Revealage"), out _), Is.False);
+            Assert.That(feature.ProducedResources, Does.Not.Contain(HoUrpBuiltInNames.Resources.OitAccumulation));
+            Assert.That(feature.ProducedResources, Does.Not.Contain(HoUrpBuiltInNames.Resources.OitRevealage));
+        }
+
+        [Test]
+        public void MinimalAovRegistryLinksTransparentOitRuntimeResources()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            FeatureDescriptor feature = registry.Features.Get(HoUrpBuiltInNames.Features.TransparentOit);
+            ResourceDefinition opaque = registry.Resources.Get(HoUrpBuiltInNames.Resources.OitOpaqueColor);
+            ResourceDefinition accumulation = registry.Resources.Get(HoUrpBuiltInNames.Resources.OitAccumulation);
+            ResourceDefinition revealage = registry.Resources.Get(HoUrpBuiltInNames.Resources.OitRevealage);
+            ResourceDefinition compositeSource = registry.Resources.Get(HoUrpBuiltInNames.Resources.OitCompositeSource);
+            DebugViewDefinition accumulationDebug = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.OitAccumulation);
+            DebugViewDefinition revealageDebug = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.OitRevealage);
+
+            Assert.That(feature.Domain, Is.EqualTo(HoUrpDomain.Composite));
+            Assert.That(feature.Stage, Is.EqualTo(HoUrpPassStage.TransparentOit));
+            Assert.That(feature.ProducedResources, Contains.Item(HoUrpBuiltInNames.Resources.OitOpaqueColor));
+            Assert.That(feature.ProducedResources, Contains.Item(HoUrpBuiltInNames.Resources.OitAccumulation));
+            Assert.That(feature.ProducedResources, Contains.Item(HoUrpBuiltInNames.Resources.OitRevealage));
+            Assert.That(feature.ProducedResources, Contains.Item(HoUrpBuiltInNames.Resources.OitCompositeSource));
+            Assert.That(feature.ConsumedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.OitAccumulationInput));
+            Assert.That(feature.ConsumedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.OitRevealageInput));
+            Assert.That(feature.RequiredCapabilities, Contains.Item(HoUrpBuiltInNames.Capabilities.SupportsOit));
+            Assert.That(feature.RequiredCapabilities, Contains.Item(HoUrpBuiltInNames.Capabilities.ParticipatesOit));
+            Assert.That(feature.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.OitAccumulation));
+            Assert.That(feature.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.OitRevealage));
+
+            Assert.That(opaque.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.TransparentOit));
+            Assert.That(opaque.ClearPolicy, Is.EqualTo(ResourceClearPolicy.CopySource));
+            Assert.That(accumulation.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.TransparentOit));
+            Assert.That(accumulation.Format, Is.EqualTo(ResourceFormatHint.HighPrecisionRgba16Float));
+            Assert.That(accumulation.ClearPolicy, Is.EqualTo(ResourceClearPolicy.ClearZero));
+            Assert.That(revealage.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.TransparentOit));
+            Assert.That(revealage.Format, Is.EqualTo(ResourceFormatHint.R8Unorm));
+            Assert.That(revealage.ClearPolicy, Is.EqualTo(ResourceClearPolicy.ClearWhite));
+            Assert.That(compositeSource.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.TransparentOit));
+            Assert.That(compositeSource.ClearPolicy, Is.EqualTo(ResourceClearPolicy.CopySource));
+            Assert.That(accumulationDebug.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.OitAccumulation));
+            Assert.That(revealageDebug.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.OitRevealage));
         }
 
         [Test]

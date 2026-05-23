@@ -53,6 +53,9 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
             };
 
             half4 _HoUrpBaseColor;
+            float _HoUrpSupportsOit;
+            float _HoUrpParticipatesOit;
+            float _HoUrpOitActive;
 
             Varyings Vert(Attributes input)
             {
@@ -72,6 +75,7 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 HoUrpSurfaceData surface = HoUrpCreateSurfaceData(_HoUrpBaseColor.rgb, _HoUrpBaseColor.a, input.normalWS);
+                clip(0.5h - half(_HoUrpOitActive * _HoUrpSupportsOit * _HoUrpParticipatesOit));
                 half ndotl = saturate(dot(normalize(surface.normalWS), normalize(half3(0.3h, 0.6h, 0.7h))));
                 half3 debugLighting = surface.baseColor * (0.25h + 0.75h * ndotl);
                 return half4(debugLighting, surface.alpha);
@@ -188,7 +192,8 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
             Cull Back
             ZWrite Off
             ZTest LEqual
-            Blend One One, Zero OneMinusSrcAlpha
+            Blend 0 One One
+            Blend 1 Zero OneMinusSrcColor
 
             HLSLPROGRAM
             #pragma target 4.5
@@ -246,12 +251,61 @@ Shader "HoURP/Generated/HoUrpDebugLitMinimal"
                     half(_HoUrpSupportsOit),
                     half(_HoUrpParticipatesOit));
                 transparentData.alpha *= transparentData.supportsOit * transparentData.participatesOit;
+                half ndotl = saturate(dot(normalize(surface.normalWS), normalize(half3(0.3h, 0.6h, 0.7h))));
+                transparentData.color = surface.baseColor * (0.25h + 0.75h * ndotl);
 
                 HoUrpOitAccumulationData accumulation = HoUrpEncodeOitAccumulation(transparentData);
                 OitOutput output;
                 output.accumulation = half4(accumulation.weightedColor, accumulation.weightedAlpha);
                 output.revealage = accumulation.revealage;
                 return output;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode" = "ShadowCaster" }
+
+            Cull Back
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+
+            HLSLPROGRAM
+            #pragma target 4.5
+            #pragma vertex VertShadow
+            #pragma fragment FragShadow
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings VertShadow(Attributes input)
+            {
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                return output;
+            }
+
+            half4 FragShadow(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                return 0;
             }
             ENDHLSL
         }

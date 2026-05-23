@@ -3,6 +3,9 @@
 
 #include "HoUrpMaterialSurface.hlsl"
 
+float _HoUrpOitWeight;
+float _HoUrpOitAlphaClipThreshold;
+
 struct HoUrpOitAccumulationData
 {
     half3 weightedColor;
@@ -14,12 +17,13 @@ struct HoUrpOitAccumulationData
 half HoUrpComputeOitWeight(HoUrpTransparentOutputData transparentData)
 {
     half alpha = saturate(transparentData.alpha * transparentData.coverage);
-    return max(0.01h, alpha * max(transparentData.depthWeight, 0.01h));
+    return max(0.01h, alpha * half(max(_HoUrpOitWeight, 0.0)) * max(transparentData.depthWeight, 0.01h));
 }
 
 HoUrpOitAccumulationData HoUrpEncodeOitAccumulation(HoUrpTransparentOutputData transparentData)
 {
     half alpha = saturate(transparentData.alpha * transparentData.coverage);
+    clip(alpha - half(_HoUrpOitAlphaClipThreshold));
     half weight = HoUrpComputeOitWeight(transparentData);
 
     HoUrpOitAccumulationData data;

@@ -6,6 +6,7 @@ namespace HoUrp.Extensions.Resources
         ClearZero,
         ClearBlack,
         ClearTransparentBlack,
+        ClearWhite,
         ClearNeutralNormal,
         ClearInvalidNormalFarDepth,
         ClearDepth,

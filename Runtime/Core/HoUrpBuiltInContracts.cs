@@ -94,7 +94,7 @@ namespace HoUrp.Extensions.Core
                 "HoUrpOitAccumulation pass",
                 false,
                 "Material preset",
-                "_lilOITEnabled",
+                "old OIT material toggle",
                 "Marks a generated material preset as capable of producing OIT accumulation input."));
 
             registry.Capabilities.Register(new CapabilityDefinition(
@@ -105,7 +105,7 @@ namespace HoUrp.Extensions.Core
                 "Weighted OIT runtime draw list",
                 false,
                 "Material preset",
-                "_lilOITEnabled",
+                "old OIT material toggle",
                 "Marks a generated material instance as participating in OIT accumulation. Runtime support is deferred to the OIT stage."));
         }
 
@@ -472,6 +472,34 @@ namespace HoUrp.Extensions.Core
                 DebugValueRange.MinusOneToOne,
                 "HoAovDebugMode.SSS.Curvature",
                 "SSS-oriented alias for Material.Curvature from Aov.SurfaceData.");
+
+            registry.DebugViews.Register(new DebugViewDefinition(
+                HoUrpBuiltInNames.DebugViews.OitAccumulation,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.OitAccumulation,
+                HoUrpBuiltInNames.Semantics.OitAccumulationInput,
+                HoUrpBuiltInNames.Features.TransparentOit,
+                new ReadOnlyArray<DebugDisplayMode>(
+                    DebugDisplayMode.Replace,
+                    DebugDisplayMode.ChannelInspect),
+                DebugValueRange.ZeroToOne,
+                HoUrpBuiltInNames.Features.TransparentOit,
+                "WeightedOIT.Accumulation",
+                "Displays the weighted OIT accumulation buffer owned by TransparentOit."));
+
+            registry.DebugViews.Register(new DebugViewDefinition(
+                HoUrpBuiltInNames.DebugViews.OitRevealage,
+                HoUrpDomain.Debug,
+                HoUrpBuiltInNames.Resources.OitRevealage,
+                HoUrpBuiltInNames.Semantics.OitRevealageInput,
+                HoUrpBuiltInNames.Features.TransparentOit,
+                new ReadOnlyArray<DebugDisplayMode>(
+                    DebugDisplayMode.Replace,
+                    DebugDisplayMode.ChannelInspect),
+                DebugValueRange.ZeroToOne,
+                HoUrpBuiltInNames.Features.TransparentOit,
+                "WeightedOIT.Revealage",
+                "Displays the weighted OIT revealage buffer owned by TransparentOit."));
         }
 
         private static void RegisterObjectCustomDebugView(
@@ -589,6 +617,12 @@ namespace HoUrp.Extensions.Core
             {
                 HoUrpBuiltInNames.Features.SubsurfaceScattering,
                 HoUrpBuiltInNames.Features.ScreenPost,
+                HoUrpBuiltInNames.Features.DebugComposite
+            };
+
+            HoUrpIdentifier[] oitInputConsumers =
+            {
+                HoUrpBuiltInNames.Features.TransparentOit,
                 HoUrpBuiltInNames.Features.DebugComposite
             };
 
@@ -847,21 +881,31 @@ namespace HoUrp.Extensions.Core
                 "TransparentOutputData.coverage",
                 "Coverage after alpha clip or dithering. The stage-ten prototype may mirror alpha.");
 
-            RegisterGeneratedMaterialSemantic(
-                registry,
+            registry.Semantics.Register(new SemanticDefinition(
                 HoUrpBuiltInNames.Semantics.OitAccumulationInput,
                 HoUrpDomain.Composite,
                 SemanticFormat.Float4,
+                HoUrpPassStage.MaterialShadingSemanticAov,
+                HoUrpLifetime.PerMaterial,
+                HoUrpBuiltInNames.Features.GeneratedMaterial,
+                new ReadOnlyArray<HoUrpIdentifier>(oitInputConsumers),
+                HoUrpBuiltInNames.DebugViews.OitAccumulation,
+                HoUrpMigrationDecision.Replace,
                 "OitAccumulationData.weightedColor",
-                "OIT-ready weighted color/alpha input produced by the material pass. OIT runtime resources are deferred.");
+                "OIT-ready weighted color/alpha input produced by the material pass and consumed by TransparentOit."));
 
-            RegisterGeneratedMaterialSemantic(
-                registry,
+            registry.Semantics.Register(new SemanticDefinition(
                 HoUrpBuiltInNames.Semantics.OitRevealageInput,
                 HoUrpDomain.Composite,
                 SemanticFormat.NormalizedFloat,
+                HoUrpPassStage.MaterialShadingSemanticAov,
+                HoUrpLifetime.PerMaterial,
+                HoUrpBuiltInNames.Features.GeneratedMaterial,
+                new ReadOnlyArray<HoUrpIdentifier>(oitInputConsumers),
+                HoUrpBuiltInNames.DebugViews.OitRevealage,
+                HoUrpMigrationDecision.Replace,
                 "OitAccumulationData.revealage",
-                "OIT-ready revealage input produced by the material pass. OIT runtime resources are deferred.");
+                "OIT-ready revealage input produced by the material pass and consumed by TransparentOit."));
 
             registry.Semantics.Register(new SemanticDefinition(
                 HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
@@ -1012,6 +1056,17 @@ namespace HoUrp.Extensions.Core
 
         private static void RegisterResources(HoUrpContractRegistry registry)
         {
+            HoUrpIdentifier[] transparentOitOnly =
+            {
+                HoUrpBuiltInNames.Features.TransparentOit
+            };
+
+            HoUrpIdentifier[] transparentOitAndDebug =
+            {
+                HoUrpBuiltInNames.Features.TransparentOit,
+                HoUrpBuiltInNames.Features.DebugComposite
+            };
+
             registry.Resources.Register(new ResourceDefinition(
                 HoUrpBuiltInNames.Resources.AovMaskId,
                 ResourceKind.Texture2D,
@@ -1160,6 +1215,62 @@ namespace HoUrp.Extensions.Core
                 "_lilHoSSSDiffusedTexture",
                 "Diffused SSS color and composite weight."));
 
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.OitOpaqueColor,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.TransparentColor,
+                HoUrpBuiltInNames.Features.TransparentOit,
+                new ReadOnlyArray<HoUrpIdentifier>(transparentOitOnly),
+                ResourceFormatHint.CameraColor,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.CopySource,
+                HoUrpBuiltInNames.DebugViews.None,
+                string.Empty,
+                "Camera color copied before OIT accumulation for transparent material sampling."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.OitAccumulation,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.OitAccumulationInput,
+                HoUrpBuiltInNames.Features.TransparentOit,
+                new ReadOnlyArray<HoUrpIdentifier>(transparentOitAndDebug),
+                ResourceFormatHint.HighPrecisionRgba16Float,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearZero,
+                HoUrpBuiltInNames.DebugViews.OitAccumulation,
+                string.Empty,
+                "Weighted OIT accumulation texture owned by TransparentOit."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.OitRevealage,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.OitRevealageInput,
+                HoUrpBuiltInNames.Features.TransparentOit,
+                new ReadOnlyArray<HoUrpIdentifier>(transparentOitAndDebug),
+                ResourceFormatHint.R8Unorm,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.ClearWhite,
+                HoUrpBuiltInNames.DebugViews.OitRevealage,
+                string.Empty,
+                "Weighted OIT revealage texture owned by TransparentOit."));
+
+            registry.Resources.Register(new ResourceDefinition(
+                HoUrpBuiltInNames.Resources.OitCompositeSource,
+                ResourceKind.Texture2D,
+                HoUrpBuiltInNames.Semantics.TransparentColor,
+                HoUrpBuiltInNames.Features.TransparentOit,
+                new ReadOnlyArray<HoUrpIdentifier>(transparentOitOnly),
+                ResourceFormatHint.CameraColor,
+                ResourceScale.Full,
+                HoUrpLifetime.PerCamera,
+                ResourceClearPolicy.CopySource,
+                HoUrpBuiltInNames.DebugViews.None,
+                string.Empty,
+                "Camera color copy used as the OIT composite source."));
+
         }
 
         private static void RegisterFeatures(HoUrpContractRegistry registry)
@@ -1294,7 +1405,9 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Resources.AovMaterialCustom0_3,
                     HoUrpBuiltInNames.Resources.AovSssSource,
                     HoUrpBuiltInNames.Resources.SssSource,
-                    HoUrpBuiltInNames.Resources.SssDiffusion),
+                    HoUrpBuiltInNames.Resources.SssDiffusion,
+                    HoUrpBuiltInNames.Resources.OitAccumulation,
+                    HoUrpBuiltInNames.Resources.OitRevealage),
                 new ReadOnlyArray<HoUrpIdentifier>(),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
@@ -1321,6 +1434,8 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Semantics.ShadingSssWeight,
                     HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
                     HoUrpBuiltInNames.Semantics.ShadingSssCompositeWeight,
+                    HoUrpBuiltInNames.Semantics.OitAccumulationInput,
+                    HoUrpBuiltInNames.Semantics.OitRevealageInput,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
                 new ReadOnlyArray<HoUrpIdentifier>(
@@ -1343,6 +1458,38 @@ namespace HoUrp.Extensions.Core
                 HoUrpMigrationDecision.KeepConceptRename,
                 "Shoost image-chain prototype",
                 "Stage-eleven ImagePost prototype. It uses frame-local Image.WorkA/Image.WorkB ping-pong textures without publishing them as public semantic resources."));
+
+            registry.Features.Register(new FeatureDescriptor(
+                HoUrpBuiltInNames.Features.TransparentOit,
+                HoUrpDomain.Composite,
+                HoUrpPassStage.TransparentOit,
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Resources.OitOpaqueColor,
+                    HoUrpBuiltInNames.Resources.OitAccumulation,
+                    HoUrpBuiltInNames.Resources.OitRevealage,
+                    HoUrpBuiltInNames.Resources.OitCompositeSource),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Resources.OitOpaqueColor,
+                    HoUrpBuiltInNames.Resources.OitAccumulation,
+                    HoUrpBuiltInNames.Resources.OitRevealage,
+                    HoUrpBuiltInNames.Resources.OitCompositeSource),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Semantics.TransparentColor,
+                    HoUrpBuiltInNames.Semantics.TransparentAlpha,
+                    HoUrpBuiltInNames.Semantics.TransparentCoverage,
+                    HoUrpBuiltInNames.Semantics.OitAccumulationInput,
+                    HoUrpBuiltInNames.Semantics.OitRevealageInput),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Capabilities.SupportsOit,
+                    HoUrpBuiltInNames.Capabilities.ParticipatesOit,
+                    HoUrpBuiltInNames.Capabilities.SupportsDebugView),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.DebugViews.OitAccumulation,
+                    HoUrpBuiltInNames.DebugViews.OitRevealage),
+                HoUrpMigrationDecision.KeepConceptRename,
+                "Runtime/OIT/WeightedOITRendererFeature.cs",
+                "Stage-twelve TransparentOit runtime owner for weighted OIT accumulation, revealage, and composite resources."));
 
             registry.Features.Register(new FeatureDescriptor(
                 HoUrpBuiltInNames.Features.SubsurfaceScattering,
@@ -1466,7 +1613,9 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.DebugViews.SssCompositeWeight,
                     HoUrpBuiltInNames.DebugViews.SssProfileId,
                     HoUrpBuiltInNames.DebugViews.SssThickness,
-                    HoUrpBuiltInNames.DebugViews.SssCurvature),
+                    HoUrpBuiltInNames.DebugViews.SssCurvature,
+                    HoUrpBuiltInNames.DebugViews.OitAccumulation,
+                    HoUrpBuiltInNames.DebugViews.OitRevealage),
                 HoUrpMigrationDecision.Replace,
                 "old per-feature debug passes",
                 "Central debug composite owner for registered debug views."));

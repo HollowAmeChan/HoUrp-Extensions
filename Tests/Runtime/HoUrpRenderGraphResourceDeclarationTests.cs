@@ -130,6 +130,38 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
+        public void OitResourceDescriptorsUseExplicitFormatsAndClearValues()
+        {
+            var resources = HoUrpBuiltInContracts
+                .CreateMinimalAovRegistry()
+                .Resources;
+            ResourceDefinition opaque = resources.Get(HoUrpBuiltInNames.Resources.OitOpaqueColor);
+            ResourceDefinition accumulation = resources.Get(HoUrpBuiltInNames.Resources.OitAccumulation);
+            ResourceDefinition revealage = resources.Get(HoUrpBuiltInNames.Resources.OitRevealage);
+            ResourceDefinition compositeSource = resources.Get(HoUrpBuiltInNames.Resources.OitCompositeSource);
+
+            TextureDesc opaqueDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(opaque, CreateCameraDescriptor());
+            TextureDesc accumulationDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(accumulation, CreateCameraDescriptor());
+            TextureDesc revealageDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(revealage, CreateCameraDescriptor());
+            TextureDesc compositeSourceDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(compositeSource, CreateCameraDescriptor());
+
+            Assert.That(opaqueDesc.name, Is.EqualTo("Oit.OpaqueColor"));
+            Assert.That(opaqueDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(opaqueDesc.clearBuffer, Is.False);
+            Assert.That(accumulationDesc.name, Is.EqualTo("Oit.Accumulation"));
+            Assert.That(accumulationDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(accumulationDesc.clearBuffer, Is.True);
+            Assert.That(accumulationDesc.clearColor, Is.EqualTo(Color.clear));
+            Assert.That(revealageDesc.name, Is.EqualTo("Oit.Revealage"));
+            Assert.That(revealageDesc.format, Is.EqualTo(GraphicsFormat.R8_UNorm));
+            Assert.That(revealageDesc.clearBuffer, Is.True);
+            Assert.That(revealageDesc.clearColor, Is.EqualTo(Color.white));
+            Assert.That(compositeSourceDesc.name, Is.EqualTo("Oit.CompositeSource"));
+            Assert.That(compositeSourceDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(compositeSourceDesc.clearBuffer, Is.False);
+        }
+
+        [Test]
         public void ScaledDescriptorRoundsDownButNeverBelowOnePixel()
         {
             ResourceDefinition scaled = new ResourceDefinition(

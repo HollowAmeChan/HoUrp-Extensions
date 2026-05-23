@@ -9,6 +9,7 @@ namespace HoUrp.Extensions.Core
         public const string SubsurfaceScatteringShaderName = "Hidden/HoURP/SSS/SubsurfaceScattering";
         public const string ScreenPostPrototypeShaderName = "Hidden/HoURP/ScreenPost/Prototype";
         public const string ImagePostPrototypeShaderName = "Hidden/HoURP/ImagePost/Prototype";
+        public const string OitWeightedCompositeShaderName = "Hidden/HoURP/OIT/WeightedComposite";
 
         public static readonly int AovMaskIdTexture = Shader.PropertyToID("_HoUrpAovMaskIdTexture");
         public static readonly int AovNormalDepthTexture = Shader.PropertyToID("_HoUrpAovNormalDepthTexture");
@@ -19,6 +20,13 @@ namespace HoUrp.Extensions.Core
         public static readonly int AovSssSourceTexture = Shader.PropertyToID("_HoUrpAovSssSourceTexture");
         public static readonly int SssSourceTexture = Shader.PropertyToID("_HoUrpSssSourceTexture");
         public static readonly int SssDiffusionTexture = Shader.PropertyToID("_HoUrpSssDiffusionTexture");
+        public static readonly int OitOpaqueColorTexture = Shader.PropertyToID("_HoUrpOitOpaqueColorTexture");
+        public static readonly int OitAccumulationTexture = Shader.PropertyToID("_HoUrpOitAccumulationTexture");
+        public static readonly int OitRevealageTexture = Shader.PropertyToID("_HoUrpOitRevealageTexture");
+        public static readonly int OitCompositeSourceTexture = Shader.PropertyToID("_HoUrpOitCompositeSourceTexture");
+        public static readonly int OitActive = Shader.PropertyToID("_HoUrpOitActive");
+        public static readonly int OitWeight = Shader.PropertyToID("_HoUrpOitWeight");
+        public static readonly int OitAlphaClipThreshold = Shader.PropertyToID("_HoUrpOitAlphaClipThreshold");
         public static readonly int AovDebugSourceTexture = Shader.PropertyToID("_HoUrpAovDebugSourceTexture");
         public static readonly int AovDebugTileMode = Shader.PropertyToID("_HoUrpAovDebugTileMode");
         public static readonly int AovDebugTileRect = Shader.PropertyToID("_HoUrpAovDebugTileRect");

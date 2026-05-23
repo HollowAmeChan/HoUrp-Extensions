@@ -10,6 +10,7 @@ namespace HoUrp.Extensions.Tests.Runtime
     {
         private const string PackageRoot = "Packages/com.hollow.hourp-extensions";
         private const string ShaderPath = PackageRoot + "/Runtime/Shaders/Generated/HoUrpDebugLitMinimal.shader";
+        private const string OitCompositeShaderPath = PackageRoot + "/Runtime/Shaders/Hidden/HoURP/OIT/WeightedComposite.shader";
 
         [Test]
         public void MaterialShaderAbiIncludeFilesExist()
@@ -32,10 +33,17 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(shaderText, Does.Contain("\"LightMode\" = \"HoUrpAovOutput\""));
             Assert.That(shaderText, Does.Contain("Name \"HoUrpOitAccumulation\""));
             Assert.That(shaderText, Does.Contain("\"LightMode\" = \"HoUrpOitAccumulation\""));
+            Assert.That(shaderText, Does.Contain("Name \"ShadowCaster\""));
+            Assert.That(shaderText, Does.Contain("\"LightMode\" = \"ShadowCaster\""));
             Assert.That(shaderText, Does.Contain("HoUrpTransparentOutputData"));
             Assert.That(shaderText, Does.Contain("HoUrpOitAccumulationData"));
+            Assert.That(shaderText, Does.Contain("transparentData.color = surface.baseColor * (0.25h + 0.75h * ndotl);"));
             Assert.That(ReadPackageText(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl"), Does.Contain("weightedColor"));
             Assert.That(ReadPackageText(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl"), Does.Contain("weightedAlpha"));
+            Assert.That(ReadPackageText(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl"), Does.Contain("_HoUrpOitWeight"));
+            Assert.That(ReadPackageText(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl"), Does.Contain("_HoUrpOitAlphaClipThreshold"));
+            Assert.That(shaderText, Does.Contain("_HoUrpOitActive"));
+            Assert.That(shaderText, Does.Contain("clip(0.5h - half(_HoUrpOitActive * _HoUrpSupportsOit * _HoUrpParticipatesOit))"));
             Assert.That(shaderText, Does.Contain("_HoUrpGeneratedMaterialClass"));
             Assert.That(shaderText, Does.Not.Contain("float _HoUrpMaterialClass;"));
             Assert.That(shaderText, Does.Not.Contain("_HoUrpAovMaskWeight(\""));
@@ -64,12 +72,28 @@ namespace HoUrp.Extensions.Tests.Runtime
         public void GeneratedDebugLitShaderDoesNotExposeOldOitAbi()
         {
             string shaderText = ReadPackageText(ShaderPath);
+            string materialOitText = ReadPackageText(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl");
 
             Assert.That(shaderText, Does.Not.Contain("lilToonOIT"));
             Assert.That(shaderText, Does.Not.Contain("_lilOITEnabled"));
             Assert.That(shaderText, Does.Not.Contain("_lilOITActive"));
             Assert.That(shaderText, Does.Not.Contain("_lilHoAov"));
             Assert.That(shaderText, Does.Not.Contain("_HoAov"));
+            Assert.That(materialOitText, Does.Not.Contain("_lilOIT"));
+            Assert.That(materialOitText, Does.Not.Contain("lilWeightedOIT"));
+        }
+
+        [Test]
+        public void WeightedOitCompositeShaderUsesNewRuntimeAbiOnly()
+        {
+            string shaderText = ReadPackageText(OitCompositeShaderPath);
+
+            Assert.That(shaderText, Does.Contain("Shader \"Hidden/HoURP/OIT/WeightedComposite\""));
+            Assert.That(shaderText, Does.Contain("_HoUrpOitCompositeSourceTexture"));
+            Assert.That(shaderText, Does.Contain("_HoUrpOitAccumulationTexture"));
+            Assert.That(shaderText, Does.Contain("_HoUrpOitRevealageTexture"));
+            Assert.That(shaderText, Does.Not.Contain("_lilOIT"));
+            Assert.That(shaderText, Does.Not.Contain("Hidden/lilToon/URP/WeightedOITComposite"));
         }
 
         [Test]
