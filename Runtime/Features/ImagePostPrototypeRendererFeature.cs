@@ -1,4 +1,5 @@
 using HoUrp.Extensions.Core;
+using HoUrp.Extensions.PostProcess;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -18,22 +19,7 @@ namespace HoUrp.Extensions.Features
         private bool enabledForSceneView = true;
 
         [SerializeField]
-        private Color colorTint = Color.white;
-
-        [SerializeField]
-        [Range(0.0f, 2.0f)]
-        private float brightness = 1.0f;
-
-        [SerializeField]
-        [Range(0.0f, 2.0f)]
-        private float contrast = 1.0f;
-
-        [SerializeField]
-        [Range(0.0f, 1.0f)]
-        private float tintStrength = 0.15f;
-
-        [SerializeField]
-        private bool runSecondPass;
+        private ImagePostFilterSettings[] filters = { ImagePostFilterSettings.CreateDefault() };
 
         private ImagePostPrototypePass imagePostPass;
         private Material material;
@@ -55,7 +41,8 @@ namespace HoUrp.Extensions.Features
                 return;
             }
 
-            imagePostPass.Setup(material, colorTint, brightness, contrast, tintStrength, runSecondPass);
+            EnsureFilters();
+            imagePostPass.Setup(material, filters);
             renderer.EnqueuePass(imagePostPass);
         }
 
@@ -73,15 +60,34 @@ namespace HoUrp.Extensions.Features
                 || (enabledForSceneView && cameraType == CameraType.SceneView);
         }
 
+        private void OnValidate()
+        {
+            EnsureFilters();
+        }
+
+        private void EnsureFilters()
+        {
+            if (filters == null || filters.Length == 0)
+            {
+                filters = new[] { ImagePostFilterSettings.CreateDefault() };
+            }
+
+            for (int i = 0; i < filters.Length; i++)
+            {
+                if (filters[i] == null)
+                {
+                    filters[i] = ImagePostFilterSettings.CreateDefault("Color Adjust " + i);
+                }
+
+                filters[i].Ensure();
+            }
+        }
+
         private sealed class ImagePostPrototypePass : ScriptableRenderPass
         {
             private const int ColorAdjustPassIndex = 0;
             private Material material;
-            private Color colorTint;
-            private float brightness;
-            private float contrast;
-            private float tintStrength;
-            private bool runSecondPass;
+            private ImagePostFilterSettings[] filters;
 
             public ImagePostPrototypePass()
             {
@@ -89,32 +95,27 @@ namespace HoUrp.Extensions.Features
                 requiresIntermediateTexture = true;
             }
 
-            public void Setup(
-                Material material,
-                Color colorTint,
-                float brightness,
-                float contrast,
-                float tintStrength,
-                bool runSecondPass)
+            public void Setup(Material material, ImagePostFilterSettings[] filters)
             {
                 this.material = material;
-                this.colorTint = colorTint;
-                this.brightness = Mathf.Max(0.0f, brightness);
-                this.contrast = Mathf.Max(0.0f, contrast);
-                this.tintStrength = Mathf.Clamp01(tintStrength);
-                this.runSecondPass = runSecondPass;
+                this.filters = filters;
                 requiresIntermediateTexture = true;
             }
 
             public override void RecordRenderGraph(UnityRenderGraph renderGraph, ContextContainer frameData)
             {
-                if (material == null)
+                if (material == null || filters == null || filters.Length == 0)
                 {
                     return;
                 }
 
                 UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
                 if (resourceData.isActiveTargetBackBuffer)
+                {
+                    return;
+                }
+
+                if (!HasEnabledFilter(filters))
                 {
                     return;
                 }
@@ -134,48 +135,65 @@ namespace HoUrp.Extensions.Features
 
                 TextureHandle current = workA;
                 TextureHandle alternate = workB;
-                RecordColorAdjustPass(renderGraph, current, alternate, "HoURP ImagePost Prototype Pass 0", brightness, contrast, tintStrength);
-                Swap(ref current, ref alternate);
 
-                if (runSecondPass)
+                for (int i = 0; i < filters.Length; i++)
                 {
-                    RecordColorAdjustPass(renderGraph, current, alternate, "HoURP ImagePost Prototype Pass 1", 1.0f, 1.0f, tintStrength * 0.5f);
+                    ImagePostFilterSettings filter = filters[i];
+                    if (filter == null)
+                    {
+                        continue;
+                    }
+
+                    filter.Ensure();
+                    if (!filter.enabled)
+                    {
+                        continue;
+                    }
+
+                    RecordColorAdjustPass(renderGraph, current, alternate, filter, "HoURP ImagePost Filter " + i);
                     Swap(ref current, ref alternate);
                 }
 
                 renderGraph.AddBlitPass(current, cameraColor, Vector2.one, Vector2.zero, passName: "HoURP ImagePost Copy Back");
             }
 
+            private static bool HasEnabledFilter(ImagePostFilterSettings[] filters)
+            {
+                for (int i = 0; i < filters.Length; i++)
+                {
+                    if (filters[i] != null && filters[i].enabled)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             private void RecordColorAdjustPass(
                 UnityRenderGraph renderGraph,
                 TextureHandle source,
                 TextureHandle destination,
-                string passName,
-                float passBrightness,
-                float passContrast,
-                float passTintStrength)
+                ImagePostFilterSettings filter,
+                string passName)
             {
                 RenderGraphUtils.BlitMaterialParameters blitParameters =
-                    new RenderGraphUtils.BlitMaterialParameters(
-                        source,
-                        destination,
-                        material,
-                        ColorAdjustPassIndex)
+                    new RenderGraphUtils.BlitMaterialParameters(source, destination, material, ColorAdjustPassIndex)
                     {
-                        propertyBlock = CreatePropertyBlock(passBrightness, passContrast, passTintStrength),
+                        propertyBlock = CreatePropertyBlock(filter),
                         sourceTexturePropertyID = HoUrpShaderPropertyIds.SourceColorTexture
                     };
 
                 renderGraph.AddBlitPass(blitParameters, passName: passName);
             }
 
-            private MaterialPropertyBlock CreatePropertyBlock(float passBrightness, float passContrast, float passTintStrength)
+            private static MaterialPropertyBlock CreatePropertyBlock(ImagePostFilterSettings filter)
             {
                 MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
-                propertyBlock.SetColor(HoUrpShaderPropertyIds.ImagePostColorTint, colorTint);
+                propertyBlock.SetColor(HoUrpShaderPropertyIds.ImagePostColorTint, filter.colorTint);
                 propertyBlock.SetVector(
                     HoUrpShaderPropertyIds.ImagePostParams,
-                    new Vector4(passBrightness, passContrast, passTintStrength, 0.0f));
+                    new Vector4(filter.brightness, filter.contrast, filter.tintStrength, 0.0f));
                 return propertyBlock;
             }
 

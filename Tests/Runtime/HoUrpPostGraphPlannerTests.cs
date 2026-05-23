@@ -71,11 +71,10 @@ namespace HoUrp.Extensions.Tests.Runtime
         [Test]
         public void ScreenPostSemanticPassDeclaresSemanticInputsWithoutImageChainWork()
         {
-            PostGraphPlan plan = BuildPlan(new PostLayerDefinition(
+            PostGraphPlan plan = BuildPlan(ScreenPostLayerWithRule(
                 "Layer.RuleMask",
-                PostEffectDomain.ScreenPost,
-                true,
-                new ReadOnlyArray<HoUrpIdentifier>(HoUrpBuiltInNames.PostEffects.ScreenPostRuleMaskPrototype)));
+                ScreenPostRuleSource.MaskWeight,
+                ScreenPostRuleSource.LinearDepth));
 
             Assert.That(plan.Nodes.Count, Is.EqualTo(1));
             Assert.That(ContainsRequest(plan, request =>
@@ -88,6 +87,56 @@ namespace HoUrp.Extensions.Tests.Runtime
                 request.Kind == PostResourceRequestKind.SemanticInput &&
                 request.ResourceId == HoUrpBuiltInNames.Resources.AovNormalDepth &&
                 request.ReadSemantics[0] == HoUrpBuiltInNames.Semantics.GeometryLinearDepth), Is.True);
+        }
+
+        [Test]
+        public void ScreenPostRuleSourcesCreateOnlyRequiredAovRequests()
+        {
+            PostGraphPlan plan = BuildPlan(ScreenPostLayerWithRule(
+                "Layer.ObjectCustom",
+                ScreenPostRuleSource.ObjectCustom4,
+                ScreenPostRuleSource.Thickness));
+
+            Assert.That(ContainsRequest(plan, request =>
+                request.Kind == PostResourceRequestKind.SemanticInput &&
+                request.ResourceId == HoUrpBuiltInNames.Resources.AovObjectCustom4_7), Is.True);
+            Assert.That(ContainsRequest(plan, request =>
+                request.Kind == PostResourceRequestKind.SemanticInput &&
+                request.ResourceId == HoUrpBuiltInNames.Resources.AovSurfaceData), Is.True);
+            Assert.That(ContainsRequest(plan, request =>
+                request.ResourceId == HoUrpBuiltInNames.Resources.AovMaskId), Is.False);
+            Assert.That(ContainsRequest(plan, request =>
+                request.ResourceId == HoUrpBuiltInNames.Resources.AovNormalDepth), Is.False);
+        }
+
+        [Test]
+        public void StackSettingsPreserveSerializedListOrder()
+        {
+            var filters = new[]
+            {
+                ImagePostFilterSettings.CreateDefault("First"),
+                ImagePostFilterSettings.CreateDefault("Second")
+            };
+
+            PostGraphPlan plan = new PostGraphPlanner(HoUrpPostPrototypeCatalog.CreateRegistry())
+                .Build(PostStackSettings.BuildImagePostStack(filters));
+
+            Assert.That(plan.Nodes.Count, Is.EqualTo(2));
+            Assert.That(plan.Nodes[0].LayerId, Is.EqualTo(HoUrpIdentifier.From("ImagePost.Layer.00")));
+            Assert.That(plan.Nodes[1].LayerId, Is.EqualTo(HoUrpIdentifier.From("ImagePost.Layer.01")));
+        }
+
+        [Test]
+        public void DisabledScreenPostRuleSetCreatesNoNodeOrRequest()
+        {
+            var layer = ScreenPostLayerSettings.CreateDefault();
+            layer.ruleSet.enabled = false;
+
+            PostGraphPlan plan = new PostGraphPlanner(HoUrpPostPrototypeCatalog.CreateRegistry())
+                .Build(PostStackSettings.BuildScreenPostStack(new[] { layer }));
+
+            Assert.That(plan.Nodes.Count, Is.EqualTo(0));
+            Assert.That(plan.ResourceRequests.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -144,11 +193,10 @@ namespace HoUrp.Extensions.Tests.Runtime
         [Test]
         public void PostRequestsDoNotExposeLegacyGlobalTextureNames()
         {
-            PostGraphPlan plan = BuildPlan(new PostLayerDefinition(
+            PostGraphPlan plan = BuildPlan(ScreenPostLayerWithRule(
                 "Layer.RuleMask",
-                PostEffectDomain.ScreenPost,
-                true,
-                new ReadOnlyArray<HoUrpIdentifier>(HoUrpBuiltInNames.PostEffects.ScreenPostRuleMaskPrototype)));
+                ScreenPostRuleSource.MaskWeight,
+                ScreenPostRuleSource.LinearDepth));
 
             for (int i = 0; i < plan.ResourceRequests.Count; i++)
             {
@@ -166,6 +214,24 @@ namespace HoUrp.Extensions.Tests.Runtime
         {
             var planner = new PostGraphPlanner(HoUrpPostPrototypeCatalog.CreateRegistry());
             return planner.Build(new PostStackDefinition(new ReadOnlyArray<PostLayerDefinition>(layer)));
+        }
+
+        private static PostLayerDefinition ScreenPostLayerWithRule(
+            HoUrpIdentifier layerId,
+            ScreenPostRuleSource first,
+            ScreenPostRuleSource second)
+        {
+            var settings = ScreenPostLayerSettings.CreateDefault();
+            settings.ruleSet.rules[0].source = first;
+            settings.ruleSet.rules[1].enabled = true;
+            settings.ruleSet.rules[1].source = second;
+            settings.ruleSet.rules[1].op = ScreenPostRuleOperator.Greater;
+            return new PostLayerDefinition(
+                layerId,
+                PostEffectDomain.ScreenPost,
+                true,
+                new ReadOnlyArray<HoUrpIdentifier>(HoUrpBuiltInNames.PostEffects.ScreenPostRuleMaskPrototype),
+                settings.ruleSet.BuildResourceRequests(layerId));
         }
 
         private static bool ContainsRequest(PostGraphPlan plan, Predicate<PostResourceRequest> predicate)

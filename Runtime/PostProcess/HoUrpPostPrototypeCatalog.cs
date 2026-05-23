@@ -64,22 +64,10 @@ namespace HoUrp.Extensions.PostProcess
                 PostEffectDomain.ScreenPost,
                 PostEffectExecutionKind.SemanticImagePass,
                 new ReadOnlyArray<PostResourceRequest>(
-                    CreateSourceImageRequest(HoUrpBuiltInNames.Features.ScreenPost),
-                    CreateSemanticInputRequest(
-                        HoUrpIdentifier.From("ScreenPost.RuleMask.MaskId.Request"),
-                        HoUrpBuiltInNames.Features.ScreenPost,
-                        HoUrpBuiltInNames.Resources.AovMaskId,
-                        HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
-                        "ScreenPost.RuleMask.AovMaskId"),
-                    CreateSemanticInputRequest(
-                        HoUrpIdentifier.From("ScreenPost.RuleMask.NormalDepth.Request"),
-                        HoUrpBuiltInNames.Features.ScreenPost,
-                        HoUrpBuiltInNames.Resources.AovNormalDepth,
-                        HoUrpBuiltInNames.Semantics.GeometryLinearDepth,
-                        "ScreenPost.RuleMask.AovNormalDepth")),
+                    CreateSourceImageRequest(HoUrpBuiltInNames.Features.ScreenPost)),
                 1,
                 "HoPost rule mask behavior reference",
-                "Minimal semantic-aware ScreenPost prototype that declares AOV inputs explicitly.");
+                "ScreenPost rule-mask effect. Layer rule sets declare AOV inputs dynamically.");
         }
 
         public static PostEffectDefinition CreatePlannedHistoryPrototype()

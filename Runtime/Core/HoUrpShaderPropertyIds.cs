@@ -31,6 +31,9 @@ namespace HoUrp.Extensions.Core
         public static readonly int ScreenPostTintColor = Shader.PropertyToID("_HoUrpScreenPostTintColor");
         public static readonly int ScreenPostParams = Shader.PropertyToID("_HoUrpScreenPostParams");
         public static readonly int ScreenPostMaskTexture = Shader.PropertyToID("_HoUrpScreenPostMaskTexture");
+        public static readonly int ScreenPostLayerParams = Shader.PropertyToID("_HoUrpScreenPostLayerParams");
+        public static readonly int ScreenPostRuleParams = Shader.PropertyToID("_HoUrpScreenPostRuleParams");
+        public static readonly int ScreenPostRuleValues = Shader.PropertyToID("_HoUrpScreenPostRuleValues");
         public static readonly int AovDebugMode = Shader.PropertyToID("_HoUrpAovDebugMode");
         public static readonly int SemanticPostTintColor = Shader.PropertyToID("_HoUrpSemanticPostTintColor");
         public static readonly int AovMaskWeight = Shader.PropertyToID("_HoUrpAovMaskWeight");

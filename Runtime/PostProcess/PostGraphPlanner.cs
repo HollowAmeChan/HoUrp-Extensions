@@ -111,6 +111,22 @@ namespace HoUrp.Extensions.PostProcess
                                 $"Resource request '{request.RequestId}' uses {request.Kind}, which is planned but not implemented in stage 11."));
                         }
                     }
+
+                    for (int requestIndex = 0; requestIndex < layer.AdditionalResourceRequests.Count; requestIndex++)
+                    {
+                        PostResourceRequest request = layer.AdditionalResourceRequests[requestIndex];
+
+                        requests.Add(WithOwner(request, layer.Id, effect.Id));
+
+                        if (IsUnsupportedInStage11(request.Kind))
+                        {
+                            diagnostics.Add(new PostGraphDiagnostic(
+                                PostGraphDiagnosticSeverity.Warning,
+                                effect.Id,
+                                "PostResource.UnsupportedInStage11",
+                                $"Resource request '{request.RequestId}' uses {request.Kind}, which is planned but not implemented in stage 11."));
+                        }
+                    }
                 }
             }
 
