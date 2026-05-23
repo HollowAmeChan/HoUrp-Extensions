@@ -130,22 +130,6 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
-        public void SemanticPostMaskResourceDescriptorUsesMaskFormatAndZeroClear()
-        {
-            ResourceDefinition semanticPostMask = HoUrpBuiltInContracts
-                .CreateMinimalAovRegistry()
-                .Resources
-                .Get(HoUrpBuiltInNames.Resources.SemanticPostMask);
-
-            TextureDesc desc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(semanticPostMask, CreateCameraDescriptor());
-
-            Assert.That(desc.name, Is.EqualTo("SemanticPost.Mask"));
-            Assert.That(desc.format, Is.EqualTo(GraphicsFormat.R8G8B8A8_UNorm));
-            Assert.That(desc.clearBuffer, Is.True);
-            Assert.That(desc.clearColor, Is.EqualTo(Color.clear));
-        }
-
-        [Test]
         public void ScaledDescriptorRoundsDownButNeverBelowOnePixel()
         {
             ResourceDefinition scaled = new ResourceDefinition(

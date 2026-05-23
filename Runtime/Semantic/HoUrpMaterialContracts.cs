@@ -61,7 +61,7 @@ namespace HoUrp.Extensions.Semantic
                         HoUrpBuiltInNames.Semantics.ShadingSssWeight),
                     new ReadOnlyArray<string>("HoUrpObjectSemantic.hlsl", "HoUrpMaterialSurface.hlsl", "HoUrpMaterialAov.hlsl"),
                     new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
-                    "Provides minimal SSS semantics for AOV, SSS, and SemanticPost validation."),
+                    "Provides minimal SSS semantics for AOV, SSS, and ScreenPost validation."),
                 new MaterialFeatureBlockDefinition(
                     FeatureBlocks.MaterialClass,
                     "Material Class",
@@ -158,7 +158,7 @@ namespace HoUrp.Extensions.Semantic
                     HoUrpBuiltInNames.ShaderPasses.HoUrpOitAccumulation),
                 MaterialPhasePolicy.OitOnly,
                 true,
-                "Prototype generated-material contract for AOV, SSS, SemanticPost, and OIT-ready validation.");
+                "Prototype generated-material contract for AOV, SSS, ScreenPost, and OIT-ready validation.");
         }
     }
 }

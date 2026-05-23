@@ -6,8 +6,6 @@ namespace HoUrp.Extensions.Core
     {
         public const string AovOutputFallbackShaderName = "Hidden/HoURP/AOV/AovOutputFallback";
         public const string AovDebugShaderName = "Hidden/HoURP/Debug/AovDebug";
-        public const string SemanticPostShaderName = "Hidden/HoURP/SemanticPost/AovReadProbe";
-        public const string SemanticPostAovReadProbeShaderName = SemanticPostShaderName;
         public const string SubsurfaceScatteringShaderName = "Hidden/HoURP/SSS/SubsurfaceScattering";
         public const string ScreenPostPrototypeShaderName = "Hidden/HoURP/ScreenPost/Prototype";
         public const string ImagePostPrototypeShaderName = "Hidden/HoURP/ImagePost/Prototype";
@@ -35,7 +33,6 @@ namespace HoUrp.Extensions.Core
         public static readonly int ScreenPostRuleParams = Shader.PropertyToID("_HoUrpScreenPostRuleParams");
         public static readonly int ScreenPostRuleValues = Shader.PropertyToID("_HoUrpScreenPostRuleValues");
         public static readonly int AovDebugMode = Shader.PropertyToID("_HoUrpAovDebugMode");
-        public static readonly int SemanticPostTintColor = Shader.PropertyToID("_HoUrpSemanticPostTintColor");
         public static readonly int AovMaskWeight = Shader.PropertyToID("_HoUrpAovMaskWeight");
         public static readonly int ObjectId = Shader.PropertyToID("_HoUrpObjectId");
         public static readonly int ObjectGroupId = Shader.PropertyToID("_HoUrpObjectGroupId");
@@ -49,13 +46,6 @@ namespace HoUrp.Extensions.Core
         public static readonly int MaterialCustom0_3 = Shader.PropertyToID("_HoUrpMaterialCustom0_3");
         public static readonly int SssSourceColor = Shader.PropertyToID("_HoUrpSssSourceColor");
         public static readonly int SssWeight = Shader.PropertyToID("_HoUrpSssWeight");
-        public static readonly int SemanticPostObjectCustomChannel = Shader.PropertyToID("_HoUrpSemanticPostObjectCustomChannel");
-        public static readonly int SemanticPostMaterialCustomChannel = Shader.PropertyToID("_HoUrpSemanticPostMaterialCustomChannel");
-        public static readonly int SemanticPostMaskTexture = Shader.PropertyToID("_HoUrpSemanticPostMaskTexture");
-        public static readonly int SemanticPostLayerParams = Shader.PropertyToID("_HoUrpSemanticPostLayerParams");
-        public static readonly int SemanticPostLayerColors = Shader.PropertyToID("_HoUrpSemanticPostLayerColors");
-        public static readonly int SemanticPostRuleParams = Shader.PropertyToID("_HoUrpSemanticPostRuleParams");
-        public static readonly int SemanticPostRuleValues = Shader.PropertyToID("_HoUrpSemanticPostRuleValues");
         public static readonly int SssStrength = Shader.PropertyToID("_HoUrpSssStrength");
         public static readonly int SssRadius = Shader.PropertyToID("_HoUrpSssRadius");
         public static readonly int SssDepthTolerance = Shader.PropertyToID("_HoUrpSssDepthTolerance");

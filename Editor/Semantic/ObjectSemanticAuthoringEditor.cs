@@ -196,7 +196,7 @@ namespace HoUrp.Extensions.Editor.Semantic
                 EditorGUILayout.ToggleLeft("Flag 0 留空", false);
             }
 
-            EditorGUILayout.PropertyField(featureFlag1ReceivesSemanticPost, new GUIContent("Flag 1 SemanticPost 接收"));
+            EditorGUILayout.PropertyField(featureFlag1ReceivesSemanticPost, new GUIContent("Flag 1 ScreenPost Receive"));
             EditorGUILayout.PropertyField(featureFlag2ReceivesSss, new GUIContent("Flag 2 SSS 接收"));
             EditorGUILayout.PropertyField(featureFlag3ReceivesCharacterComposite, new GUIContent("Flag 3 角色合成接收"));
             EditorGUILayout.PropertyField(featureFlag4ReceivesOutline, new GUIContent("Flag 4 轮廓接收"));

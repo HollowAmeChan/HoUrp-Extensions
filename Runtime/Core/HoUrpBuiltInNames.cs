@@ -6,7 +6,6 @@ namespace HoUrp.Extensions.Core
         {
             public static readonly HoUrpIdentifier AovOutput = "AovOutput";
             public static readonly HoUrpIdentifier SubsurfaceScattering = "SubsurfaceScattering";
-            public static readonly HoUrpIdentifier SemanticPostProcess = "SemanticPostProcess";
             public static readonly HoUrpIdentifier ScreenPost = "ScreenPost";
             public static readonly HoUrpIdentifier ImagePost = "ImagePost";
             public static readonly HoUrpIdentifier GeneratedMaterial = "GeneratedMaterial";
@@ -64,7 +63,6 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier ShadingSssWeight = "Shading.SssWeight";
             public static readonly HoUrpIdentifier ShadingSssDiffusionColor = "Shading.SssDiffusionColor";
             public static readonly HoUrpIdentifier ShadingSssCompositeWeight = "Shading.SssCompositeWeight";
-            public static readonly HoUrpIdentifier CompositeSemanticPostMask = "Composite.SemanticPostMask";
             public static readonly HoUrpIdentifier GeometryWorldNormal = "Geometry.WorldNormal";
             public static readonly HoUrpIdentifier GeometryLinearDepth = "Geometry.LinearDepth";
             public static readonly HoUrpIdentifier TransparentColor = "Transparent.Color";
@@ -85,7 +83,6 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovSssSource = "Aov.SssSource";
             public static readonly HoUrpIdentifier SssSource = "Sss.Source";
             public static readonly HoUrpIdentifier SssDiffusion = "Sss.Diffusion";
-            public static readonly HoUrpIdentifier SemanticPostMask = "SemanticPost.Mask";
         }
 
         public static class DebugViews
@@ -133,7 +130,6 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier SssProfileId = "SSS.ProfileId";
             public static readonly HoUrpIdentifier SssThickness = "SSS.Thickness";
             public static readonly HoUrpIdentifier SssCurvature = "SSS.Curvature";
-            public static readonly HoUrpIdentifier SemanticPostMask = "SemanticPost.Mask";
         }
 
         public static class Capabilities
