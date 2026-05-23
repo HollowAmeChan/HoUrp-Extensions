@@ -13,6 +13,7 @@ namespace HoUrp.Extensions.Tests.Runtime
         private const string OitCompositeShaderPath = PackageRoot + "/Runtime/Shaders/Hidden/HoURP/OIT/WeightedComposite.shader";
         private const string ShadowCastSamplingPath = PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpShadowCastSampling.hlsl";
         private const string ShadowCastDebugPath = PackageRoot + "/Runtime/Shaders/Hidden/HoURP/ShadowCast/Debug.shader";
+        private const string ShadowCastReceiverDebugPath = PackageRoot + "/Runtime/Shaders/Generated/HoUrpShadowCastReceiverDebug.shader";
 
         [Test]
         public void MaterialShaderAbiIncludeFilesExist()
@@ -22,6 +23,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(File.Exists(ToAbsolutePath(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl")), Is.True);
             Assert.That(File.Exists(ToAbsolutePath(PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpObjectSemantic.hlsl")), Is.True);
             Assert.That(File.Exists(ToAbsolutePath(ShadowCastSamplingPath)), Is.True);
+            Assert.That(File.Exists(ToAbsolutePath(ShadowCastReceiverDebugPath)), Is.True);
         }
 
         [Test]
@@ -106,6 +108,7 @@ namespace HoUrp.Extensions.Tests.Runtime
         {
             string samplingText = ReadPackageText(ShadowCastSamplingPath);
             string debugText = ReadPackageText(ShadowCastDebugPath);
+            string receiverDebugText = ReadPackageText(ShadowCastReceiverDebugPath);
 
             Assert.That(samplingText, Does.Contain("HoUrpSampleShadowCastAttenuation"));
             Assert.That(samplingText, Does.Contain("_HoUrpShadowCastAtlas"));
@@ -114,6 +117,13 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(samplingText, Does.Contain("HoUrpSampleShadowCastSecondDirectional"));
             Assert.That(samplingText, Does.Not.Contain("_HoShadowCast"));
             Assert.That(debugText, Does.Contain("Shader \"Hidden/HoURP/ShadowCast/Debug\""));
+            Assert.That(receiverDebugText, Does.Contain("Shader \"HoURP/Generated/HoUrpShadowCastReceiverDebug\""));
+            Assert.That(receiverDebugText, Does.Contain("\"LightMode\" = \"UniversalForward\""));
+            Assert.That(receiverDebugText, Does.Contain("\"LightMode\" = \"ShadowCaster\""));
+            Assert.That(receiverDebugText, Does.Contain("HoUrpShadowCastSampling.hlsl"));
+            Assert.That(receiverDebugText, Does.Contain("HoUrpSampleShadowCastPunctual"));
+            Assert.That(receiverDebugText, Does.Contain("HoUrpSampleShadowCastSecondDirectional"));
+            Assert.That(receiverDebugText, Does.Contain("HoUrpSampleShadowCastAttenuation"));
         }
 
         [Test]
@@ -123,6 +133,15 @@ namespace HoUrp.Extensions.Tests.Runtime
 
             Assert.That(shader, Is.Not.Null);
             Assert.That(shader.name, Is.EqualTo("HoURP/Generated/HoUrpDebugLitMinimal"));
+        }
+
+        [Test]
+        public void ShadowCastReceiverDebugShaderCanBeResolvedByAssetDatabase()
+        {
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(ShadowCastReceiverDebugPath);
+
+            Assert.That(shader, Is.Not.Null);
+            Assert.That(shader.name, Is.EqualTo("HoURP/Generated/HoUrpShadowCastReceiverDebug"));
         }
 
         private static string ReadPackageText(string assetPath)

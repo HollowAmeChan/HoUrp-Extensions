@@ -1,157 +1,71 @@
-# rp重构第十三步执行计划
+﻿# rp閲嶆瀯绗崄涓夋鎵ц璁″垝
 
-## 目标
+## 鐩爣
 
-第十三步进入 HoShadowCast 子系统迁移第一阶段：把旧仓库里已经具备的 atlas packing、聚光/点光投影、额外方向光 atlas、debug view 和 receiver sampling 拆成新的资源契约、RenderGraph 执行节点、Shader 接收 ABI 和验收路径。
+绗崄涓夋杩涘叆 HoShadowCast 瀛愮郴缁熻縼绉荤涓€闃舵锛氭妸鏃т粨搴撻噷宸茬粡鍏峰鐨?atlas packing銆佽仛鍏?鐐瑰厜鎶曞奖銆侀澶栨柟鍚戝厜 atlas銆乨ebug view 鍜?receiver sampling 鎷嗘垚鏂扮殑璧勬簮濂戠害銆丷enderGraph 鎵ц鑺傜偣銆丼hader 鎺ユ敹 ABI 鍜岄獙鏀惰矾寰勩€?
+杩欎竴闃舵涓嶆槸閲嶅缓瀹屾暣鏉愯川绯荤粺锛屼篃涓嶆槸鎶婃棫瀹炵幇鏁存鎼洖銆傜洰鏍囨槸璁╂柊 HoURP 绠＄嚎鍏峰涓€鏉℃帴杩戞棫 ShadowCast 鑳藉姏涓嬮檺銆佷絾鍛藉悕鍜岃祫婧愯竟鐣岄噸鏂版暣鐞嗚繃鐨勮嚜瀹氫箟闃村奖閾捐矾锛?
+- 鑳藉湪 RenderGraph 涓垎閰嶅苟鍙戝竷 HoURP 鑷湁 ShadowCast 璧勬簮銆?- 鑳界敤鏍囧噯 `ShadowCaster` pass 鍐欏叆 atlas slice銆?- 鑳?pack spot/point light slice锛岀偣鍏夋寜 6 faces 鍐欏叆涓?atlas銆?- 鑳戒负棰濆鏂瑰悜鍏夌敓鎴愮嫭绔?second directional atlas锛屽苟鏀寔 cascades銆?- 鑳藉湪鐢熸垚鏉愯川鐨?Forward/OIT 璺緞涓鍙栬嚜瀹氫箟闃村奖琛板噺銆?- 鑳藉湪 feature 鍏抽棴銆佹棤鍏夋簮銆佹棤鎺ユ敹鑰呫€丼cene/Game View 鍒囨崲鏃舵竻鐞嗗叏灞€鐘舵€併€?- 鑳界敤 Debug 杈撳嚭瀹氫綅 atlas銆乻econd directional atlas銆乴ight/slice 鏁版嵁銆乺eceiver attenuation 鍜岃祫婧愮敓鍛藉懆鏈熼棶棰樸€?
+## 鏃у疄鐜拌兘鍔涘熀绾?
+鏃?`lilToon-URP-Extensions` 涓?HoShadowCast 鍙互浣滀负琛屼负鍙傝€冿紝浣嗕笉鑳戒綔涓?ABI 鐩存帴缁ф壙銆傛棫瀹炵幇涓嶆槸鍗曞厜鍘熷瀷锛屽畠宸茬粡鍏峰锛?
+- `MaxSpotLights = 4`銆乣MaxPointLights = 4`锛岀偣鍏夋渶澶?24 涓?faces銆?- 涓?atlas 浣跨敤绠€鍗?row packer 鍒嗛厤 spot/point slices銆?- second directional atlas 鏀寔鏈€澶?4 涓澶栨柟鍚戝厜锛屾瘡鍏夋渶澶?4 cascades銆?- debug mode 鏀寔涓?atlas 涓?second directional atlas銆?- sampling include 涓凡鏈?punctual attenuation銆乻econd directional attenuation銆乵anual PCF/PCSS 鍒嗘敮銆?
+绗崄涓夋搴斾繚鐣欒繖浜涜兘鍔涘眰绾э紝浣嗕笉淇濈暀鏃у悕瀛楁薄鏌擄細
 
-这一阶段不是重建完整材质系统，也不是把旧实现整段搬回。目标是让新 HoURP 管线具备一条接近旧 ShadowCast 能力下限、但命名和资源边界重新整理过的自定义阴影链路：
+- 鏃?RenderFeature銆丆ontroller銆丷esource銆丼ampling include 鍙綔涓烘暟鎹祦鍙傝€冦€?- 鏂板叕鍏辫祫婧愬悕銆乻hader property銆乨ebug id 蹇呴』褰掑叆 HoURP 鍛藉悕绌洪棿銆?- 涓嶇洿鎺ユ毚闇叉棫 `_HoShadowCast*` 鍚嶇О浣滀负鏂板绾︼紱纭渶鍏煎鏃跺彟寮€ legacy bridge 鏂囨。鍜屽紑鍏炽€?
+## 鍒嗘瀹炴柦
 
-- 能在 RenderGraph 中分配并发布 HoURP 自有 ShadowCast 资源。
-- 能用标准 `ShadowCaster` pass 写入 atlas slice。
-- 能 pack spot/point light slice，点光按 6 faces 写入主 atlas。
-- 能为额外方向光生成独立 second directional atlas，并支持 cascades。
-- 能在生成材质的 Forward/OIT 路径中读取自定义阴影衰减。
-- 能在 feature 关闭、无光源、无接收者、Scene/Game View 切换时清理全局状态。
-- 能用 Debug 输出定位 atlas、second directional atlas、light/slice 数据、receiver attenuation 和资源生命周期问题。
+### 13.a 杈圭晫涓庢棫瀹炵幇瀹℃煡
 
-## 旧实现能力基线
+杈撳嚭锛?
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rp绗崄涓夐樁娈靛疄鐜拌竟鐣屽鏌?md`
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rpHoShadowCast鏃у疄鐜版暟鎹祦瀹℃煡.md`
 
-旧 `lilToon-URP-Extensions` 中 HoShadowCast 可以作为行为参考，但不能作为 ABI 直接继承。旧实现不是单光原型，它已经具备：
+宸ヤ綔锛?
+- 褰掓。鏃?`Runtime/ShadowCast` 鐨?atlas銆乻pot銆乸oint銆乻econd directional銆乨ebug銆乻ampling 鏁版嵁娴併€?- 鏍囨敞鈥滀繚鐣欐蹇碘€濃€滄敼鍚嶉噸寤衡€濃€滃垎灞傝縼绉烩€濃€滄殏缂撯€濄€?- 鏄庣‘绗崄涓夋涓嶅鐞?CharacterSpecialization銆丳lanar Reflection銆佸畬鏁存潗璐?UI銆侀€忔槑绮剧‘鎶曞奖銆?
+### 13.b ShadowCast 璧勬簮濂戠害涓庡鍏夋簮甯冨眬
 
-- `MaxSpotLights = 4`、`MaxPointLights = 4`，点光最多 24 个 faces。
-- 主 atlas 使用简单 row packer 分配 spot/point slices。
-- second directional atlas 支持最多 4 个额外方向光，每光最多 4 cascades。
-- debug mode 支持主 atlas 与 second directional atlas。
-- sampling include 中已有 punctual attenuation、second directional attenuation、manual PCF/PCSS 分支。
+杈撳嚭锛?
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rpShadowCast璧勬簮涓庡绾﹁鍒?md`
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rpShadowCastAtlasPack涓庡鍏夋簮鎵ц瑙勫垝.md`
 
-第十三步应保留这些能力层级，但不保留旧名字污染：
+宸ヤ綔锛?
+- 鍦?`HoUrpRenderGraphResourceIds` 澧炲姞 ShadowCast 璧勬簮鏃忋€?- 寤虹珛 `HoUrpShadowCastResourceDeclaration`锛岃礋璐ｄ富 atlas銆乻econd directional atlas銆乴ight data銆乻lice data銆亀orld-to-shadow 鏁版嵁鐨勫０鏄庡拰 debug 鍛藉悕銆?- 瑙勫垝涓?atlas row packing銆乻pot 鍗?slice銆乸oint 鍏?faces銆?- 瑙勫垝 second directional atlas 鐨?grid/cascade 甯冨眬銆?- 鏄庣‘鏃犲厜婧愭垨 feature 鍏抽棴鏃跺彂甯?inactive 鐘舵€侊紝鑰屼笉鏄暀涓嬩笂涓€甯у叏灞€绾圭悊銆?
+### 13.c RenderGraph 鎵ц璺緞
 
-- 旧 RenderFeature、Controller、Resource、Sampling include 可作为数据流参考。
-- 新公共资源名、shader property、debug id 必须归入 HoURP 命名空间。
-- 不直接暴露旧 `_HoShadowCast*` 名称作为新契约；确需兼容时另开 legacy bridge 文档和开关。
+杈撳嚭锛?
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rpShadowCastRenderGraph鎵ц璁″垝.md`
 
-## 分段实施
+宸ヤ綔锛?
+- 鏂板缓 `Runtime/ShadowCast/HoShadowCastRendererFeature.cs`銆?- 鏂板缓 settings/constants/resources/packer 鐩稿叧鏂囦欢銆?- Pass 椤哄簭寤鸿锛?  1. Reset/Inactive銆?  2. Build punctual frame data銆?  3. Allocate main atlas銆?  4. Draw spot/point caster slices銆?  5. Build second directional frame data銆?  6. Allocate second directional atlas銆?  7. Draw second directional cascade slices銆?  8. Publish receiver globals銆?  9. Debug atlas view銆?
+绗竴涓増鏈笉鍐嶅彧鍋氬崟涓诲厜銆傚繀椤昏鐩栨棫瀹炵幇宸叉湁鐨勪笁绫昏緭鍏ワ細
 
-### 13.a 边界与旧实现审查
+- spot lights锛氭瘡鍏?1 slice锛岃繘鍏ヤ富 atlas銆?- point lights锛氭瘡鍏?6 slices锛岃繘鍏ヤ富 atlas銆?- second directional lights锛氭瘡鍏?N cascades锛岃繘鍏?second directional atlas銆?
+鍚庣疆椤瑰寘鎷洿浼?packing銆佽法甯?atlas 缂撳瓨銆侀€忔槑 alpha/dither 绮剧‘鎶曞奖鍜岄珮绾ц蒋闃村奖璋冨弬銆?
+### 13.d Shader Receiver ABI 涓庣敓鎴愭潗璐ㄦ帴鍏?
+杈撳嚭锛?
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rpShadowReceiverShaderABI涓庢潗璐ㄦ帴鍏ュ鏌?md`
 
-输出：
+宸ヤ綔锛?
+- 鏂板缓 `Runtime/Shaders/ShaderLibrary/HoUrpShadowCastSampling.hlsl`銆?- 瑙勫畾鎺ユ敹鍑芥暟锛屼緥濡?`HoUrpSampleShadowCastAttenuation(positionWS, normalWS)`銆?- sampling 绗竴鐗堝簲鍖呭惈锛?  - punctual attenuation锛歴pot/point 褰卞搷鑼冨洿銆乻pot cone銆乸oint face selection銆?  - second directional attenuation锛氶澶栨柟鍚戝厜 cascade selection銆?  - PCF/PCSS锛氬厛杩佺Щ缁撴瀯鍜屽弬鏁颁綅锛岃川閲忎紭鍖栧彲鍚庣画璋冨弬銆?- 鏇存柊 debug/generated lit shader锛?  - `UniversalForward` 鎺ユ敹 HoShadowCast attenuation銆?  - `OIT` 鎺ユ敹鍚屼竴 attenuation锛岄伩鍏?OIT 寮€鍚悗鍏夌収/闃村奖閫€鍖栨垚绾壊銆?  - `ShadowCaster` pass 鐙珛瀛樺湪锛岀敤浜庝骇鐢熸姇褰便€?
+### 13.e Debug 涓庣姸鎬佹竻鐞?
+杈撳嚭锛?
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rpShadowCastDebug涓庣姸鎬佹竻鐞嗗鏌?md`
 
-- `Documentation~/rp重构第十三步/rp第十三阶段实现边界审查.md`
-- `Documentation~/rp重构第十三步/rpHoShadowCast旧实现数据流审查.md`
+宸ヤ綔锛?
+- Debug mode 鑷冲皯瑕嗙洊 `Atlas` 涓?`SecondDirectionalAtlas`銆?- Receiver attenuation debug 鍙綔涓虹涓夐」锛岃嫢瀹炵幇鎴愭湰浣庡垯鍚岄樁娈靛畬鎴愩€?- 鎵€鏈夊叏灞€ shader id 闆嗕腑鍦?constants 鏂囦欢銆?- feature disable銆乧amera type mismatch銆佹棤鏈夋晥 light銆乤tlas allocation failure 閮藉繀椤?reset globals銆?- Debug 杈撳嚭涓嶈兘鎴愪负鏉愯川 ABI锛涘彧鐢ㄤ簬鎺掗敊銆?
+### 13.f 涓?OIT/SSS/Post/AOV 椤哄簭鍥炲綊
 
-工作：
+杈撳嚭锛?
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rpShadowCast涓嶰itSssPost椤哄簭鍥炲綊瀹℃煡.md`
 
-- 归档旧 `Runtime/ShadowCast` 的 atlas、spot、point、second directional、debug、sampling 数据流。
-- 标注“保留概念”“改名重建”“分层迁移”“暂缓”。
-- 明确第十三步不处理 CharacterSpecialization、Planar Reflection、完整材质 UI、透明精确投影。
+宸ヤ綔锛?
+- 纭 ShadowCast pass 涓嶈鍐?camera color銆?- ShadowCast 搴斿厛浜?transparent/OIT receiver 璺緞鍙戝竷 receiver globals銆?- 涓?atlas 涓?second directional atlas 涓嶅簲杩涘叆 post chain ping-pong銆?- SSS/AOV/Post 涓嶅簲渚濊禆 ShadowCast atlas 鐨?lifetime锛岄櫎闈炴樉寮忓０鏄庤祫婧愪緷璧栥€?- 鍏抽棴 ShadowCast 鍚庯紝OIT銆丼SS銆丼creenPost銆両magePost 浠嶅簲淇濇寔绗崄涓€銆佸崄浜屾琛屼负銆?
+### 13.g 娴嬭瘯涓庨獙鏀?
+杈撳嚭锛?
+- `Documentation~/rp閲嶆瀯绗崄涓夋/rp绗崄涓夐樁娈垫祴璇曚笌楠屾敹娓呭崟.md`
 
-### 13.b ShadowCast 资源契约与多光源布局
-
-输出：
-
-- `Documentation~/rp重构第十三步/rpShadowCast资源与契约规划.md`
-- `Documentation~/rp重构第十三步/rpShadowCastAtlasPack与多光源执行规划.md`
-
-工作：
-
-- 在 `HoUrpRenderGraphResourceIds` 增加 ShadowCast 资源族。
-- 建立 `HoUrpShadowCastResourceDeclaration`，负责主 atlas、second directional atlas、light data、slice data、world-to-shadow 数据的声明和 debug 命名。
-- 规划主 atlas row packing、spot 单 slice、point 六 faces。
-- 规划 second directional atlas 的 grid/cascade 布局。
-- 明确无光源或 feature 关闭时发布 inactive 状态，而不是留下上一帧全局纹理。
-
-### 13.c RenderGraph 执行路径
-
-输出：
-
-- `Documentation~/rp重构第十三步/rpShadowCastRenderGraph执行计划.md`
-
-工作：
-
-- 新建 `Runtime/ShadowCast/HoShadowCastRendererFeature.cs`。
-- 新建 settings/constants/resources/packer 相关文件。
-- Pass 顺序建议：
-  1. Reset/Inactive。
-  2. Build punctual frame data。
-  3. Allocate main atlas。
-  4. Draw spot/point caster slices。
-  5. Build second directional frame data。
-  6. Allocate second directional atlas。
-  7. Draw second directional cascade slices。
-  8. Publish receiver globals。
-  9. Debug atlas view。
-
-第一个版本不再只做单主光。必须覆盖旧实现已有的三类输入：
-
-- spot lights：每光 1 slice，进入主 atlas。
-- point lights：每光 6 slices，进入主 atlas。
-- second directional lights：每光 N cascades，进入 second directional atlas。
-
-后置项包括更优 packing、跨帧 atlas 缓存、透明 alpha/dither 精确投影和高级软阴影调参。
-
-### 13.d Shader Receiver ABI 与生成材质接入
-
-输出：
-
-- `Documentation~/rp重构第十三步/rpShadowReceiverShaderABI与材质接入审查.md`
-
-工作：
-
-- 新建 `Runtime/Shaders/ShaderLibrary/HoUrpShadowCastSampling.hlsl`。
-- 规定接收函数，例如 `HoUrpSampleShadowCastAttenuation(positionWS, normalWS)`。
-- sampling 第一版应包含：
-  - punctual attenuation：spot/point 影响范围、spot cone、point face selection。
-  - second directional attenuation：额外方向光 cascade selection。
-  - PCF/PCSS：先迁移结构和参数位，质量优化可后续调参。
-- 更新 debug/generated lit shader：
-  - `UniversalForward` 接收 HoShadowCast attenuation。
-  - `OIT` 接收同一 attenuation，避免 OIT 开启后光照/阴影退化成纯色。
-  - `ShadowCaster` pass 独立存在，用于产生投影。
-
-### 13.e Debug 与状态清理
-
-输出：
-
-- `Documentation~/rp重构第十三步/rpShadowCastDebug与状态清理审查.md`
-
-工作：
-
-- Debug mode 至少覆盖 `Atlas` 与 `SecondDirectionalAtlas`。
-- Receiver attenuation debug 可作为第三项，若实现成本低则同阶段完成。
-- 所有全局 shader id 集中在 constants 文件。
-- feature disable、camera type mismatch、无有效 light、atlas allocation failure 都必须 reset globals。
-- Debug 输出不能成为材质 ABI；只用于排错。
-
-### 13.f 与 OIT/SSS/Post/AOV 顺序回归
-
-输出：
-
-- `Documentation~/rp重构第十三步/rpShadowCast与OitSssPost顺序回归审查.md`
-
-工作：
-
-- 确认 ShadowCast pass 不读写 camera color。
-- ShadowCast 应先于 transparent/OIT receiver 路径发布 receiver globals。
-- 主 atlas 与 second directional atlas 不应进入 post chain ping-pong。
-- SSS/AOV/Post 不应依赖 ShadowCast atlas 的 lifetime，除非显式声明资源依赖。
-- 关闭 ShadowCast 后，OIT、SSS、ScreenPost、ImagePost 仍应保持第十一、十二步行为。
-
-### 13.g 测试与验收
-
-输出：
-
-- `Documentation~/rp重构第十三步/rp第十三阶段测试与验收清单.md`
-
-工作：
-
-- 增加资源契约测试。
-- 增加 atlas packer 测试。
-- 增加 shader ABI 测试。
-- 增加 generated/debug shader pass 测试。
-- 增加 spot/point/second directional Unity 手工验收场景说明。
-- 增加 RenderDoc 可选验收项。
-
-## 建议文件结构
+宸ヤ綔锛?
+- 澧炲姞璧勬簮濂戠害娴嬭瘯銆?- 澧炲姞 atlas packer 娴嬭瘯銆?- 澧炲姞 shader ABI 娴嬭瘯銆?- 澧炲姞 generated/debug shader pass 娴嬭瘯銆?- 澧炲姞 spot/point/second directional Unity 鎵嬪伐楠屾敹鍦烘櫙璇存槑銆?- 澧炲姞 RenderDoc 鍙€夐獙鏀堕」銆?
+## 寤鸿鏂囦欢缁撴瀯
 
 ```text
 Runtime/
@@ -170,8 +84,7 @@ Runtime/
       Debug.shader
 ```
 
-测试建议：
-
+娴嬭瘯寤鸿锛?
 ```text
 Tests/
   Runtime/
@@ -180,10 +93,8 @@ Tests/
     HoUrpShadowCastShaderAbiTests.cs
 ```
 
-## 新命名建议
-
-资源 id：
-
+## 鏂板懡鍚嶅缓璁?
+璧勬簮 id锛?
 - `ShadowCast.Atlas`
 - `ShadowCast.AtlasSize`
 - `ShadowCast.LightData`
@@ -200,8 +111,7 @@ Tests/
 - `ShadowCast.DebugSecondDirectionalAtlas`
 - `ShadowCast.DebugAttenuation`
 
-Shader property：
-
+Shader property锛?
 - `_HoUrpShadowCastAtlas`
 - `_HoUrpShadowCastAtlasSize`
 - `_HoUrpShadowCastActive`
@@ -223,15 +133,14 @@ Shader property：
 - `_HoUrpShadowCastSecondDirectionalPcssParams`
 - `_HoUrpShadowReceiverStrength`
 
-## 完成定义
+## 瀹屾垚瀹氫箟
 
-第十三步完成时，应满足：
+绗崄涓夋瀹屾垚鏃讹紝搴旀弧瓒筹細
 
-- HoShadowCast feature 可开关，且不会污染关闭后的后续帧。
-- 主 atlas 能 pack spot/point slices，点光 6 faces 的 slice 数据可 debug。
-- second directional atlas 能显示额外方向光 cascades。
-- 至少一个 debug/generated lit 材质既能产生 shadow caster depth，也能接收 HoURP ShadowCast attenuation。
-- OIT 打开后，透明对象仍能复用同一 receiver attenuation，不退回纯色合成。
-- AOV/SSS/Post 不因 ShadowCast 资源引入产生顺序或生命周期回归。
-- 测试和文档都能说明当前透明投影限制，以及后续 alpha/dither shadow 的入口。
+- HoShadowCast feature 鍙紑鍏筹紝涓斾笉浼氭薄鏌撳叧闂悗鐨勫悗缁抚銆?- 涓?atlas 鑳?pack spot/point slices锛岀偣鍏?6 faces 鐨?slice 鏁版嵁鍙?debug銆?- second directional atlas 鑳芥樉绀洪澶栨柟鍚戝厜 cascades銆?- 鑷冲皯涓€涓?debug/generated lit 鏉愯川鏃㈣兘浜х敓 shadow caster depth锛屼篃鑳芥帴鏀?HoURP ShadowCast attenuation銆?- OIT 鎵撳紑鍚庯紝閫忔槑瀵硅薄浠嶈兘澶嶇敤鍚屼竴 receiver attenuation锛屼笉閫€鍥炵函鑹插悎鎴愩€?- AOV/SSS/Post 涓嶅洜 ShadowCast 璧勬簮寮曞叆浜х敓椤哄簭鎴栫敓鍛藉懆鏈熷洖褰掋€?- 娴嬭瘯鍜屾枃妗ｉ兘鑳借鏄庡綋鍓嶉€忔槑鎶曞奖闄愬埗锛屼互鍙婂悗缁?alpha/dither shadow 鐨勫叆鍙ｃ€?
+
+## 13.h ShadowCast 宸ヤ綔妯″紡涓庣淮鎶ゅ簳绾?
+杈撳嚭锛?- `Documentation~/rp閲嶆瀯绗崄涓夋/rpShadowCast宸ヤ綔妯″紡涓庝娇鐢ㄦ柟娉?md`
+
+宸ヤ綔锛?- 璁板綍 ShadowCast 涓?URP 涓诲厜/澶╁厜鐨勮竟鐣岋細HoCast 鏄嫭绔?receiver term锛屼笉鍐欏叆 URP main light shadow銆?- 璁板綍 RendererFeature Inspector 浣跨敤鏂瑰紡锛氶粯璁よ嚜鍔ㄦ敹闆嗗彲瑙佺伅锛屾墜鍔ㄧ伅鍏夊垪琛ㄥ彧浣滀负楂樼骇琛ュ厖鍏ュ彛銆?- 璁板綍 atlas/debug 鏄剧ず绾﹀畾锛氫富 atlas 鏄剧ず鐪熷疄 slice锛宻econd directional atlas 鎸夊厜婧?block 鏄剧ず cascade銆?- 璁板綍鏉愯川娑堣垂鏂瑰紡锛氭寮忔潗璐ㄩ€氳繃 `HoUrpShadowCastSampling.hlsl` 璋冪敤 receiver sampling锛屼笉鐩存帴璇?atlas銆?- 璁板綍 AI/寮€鍙戣€呭悗缁慨鏀瑰簳绾匡紝閬垮厤鍥為€€鍒版棫 ABI銆佸亣缃戞牸銆侀殣寮忓弬涓庢垨蹇呴』鎷栫伅鐨勫伐浣滄祦銆?
 
