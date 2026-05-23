@@ -18,6 +18,12 @@ AOV / Semantic input
 - layer blend 可执行。
 - 关闭 layer 后资源 request 消失。
 
+当前状态（2026-05-23）：
+
+- `HoURP ScreenPost Prototype` 已经能在 RenderGraph 中生成 SourceCopy / RuleMask / Composite，并实际影响屏幕。
+- 当前 `Preview When AOV Mask Is Empty` 只是可见性验证 fallback，不是正式 rule 语义。
+- 后续仍在第十一阶段内继续实现正式 rule 系统。
+
 ## 旧实现参考
 
 旧代码定位：
@@ -114,6 +120,26 @@ Multiply
 - 嵌套规则组。
 - 每 effect 自定义 rule 解析。
 - shader 中散落各自 rule 代码。
+
+## 下一步：正式 Rule 系统
+
+当前 prototype 应改造成：
+
+```text
+ScreenPostLayerSettings[]
+  -> ScreenPostRuleSet
+  -> PostResourceRequest
+  -> RuleMask pass
+  -> LayerComposite pass
+```
+
+执行要求：
+
+- layer 列表顺序决定 composite 顺序。
+- 每个 enabled rule 推导所需 AOV resource。
+- 无 enabled rule 的 layer 不请求 AOV。
+- preview fallback 只保留为 debug 开关，默认正式路径不依赖它。
+- rule evaluator 抽到公共 HLSL。
 
 ## Shader / HLSL 入口
 

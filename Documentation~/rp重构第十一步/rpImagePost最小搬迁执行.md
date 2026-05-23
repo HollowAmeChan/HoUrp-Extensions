@@ -19,6 +19,13 @@ Camera color copy
 - effect 启停会动态改变 plan / request。
 - AOV composite 是显式可选能力，不是默认能力。
 
+当前状态（2026-05-23）：
+
+- `HoURP ImagePost Prototype` 已经能在 RenderGraph 中创建 `Image.WorkA` / `Image.WorkB`，并实际影响屏幕。
+- `Run Second Pass` 可用于验证 WorkA / WorkB ping-pong。
+- 当前只有一个可见 color adjust prototype，不代表旧 Shoost catalog 已迁移。
+- 后续仍在第十一阶段内继续做可排序 ImagePost stack 与 UI。
+
 ## 旧实现参考
 
 旧代码定位：
@@ -217,6 +224,27 @@ ImagePostPrototypeVolume
 - pass 顺序来自 descriptor / layer order。
 
 ### Step 4. 可选 AOV composite prototype
+
+### Step 5. 可排序 ImagePost stack
+
+目标：
+
+```text
+ImagePostFilterSettings[]
+  -> list order
+  -> PostLayerDefinition[]
+  -> ImageChain pass list
+  -> WorkA / WorkB ping-pong
+```
+
+执行要求：
+
+- 支持多个 filter item。
+- Inspector 支持拖拽排序。
+- list order 决定 pass order。
+- disabled item 不录制 pass。
+- 多个 item 仍只使用 WorkA / WorkB。
+- 不同顺序应能产生不同滤镜叠加结果。
 
 第一版只支持一种简单 mask：
 

@@ -1047,6 +1047,7 @@ namespace HoUrp.Extensions.Core
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Features.SubsurfaceScattering,
                     HoUrpBuiltInNames.Features.SemanticPostProcess,
+                    HoUrpBuiltInNames.Features.ScreenPost,
                     HoUrpBuiltInNames.Features.DebugComposite),
                 ResourceFormatHint.MaskRgba8,
                 ResourceScale.Full,
@@ -1064,6 +1065,7 @@ namespace HoUrp.Extensions.Core
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Features.SubsurfaceScattering,
                     HoUrpBuiltInNames.Features.SemanticPostProcess,
+                    HoUrpBuiltInNames.Features.ScreenPost,
                     HoUrpBuiltInNames.Features.DebugComposite),
                 ResourceFormatHint.HighPrecisionRgba16Float,
                 ResourceScale.Full,
@@ -1412,6 +1414,39 @@ namespace HoUrp.Extensions.Core
                 HoUrpMigrationDecision.KeepConceptRename,
                 "Runtime/HoPostProcessing/HoPostProcessRendererFeature.cs",
                 "Minimum read-only AOV consumer for semantic post processing."));
+
+            registry.Features.Register(new FeatureDescriptor(
+                HoUrpBuiltInNames.Features.ScreenPost,
+                HoUrpDomain.Composite,
+                HoUrpPassStage.SemanticPost,
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Resources.AovMaskId,
+                    HoUrpBuiltInNames.Resources.AovNormalDepth),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
+                    HoUrpBuiltInNames.Semantics.GeometryLinearDepth),
+                new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Capabilities.RequiresAov),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                HoUrpMigrationDecision.KeepConceptRename,
+                "HoPost rule-mask prototype",
+                "Stage-eleven ScreenPost prototype. It consumes explicitly declared AOV inputs and writes only to the current frame color target."));
+
+            registry.Features.Register(new FeatureDescriptor(
+                HoUrpBuiltInNames.Features.ImagePost,
+                HoUrpDomain.Image,
+                HoUrpPassStage.ImagePost,
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                new ReadOnlyArray<HoUrpIdentifier>(),
+                HoUrpMigrationDecision.KeepConceptRename,
+                "Shoost image-chain prototype",
+                "Stage-eleven ImagePost prototype. It uses frame-local Image.WorkA/Image.WorkB ping-pong textures without publishing them as public semantic resources."));
 
             registry.Features.Register(new FeatureDescriptor(
                 HoUrpBuiltInNames.Features.SubsurfaceScattering,

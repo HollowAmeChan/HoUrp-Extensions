@@ -4,6 +4,13 @@
 
 第十一阶段只建立 ScreenPost / ImagePost 搬迁所需的后处理基础设施和最小验证链路，不迁移完整旧效果库。
 
+当前状态（2026-05-23）：
+
+- `HoURP ScreenPost Prototype` 已能进入 RenderGraph 并实际影响屏幕。
+- `HoURP ImagePost Prototype` 已能进入 RenderGraph 并实际影响屏幕。
+- 当前可见效果只代表最小闭环通过，不代表正式 rule language / 完整 effect catalog 完成。
+- 第十一阶段继续推进基础设施，不开启第十二步。
+
 ```text
 第十一阶段:
   PostGraph 描述与计划层
@@ -14,11 +21,16 @@
   Debug / tests / docs
 
 后续阶段:
-  完整 ScreenPost rule language
   完整 ImagePost effect catalog
   multi-pass / pyramid / history effect
   CharacterSpecialization
   Weighted OIT runtime
+
+第十一阶段继续深化:
+  ScreenPost rule system
+  sortable ScreenPost / ImagePost stack
+  reorderable inspector UI
+  rule/resource/debug tests
 ```
 
 本阶段可以从旧实现确认行为，但不能复制旧架构：
@@ -224,6 +236,21 @@ PostGraphPlanner
 - effect order 来自 descriptor。
 - AOV composite 关闭时不请求 AOV。
 - 多个 single pass 共用 ImageChain。
+
+### Phase E. Rule 系统与可排序 UI
+
+目标：
+
+- ScreenPost rule 从 prototype preview fallback 升级为正式 rule set。
+- ImagePost / ScreenPost 支持可拖拽列表顺序。
+- UI list 顺序转换为 `PostLayerDefinition` 顺序，再由 planner 生成 pass 顺序。
+
+验收：
+
+- 拖动列表顺序会改变滤镜叠加结果。
+- disabled item 不产生 pass / request。
+- rule source 会推导 AOV / semantic input request。
+- RDG pass 顺序与 active plan 顺序一致。
 
 ## 明确不做
 

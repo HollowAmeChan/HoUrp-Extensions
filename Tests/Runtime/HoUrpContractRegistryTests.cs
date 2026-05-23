@@ -18,7 +18,7 @@ namespace HoUrp.Extensions.Tests.Runtime
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
-            Assert.That(registry.Features.Count, Is.EqualTo(5));
+            Assert.That(registry.Features.Count, Is.EqualTo(7));
             Assert.That(registry.Resources.Count, Is.EqualTo(10));
             Assert.That(registry.Semantics.Count, Is.EqualTo(33));
             Assert.That(registry.DebugViews.Count, Is.EqualTo(43));
@@ -271,6 +271,10 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(sssSource.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.SemanticPostProcess));
             Assert.That(semanticPostMask.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.SemanticPostProcess));
             Assert.That(semanticPostMask.DebugView, Is.EqualTo(HoUrpBuiltInNames.DebugViews.SemanticPostMask));
+            Assert.That(maskId.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
+            Assert.That(
+                registry.Resources.Get(HoUrpBuiltInNames.Resources.AovNormalDepth).ConsumerFeatures,
+                Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
             Assert.That(
                 registry.Features.Get(HoUrpBuiltInNames.Features.SemanticPostProcess).ProducedResources,
                 Contains.Item(HoUrpBuiltInNames.Resources.SemanticPostMask));
@@ -295,6 +299,27 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(
                 registry.Features.Get(HoUrpBuiltInNames.Features.SemanticPostProcess).ConsumedResources,
                 Contains.Item(HoUrpBuiltInNames.Resources.SssDiffusion));
+        }
+
+        [Test]
+        public void MinimalAovRegistryExposesStageElevenPostPrototypeFeatures()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            FeatureDescriptor screenPost = registry.Features.Get(HoUrpBuiltInNames.Features.ScreenPost);
+            FeatureDescriptor imagePost = registry.Features.Get(HoUrpBuiltInNames.Features.ImagePost);
+
+            Assert.That(screenPost.Domain, Is.EqualTo(HoUrpDomain.Composite));
+            Assert.That(screenPost.Stage, Is.EqualTo(HoUrpPassStage.SemanticPost));
+            Assert.That(screenPost.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovMaskId));
+            Assert.That(screenPost.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovNormalDepth));
+            Assert.That(screenPost.RequiredCapabilities, Contains.Item(HoUrpBuiltInNames.Capabilities.RequiresAov));
+
+            Assert.That(imagePost.Domain, Is.EqualTo(HoUrpDomain.Image));
+            Assert.That(imagePost.Stage, Is.EqualTo(HoUrpPassStage.ImagePost));
+            Assert.That(imagePost.ProducedResources.Count, Is.EqualTo(0));
+            Assert.That(imagePost.ConsumedResources.Count, Is.EqualTo(0));
+            Assert.That(imagePost.Description, Does.Contain("Image.WorkA/Image.WorkB"));
         }
 
         [Test]
@@ -451,6 +476,8 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.SemanticPostShaderName, Is.EqualTo("Hidden/HoURP/SemanticPost/AovReadProbe"));
             Assert.That(HoUrpShaderPropertyIds.SemanticPostAovReadProbeShaderName, Is.EqualTo("Hidden/HoURP/SemanticPost/AovReadProbe"));
             Assert.That(HoUrpShaderPropertyIds.SubsurfaceScatteringShaderName, Is.EqualTo("Hidden/HoURP/SSS/SubsurfaceScattering"));
+            Assert.That(HoUrpShaderPropertyIds.ScreenPostPrototypeShaderName, Is.EqualTo("Hidden/HoURP/ScreenPost/Prototype"));
+            Assert.That(HoUrpShaderPropertyIds.ImagePostPrototypeShaderName, Is.EqualTo("Hidden/HoURP/ImagePost/Prototype"));
 
             Assert.That(HoUrpShaderPropertyIds.AovMaskIdTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovMaskIdTexture")));
             Assert.That(HoUrpShaderPropertyIds.AovNormalDepthTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovNormalDepthTexture")));
@@ -462,6 +489,11 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.SssSourceTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssSourceTexture")));
             Assert.That(HoUrpShaderPropertyIds.SssDiffusionTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssDiffusionTexture")));
             Assert.That(HoUrpShaderPropertyIds.SourceColorTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSourceColorTexture")));
+            Assert.That(HoUrpShaderPropertyIds.ImagePostColorTint, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpImagePostColorTint")));
+            Assert.That(HoUrpShaderPropertyIds.ImagePostParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpImagePostParams")));
+            Assert.That(HoUrpShaderPropertyIds.ScreenPostTintColor, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpScreenPostTintColor")));
+            Assert.That(HoUrpShaderPropertyIds.ScreenPostParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpScreenPostParams")));
+            Assert.That(HoUrpShaderPropertyIds.ScreenPostMaskTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpScreenPostMaskTexture")));
             Assert.That(HoUrpShaderPropertyIds.AovDebugMode, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDebugMode")));
             Assert.That(HoUrpShaderPropertyIds.AovDebugTileGrid, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDebugTileGrid")));
             Assert.That(HoUrpShaderPropertyIds.SemanticPostTintColor, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSemanticPostTintColor")));

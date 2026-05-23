@@ -9,6 +9,8 @@ namespace HoUrp.Extensions.Core
         public const string SemanticPostShaderName = "Hidden/HoURP/SemanticPost/AovReadProbe";
         public const string SemanticPostAovReadProbeShaderName = SemanticPostShaderName;
         public const string SubsurfaceScatteringShaderName = "Hidden/HoURP/SSS/SubsurfaceScattering";
+        public const string ScreenPostPrototypeShaderName = "Hidden/HoURP/ScreenPost/Prototype";
+        public const string ImagePostPrototypeShaderName = "Hidden/HoURP/ImagePost/Prototype";
 
         public static readonly int AovMaskIdTexture = Shader.PropertyToID("_HoUrpAovMaskIdTexture");
         public static readonly int AovNormalDepthTexture = Shader.PropertyToID("_HoUrpAovNormalDepthTexture");
@@ -24,6 +26,11 @@ namespace HoUrp.Extensions.Core
         public static readonly int AovDebugTileRect = Shader.PropertyToID("_HoUrpAovDebugTileRect");
         public static readonly int AovDebugTileGrid = Shader.PropertyToID("_HoUrpAovDebugTileGrid");
         public static readonly int SourceColorTexture = Shader.PropertyToID("_HoUrpSourceColorTexture");
+        public static readonly int ImagePostColorTint = Shader.PropertyToID("_HoUrpImagePostColorTint");
+        public static readonly int ImagePostParams = Shader.PropertyToID("_HoUrpImagePostParams");
+        public static readonly int ScreenPostTintColor = Shader.PropertyToID("_HoUrpScreenPostTintColor");
+        public static readonly int ScreenPostParams = Shader.PropertyToID("_HoUrpScreenPostParams");
+        public static readonly int ScreenPostMaskTexture = Shader.PropertyToID("_HoUrpScreenPostMaskTexture");
         public static readonly int AovDebugMode = Shader.PropertyToID("_HoUrpAovDebugMode");
         public static readonly int SemanticPostTintColor = Shader.PropertyToID("_HoUrpSemanticPostTintColor");
         public static readonly int AovMaskWeight = Shader.PropertyToID("_HoUrpAovMaskWeight");

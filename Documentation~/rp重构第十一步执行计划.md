@@ -3,6 +3,8 @@
 > 第十一步目标：在 AOV / SSS / SemanticPost / Debug 以及材质生产者契约已经形成基础闭环后，暂时跳过原本排队的 Weighted OIT runtime 视觉验证，优先以旧 `HoPost` / `Shoost` 为来源，建立新 **ScreenPost / ImagePost、PostGraph、ImageChain、动态资源请求、多输入声明、双缓冲资源复用和最小可验证 stack**。
 >
 > 本阶段不是完整复制旧 `HoPostProcessRendererFeature` / `ShoostPostProcessRendererFeature`，也不是迁移全部后处理效果。重点是先把后处理 stack 从“旧实现能跑”整理成新 RP 可管理、可注册、可注销、可调试的 RenderGraph-first 契约。
+>
+> 2026-05-23 追加：第十一步不进入“第十二步”。当前 `HoURP ScreenPost Prototype` 与 `HoURP ImagePost Prototype` 已经能进入 RenderGraph 并实际影响屏幕，可作为最小闭环验收；后续仍留在第十一步内，继续补齐 ScreenPost rule 系统、可排序 Post stack、可拖拽 UI 与更完整的基础设施。
 
 ---
 
@@ -71,6 +73,10 @@ HoNpr 侧已经在把材质系统改成更显式、可管理的声明系统。Ho
   - ImagePost optional AOV composite 原型只做契约和一条最小路径，不扩展成第二套 ScreenPost。
 - 更新 feature / resource / debug descriptor。
 - 补测试，确认启停 effect 时资源 request 和 debug view 会正确注册 / 注销。
+- 在最小可运行 prototype 之后继续打基础设施：
+  - 建立 ScreenPost rule 系统，rule 的输入、operator、combine、debug mask 全部集中管理。
+  - 建立可排序 Post stack，用户拖拽列表顺序即可改变滤镜叠加顺序。
+  - 规划 Editor UI，确保 ScreenPost / ImagePost layer 都由同一套显式 descriptor 与 layer snapshot 驱动。
 
 ### 不做
 
@@ -87,6 +93,7 @@ HoNpr 侧已经在把材质系统改成更显式、可管理的声明系统。Ho
 - 不做 Weighted OIT runtime。
 - 不做 CharacterSpecialization 搬迁。
 - 不接旧材质 UI 或旧 Volume UI 的全部字段。
+- 不在第十一阶段基础设施完成前开启第十二步。
 
 ---
 
@@ -476,6 +483,114 @@ No stale global texture binding remains after effect disabled
 - Debug 能列出 active post plan、effect、layer、resource request、read/write handle。
 - 未启用 effect 不显示为 active producer。
 - 文档记录哪些旧 effect 已迁移、哪些仅登记为 planned / removed。
+
+### Step 8. 第十一步继续深化：Rule 系统
+
+目标：
+
+- 把 ScreenPost 的语义筛选从 prototype fallback 改成正式 rule set。
+- rule evaluation 只存在一套公共模型和公共 HLSL，不散落到每个 effect shader。
+- 每个 rule 根据 source semantic 推导所需 AOV / SSS / SemanticPost 输入，并写进 `PostResourceRequest`。
+
+第一版只做有限规则：
+
+```text
+Source:
+  Always
+  Object.MaskWeight
+  Object.Id
+  Object.GroupId
+  Object.Flags
+  Object.Custom0_7
+  Material.Class
+  Material.Thickness
+  Material.Curvature
+  Geometry.LinearDepth
+  Geometry.WorldNormalFacing
+
+Operator:
+  Always
+  Greater
+  Less
+  Range
+  EqualByte
+  FlagsAny
+  FlagsAll
+
+Combine:
+  Replace
+  Or
+  And
+  Subtract
+  Multiply
+```
+
+验收：
+
+- 开启 / 关闭 rule 后，对应 semantic input request 会出现 / 消失。
+- `ScreenPost.RuleMask` 可 debug。
+- 没有 AOV 命中时不依赖 preview fallback 作为正式效果。
+- 复杂规则仍归 ScreenPost，不允许 ImagePost 承载 object/material rule language。
+
+### Step 9. 第十一步继续深化：可排序 Post Stack
+
+目标：
+
+- 用户在 UI 中拖动 layer / filter 列表顺序，即改变最终叠加顺序。
+- 列表顺序是 runtime order 的事实来源之一，但仍必须转换成 `PostLayerDefinition` / `PostGraphPlan`，不能让 Inspector 字段直接决定资源结构。
+- ScreenPost 与 ImagePost 可以先分为两个 stack，后续再评估是否需要统一 PostStack 视图。
+
+第一版排序规则：
+
+```text
+ScreenPost stack:
+  ordered ScreenPost layers
+  each layer has rule set + blend + intensity
+
+ImagePost stack:
+  ordered ImagePost filters
+  each layer has effect id + intensity + parameters
+
+Planner:
+  preserves UI list order
+  disabled item skipped
+  missing effect emits diagnostic
+  generated pass list follows active item order
+```
+
+验收：
+
+- 拖动 ImagePost 两个滤镜顺序，最终画面变化。
+- 拖动 ScreenPost layer 顺序，blend 结果变化。
+- RDG pass 顺序与 active plan 一致。
+- WorkA / WorkB 数量不随 item 数量增长。
+
+### Step 10. 第十一步继续深化：Editor UI 规划
+
+目标：
+
+- 使用可拖拽列表管理 layer / filter 顺序。
+- 每个列表项清晰显示 enabled、effect 类型、名称、强度、主要颜色 / 参数摘要。
+- 复杂 rule 进入展开详情，不在主列表里挤满所有字段。
+- UI 只编辑 settings；运行时由 settings 生成 layer snapshot，再交给 planner。
+
+建议落点：
+
+```text
+Editor/PostProcess/
+  ScreenPostPrototypeRendererFeatureEditor.cs
+  ImagePostPrototypeRendererFeatureEditor.cs
+  PostLayerListDrawer.cs
+  ScreenPostRuleSetDrawer.cs
+```
+
+UI 规则：
+
+- 主列表支持拖拽排序、添加、复制、删除、启停。
+- ScreenPost layer 展开后编辑 rule set。
+- ImagePost filter 展开后编辑 effect 参数。
+- 对需要 AOV / history / pyramid 的 effect，在 UI 中显示 resource badge。
+- 对 unsupported planned effect，在 UI 中显示 disabled / planned 状态，不静默执行。
 
 ---
 

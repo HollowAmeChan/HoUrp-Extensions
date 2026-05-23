@@ -7,8 +7,34 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovOutput = "AovOutput";
             public static readonly HoUrpIdentifier SubsurfaceScattering = "SubsurfaceScattering";
             public static readonly HoUrpIdentifier SemanticPostProcess = "SemanticPostProcess";
+            public static readonly HoUrpIdentifier ScreenPost = "ScreenPost";
+            public static readonly HoUrpIdentifier ImagePost = "ImagePost";
             public static readonly HoUrpIdentifier GeneratedMaterial = "GeneratedMaterial";
             public static readonly HoUrpIdentifier DebugComposite = "DebugComposite";
+        }
+
+        public static class PostEffects
+        {
+            public static readonly HoUrpIdentifier ImagePostColorAdjustPrototype = "ImagePost.ColorAdjustPrototype";
+            public static readonly HoUrpIdentifier ImagePostAovCompositePrototype = "ImagePost.AovCompositePrototype";
+            public static readonly HoUrpIdentifier ScreenPostRuleMaskPrototype = "ScreenPost.RuleMaskPrototype";
+        }
+
+        public static class PostInputs
+        {
+            public static readonly HoUrpIdentifier None = "Post.None";
+            public static readonly HoUrpIdentifier PrimaryImage = "Image.Primary";
+            public static readonly HoUrpIdentifier OriginalSource = "Image.OriginalSource";
+            public static readonly HoUrpIdentifier History = "Image.History";
+        }
+
+        public static class PostFrameResources
+        {
+            public static readonly HoUrpIdentifier ImagePrimary = "Image.Primary";
+            public static readonly HoUrpIdentifier ImageOriginalSource = "Image.OriginalSource";
+            public static readonly HoUrpIdentifier ImageWorkA = "Image.WorkA";
+            public static readonly HoUrpIdentifier ImageWorkB = "Image.WorkB";
+            public static readonly HoUrpIdentifier ImageHistoryPlanned = "Image.History.Planned";
         }
 
         public static class Semantics

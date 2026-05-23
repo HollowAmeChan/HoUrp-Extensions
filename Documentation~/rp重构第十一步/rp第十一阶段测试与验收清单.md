@@ -2,6 +2,12 @@
 
 ## 自动检查
 
+当前最小闭环状态（2026-05-23）：
+
+- `HoURP ScreenPost Prototype` 已进入 RDG 并产生可见屏幕效果。
+- `HoURP ImagePost Prototype` 已进入 RDG 并产生可见屏幕效果。
+- 第十一阶段仍继续推进 rule system / sortable stack / UI，不进入第十二步。
+
 | 检查 | 期望 |
 | --- | --- |
 | Post model | 存在 `PostEffectDefinition` / `PostLayerDefinition` / `PostResourceRequest` / `PostGraphPlan` 或等价实现 |
@@ -25,6 +31,10 @@
 | RenderGraph | 无 camera color 同 pass 读写冲突 |
 | Debug | active plan / resource request / image chain 状态可查询 |
 | `git diff --check` | 无空白错误 |
+| Sortable stack | list order 改变 pass order |
+| Sortable stack | disabled item 不产生 pass / request |
+| ScreenPost rule | rule source 推导 AOV request |
+| ScreenPost rule | preview fallback 关闭后不影响天空 / 空 AOV 区域 |
 
 ## 建议新增测试
 
@@ -68,6 +78,11 @@ NoRequestUsesLegacyGlobalTextureName
 5. `HoURP ScreenPost Prototype`
 6. `HoURP ImagePost Prototype`
 
+当前 prototype 验收结论：
+
+- ScreenPost 可见效果已经确认；如果开启 preview fallback，空 AOV 区域也会被 tint，此行为仅用于 debug。
+- ImagePost 可见效果已经确认；当前是全屏 color adjust，用于验证 ImageChain 写回。
+
 准备：
 
 - 两个对象有不同 object group / material class。
@@ -104,6 +119,26 @@ NoRequestUsesLegacyGlobalTextureName
 - ImageChain pass 数减少。
 - Debug 不显示 layer B active output。
 - 不显示上一帧 layer B 结果。
+
+### 可排序 Stack 验收
+
+操作：
+
+1. 新增两个 ImagePost filter item。
+2. 设置明显不同的 color / brightness / contrast。
+3. 拖动列表顺序。
+
+期望：
+
+- RDG pass 顺序跟随列表顺序。
+- 最终画面随顺序变化。
+- WorkA / WorkB 仍只有两张全分辨率工作纹理。
+
+ScreenPost 同理：
+
+- 新增两个 ScreenPost layer。
+- 设置不同 rule / blend / color。
+- 拖动顺序后，重叠区域合成结果变化。
 
 ### ScreenPost rule 验收
 
