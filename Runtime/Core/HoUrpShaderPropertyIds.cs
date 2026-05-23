@@ -5,7 +5,8 @@ namespace HoUrp.Extensions.Core
     public static class HoUrpShaderPropertyIds
     {
         public const string AovOutputFallbackShaderName = "Hidden/HoURP/AOV/AovOutputFallback";
-        public const string AovDebugShaderName = "Hidden/HoURP/Debug/AovDebug";
+        public const string RenderCacheDebugShaderName = "Hidden/HoURP/Debug/RenderCacheDebug";
+        public const string AovDebugShaderName = RenderCacheDebugShaderName;
         public const string SubsurfaceScatteringShaderName = "Hidden/HoURP/SSS/SubsurfaceScattering";
         public const string ScreenPostPrototypeShaderName = "Hidden/HoURP/ScreenPost/Prototype";
         public const string ImagePostPrototypeShaderName = "Hidden/HoURP/ImagePost/Prototype";
@@ -18,7 +19,7 @@ namespace HoUrp.Extensions.Core
         public static readonly int AovObjectCustom4_7Texture = Shader.PropertyToID("_HoUrpAovObjectCustom4_7Texture");
         public static readonly int AovSurfaceDataTexture = Shader.PropertyToID("_HoUrpAovSurfaceDataTexture");
         public static readonly int AovMaterialCustom0_3Texture = Shader.PropertyToID("_HoUrpAovMaterialCustom0_3Texture");
-        public static readonly int AovSssSourceTexture = Shader.PropertyToID("_HoUrpAovSssSourceTexture");
+        public static readonly int AovDiffuseTexture = Shader.PropertyToID("_HoUrpAovDiffuseTexture");
         public static readonly int SssSourceTexture = Shader.PropertyToID("_HoUrpSssSourceTexture");
         public static readonly int SssDiffusionTexture = Shader.PropertyToID("_HoUrpSssDiffusionTexture");
         public static readonly int OitOpaqueColorTexture = Shader.PropertyToID("_HoUrpOitOpaqueColorTexture");
@@ -58,10 +59,18 @@ namespace HoUrp.Extensions.Core
         public static readonly int ShadowCastSecondDirectionalSliceData = Shader.PropertyToID("_HoUrpShadowCastSecondDirectionalSliceData");
         public static readonly int ShadowCastDebugMode = Shader.PropertyToID("_HoUrpShadowCastDebugMode");
         public static readonly int ShadowCastReceiverStrength = Shader.PropertyToID("_HoUrpShadowReceiverStrength");
-        public static readonly int AovDebugSourceTexture = Shader.PropertyToID("_HoUrpAovDebugSourceTexture");
-        public static readonly int AovDebugTileMode = Shader.PropertyToID("_HoUrpAovDebugTileMode");
-        public static readonly int AovDebugTileRect = Shader.PropertyToID("_HoUrpAovDebugTileRect");
-        public static readonly int AovDebugTileGrid = Shader.PropertyToID("_HoUrpAovDebugTileGrid");
+        public static readonly int RenderCacheDebugSourceTexture = Shader.PropertyToID("_HoUrpRenderCacheDebugSourceTexture");
+        public static readonly int RenderCacheDebugTileMode = Shader.PropertyToID("_HoUrpRenderCacheDebugTileMode");
+        public static readonly int RenderCacheDebugTileRect = Shader.PropertyToID("_HoUrpRenderCacheDebugTileRect");
+        public static readonly int RenderCacheDebugTileGrid = Shader.PropertyToID("_HoUrpRenderCacheDebugTileGrid");
+        public static readonly int RenderCacheDebugTileLabel0 = Shader.PropertyToID("_HoUrpRenderCacheDebugTileLabel0");
+        public static readonly int RenderCacheDebugTileLabel1 = Shader.PropertyToID("_HoUrpRenderCacheDebugTileLabel1");
+        public static readonly int RenderCacheDebugTileLabel2 = Shader.PropertyToID("_HoUrpRenderCacheDebugTileLabel2");
+        public static readonly int RenderCacheDebugTileLabel3 = Shader.PropertyToID("_HoUrpRenderCacheDebugTileLabel3");
+        public static readonly int AovDebugSourceTexture = RenderCacheDebugSourceTexture;
+        public static readonly int AovDebugTileMode = RenderCacheDebugTileMode;
+        public static readonly int AovDebugTileRect = RenderCacheDebugTileRect;
+        public static readonly int AovDebugTileGrid = RenderCacheDebugTileGrid;
         public static readonly int SourceColorTexture = Shader.PropertyToID("_HoUrpSourceColorTexture");
         public static readonly int ImagePostColorTint = Shader.PropertyToID("_HoUrpImagePostColorTint");
         public static readonly int ImagePostParams = Shader.PropertyToID("_HoUrpImagePostParams");
@@ -71,7 +80,8 @@ namespace HoUrp.Extensions.Core
         public static readonly int ScreenPostLayerParams = Shader.PropertyToID("_HoUrpScreenPostLayerParams");
         public static readonly int ScreenPostRuleParams = Shader.PropertyToID("_HoUrpScreenPostRuleParams");
         public static readonly int ScreenPostRuleValues = Shader.PropertyToID("_HoUrpScreenPostRuleValues");
-        public static readonly int AovDebugMode = Shader.PropertyToID("_HoUrpAovDebugMode");
+        public static readonly int RenderCacheDebugMode = Shader.PropertyToID("_HoUrpRenderCacheDebugMode");
+        public static readonly int AovDebugMode = RenderCacheDebugMode;
         public static readonly int AovMaskWeight = Shader.PropertyToID("_HoUrpAovMaskWeight");
         public static readonly int ObjectId = Shader.PropertyToID("_HoUrpObjectId");
         public static readonly int ObjectGroupId = Shader.PropertyToID("_HoUrpObjectGroupId");

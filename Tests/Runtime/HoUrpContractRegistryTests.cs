@@ -19,7 +19,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
             Assert.That(registry.Features.Count, Is.EqualTo(8));
-            Assert.That(registry.Resources.Count, Is.EqualTo(15));
+            Assert.That(registry.Resources.Count, Is.EqualTo(16));
             Assert.That(registry.Semantics.Count, Is.EqualTo(34));
             Assert.That(registry.DebugViews.Count, Is.EqualTo(45));
             Assert.That(registry.Capabilities.Count, Is.EqualTo(7));
@@ -122,38 +122,80 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
-        public void AovDebugFeatureMapsObjectFeatureFlagsWithoutDuplicateFlag1View()
+        public void RenderCacheDebugFeatureMapsObjectFeatureFlagsWithoutDuplicateFlag1View()
         {
-            Type featureType = typeof(AovDebugRendererFeature);
-            Type viewType = featureType.GetNestedType("AovDebugView", BindingFlags.NonPublic);
-            MethodInfo resolveDebugViewId = featureType.GetMethod("ResolveDebugViewId", BindingFlags.Static | BindingFlags.NonPublic);
-            MethodInfo resolveShaderMode = featureType.GetMethod("ResolveShaderMode", BindingFlags.Static | BindingFlags.NonPublic);
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+            Type passType = typeof(RenderCacheDebugRendererFeature).GetNestedType("RenderCacheDebugPass", BindingFlags.NonPublic);
+            MethodInfo resolveShaderMode = passType?.GetMethod("ResolveShaderMode", BindingFlags.Static | BindingFlags.NonPublic);
 
-            Assert.That(viewType, Is.Not.Null);
-            Assert.That(resolveDebugViewId, Is.Not.Null);
+            Assert.That(passType, Is.Not.Null);
             Assert.That(resolveShaderMode, Is.Not.Null);
-            Assert.That(Enum.GetNames(viewType), Does.Not.Contain("Flag1"));
 
-            object flag0Reserved = Enum.Parse(viewType, "Flag0Reserved");
-            object postReceiver = Enum.Parse(viewType, "PostReceiver");
-            object flag2 = Enum.Parse(viewType, "Flag2");
-            object flag7 = Enum.Parse(viewType, "Flag7");
-            object flag8 = Enum.Parse(viewType, "Flag8");
-            object flag12 = Enum.Parse(viewType, "Flag12");
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag0) }),
+                Is.EqualTo(27));
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag1) }),
+                Is.EqualTo(28));
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag2) }),
+                Is.EqualTo(29));
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag7) }),
+                Is.EqualTo(34));
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag8) }),
+                Is.EqualTo(35));
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovObjectFlag12) }),
+                Is.EqualTo(39));
+        }
 
-            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag0Reserved }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag0));
-            Assert.That(resolveDebugViewId.Invoke(null, new[] { postReceiver }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag1));
-            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag2 }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag2));
-            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag7 }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag7));
-            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag8 }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag8));
-            Assert.That(resolveDebugViewId.Invoke(null, new[] { flag12 }), Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovObjectFlag12));
+        [Test]
+        public void RenderCacheDebugAllMapsNonAovViewsToDedicatedShaderModes()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+            Type featureType = typeof(RenderCacheDebugRendererFeature);
+            Type passType = featureType.GetNestedType("RenderCacheDebugPass", BindingFlags.NonPublic);
+            MethodInfo resolveShaderMode = passType?.GetMethod("ResolveShaderMode", BindingFlags.Static | BindingFlags.NonPublic);
 
-            Assert.That(resolveShaderMode.Invoke(null, new[] { flag0Reserved }), Is.EqualTo(27));
-            Assert.That(resolveShaderMode.Invoke(null, new[] { postReceiver }), Is.EqualTo(28));
-            Assert.That(resolveShaderMode.Invoke(null, new[] { flag2 }), Is.EqualTo(29));
-            Assert.That(resolveShaderMode.Invoke(null, new[] { flag7 }), Is.EqualTo(34));
-            Assert.That(resolveShaderMode.Invoke(null, new[] { flag8 }), Is.EqualTo(35));
-            Assert.That(resolveShaderMode.Invoke(null, new[] { flag12 }), Is.EqualTo(39));
+            Assert.That(passType, Is.Not.Null);
+            Assert.That(resolveShaderMode, Is.Not.Null);
+
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.OitAccumulation) }),
+                Is.EqualTo(40));
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.OitRevealage) }),
+                Is.EqualTo(41));
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.ShadowCastAtlas) }),
+                Is.EqualTo(42));
+            Assert.That(
+                resolveShaderMode.Invoke(null, new object[] { registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.ShadowCastSecondDirectionalAtlas) }),
+                Is.EqualTo(43));
+        }
+
+        [Test]
+        public void RenderCacheDebugAllUsesPreviewLabelsDeclaredOnDebugViews()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            Assert.That(
+                registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovLinearDepth).PreviewLabel,
+                Is.EqualTo("LinearDepth"));
+            Assert.That(
+                registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovWorldNormal).PreviewLabel,
+                Is.EqualTo("WorldNormal"));
+            Assert.That(
+                registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.SssSource).PreviewLabel,
+                Is.EqualTo("SssPreparedSource"));
+            Assert.That(
+                registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.OitAccumulation).PreviewLabel,
+                Is.EqualTo("OitAccum"));
+            Assert.That(
+                registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.ShadowCastSecondDirectionalAtlas).PreviewLabel,
+                Is.EqualTo("ShadowSecond"));
         }
 
         [Test]
@@ -209,34 +251,60 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
-        public void MinimalAovRegistryExposesSssInputResource()
+        public void MinimalAovRegistryExposesDiffuseButNotSssRuntimeResources()
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
-            ResourceDefinition sssSource = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovSssSource);
+            FeatureDescriptor aovOutput = registry.Features.Get(HoUrpBuiltInNames.Features.AovOutput);
 
-            Assert.That(sssSource.Kind, Is.EqualTo(ResourceKind.Texture2D));
-            Assert.That(sssSource.Format, Is.EqualTo(ResourceFormatHint.HighPrecisionRgba16Float));
-            Assert.That(sssSource.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.AovOutput));
-            Assert.That(sssSource.LegacyName, Is.EqualTo("_lilHoAovSssTexture"));
-            Assert.That(sssSource.DebugView, Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovSssSource));
+            Assert.That(aovOutput.ProducedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovDiffuse));
+            Assert.That(aovOutput.ProducedResources, Does.Not.Contain(HoUrpBuiltInNames.Resources.SssSource));
+            Assert.That(aovOutput.ProducedResources, Does.Not.Contain(HoUrpBuiltInNames.Resources.SssDiffusion));
+            Assert.That(aovOutput.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovDiffuse));
+            Assert.That(aovOutput.DebugViews, Does.Not.Contain(HoUrpBuiltInNames.DebugViews.SssSource));
+            Assert.That(aovOutput.DebugViews, Does.Not.Contain(HoUrpBuiltInNames.DebugViews.SssDiffusion));
         }
 
         [Test]
-        public void MinimalAovRegistryLinksSssInputDebugViews()
+        public void MinimalRegistryLinksAovDiffuseToSourceColorOnly()
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
-            DebugViewDefinition sssSource = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovSssSource);
-            DebugViewDefinition sssWeight = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovSssWeight);
+            ResourceDefinition diffuse = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovDiffuse);
+            DebugViewDefinition diffuseView = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.AovDiffuse);
+
+            Assert.That(diffuse.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.AovOutput));
+            Assert.That(diffuse.DebugView, Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovDiffuse));
+            Assert.That(diffuse.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.SubsurfaceScattering));
+            Assert.That(diffuse.Semantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ShadingSssSourceColor));
+            Assert.That(diffuseView.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovDiffuse));
+            Assert.That(diffuseView.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ShadingSssSourceColor));
+        }
+
+        [Test]
+        public void MinimalRegistryKeepsSssWeightInSssRuntime()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
+            SemanticDefinition sourceColor = registry.Semantics.Get(HoUrpBuiltInNames.Semantics.ShadingSssSourceColor);
+            SemanticDefinition weight = registry.Semantics.Get(HoUrpBuiltInNames.Semantics.ShadingSssWeight);
+
+            Assert.That(sourceColor.Producer, Is.EqualTo(HoUrpBuiltInNames.Features.AovOutput));
+            Assert.That(weight.Producer, Is.EqualTo(HoUrpBuiltInNames.Features.SubsurfaceScattering));
+            Assert.That(sourceColor.DebugView, Is.EqualTo(HoUrpBuiltInNames.DebugViews.AovDiffuse));
+            Assert.That(weight.DebugView, Is.EqualTo(HoUrpBuiltInNames.DebugViews.SssMask));
+            Assert.That(sourceColor.Consumers, Contains.Item(HoUrpBuiltInNames.Features.SubsurfaceScattering));
+            Assert.That(sourceColor.Consumers, Does.Not.Contain(HoUrpBuiltInNames.Features.ScreenPost));
+            Assert.That(weight.Consumers, Does.Not.Contain(HoUrpBuiltInNames.Features.ScreenPost));
+        }
+
+        [Test]
+        public void MinimalRegistryLinksSssMaterialDebugAliasesToAovSurfaceData()
+        {
+            HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
+
             DebugViewDefinition sssThickness = registry.DebugViews.Get(HoUrpBuiltInNames.DebugViews.SssThickness);
 
-            Assert.That(sssSource.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovSssSource));
-            Assert.That(sssSource.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ShadingSssSourceColor));
-            Assert.That(sssSource.Range, Is.EqualTo(DebugValueRange.HdrColor));
-            Assert.That(sssWeight.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovSssSource));
-            Assert.That(sssWeight.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ShadingSssWeight));
-            Assert.That(sssWeight.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
             Assert.That(sssThickness.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovSurfaceData));
             Assert.That(sssThickness.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.MaterialThickness));
         }
@@ -262,9 +330,6 @@ namespace HoUrp.Extensions.Tests.Runtime
             ResourceDefinition objectCustom4 = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovObjectCustom4_7);
             ResourceDefinition surfaceData = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovSurfaceData);
             ResourceDefinition materialCustom = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3);
-            ResourceDefinition sssSource = registry.Resources.Get(HoUrpBuiltInNames.Resources.AovSssSource);
-            ResourceDefinition sssPrepared = registry.Resources.Get(HoUrpBuiltInNames.Resources.SssSource);
-            ResourceDefinition sssDiffusion = registry.Resources.Get(HoUrpBuiltInNames.Resources.SssDiffusion);
             FeatureDescriptor screenPost = registry.Features.Get(HoUrpBuiltInNames.Features.ScreenPost);
 
             Assert.That(maskId.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
@@ -272,9 +337,8 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(objectCustom4.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
             Assert.That(surfaceData.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
             Assert.That(materialCustom.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
-            Assert.That(sssSource.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
-            Assert.That(sssPrepared.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
-            Assert.That(sssDiffusion.ConsumerFeatures, Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
+            Assert.That(registry.Resources.Get(HoUrpBuiltInNames.Resources.SssSource).ConsumerFeatures, Does.Not.Contain(HoUrpBuiltInNames.Features.ScreenPost));
+            Assert.That(registry.Resources.Get(HoUrpBuiltInNames.Resources.SssDiffusion).ConsumerFeatures, Does.Not.Contain(HoUrpBuiltInNames.Features.ScreenPost));
             Assert.That(
                 registry.Resources.Get(HoUrpBuiltInNames.Resources.AovNormalDepth).ConsumerFeatures,
                 Contains.Item(HoUrpBuiltInNames.Features.ScreenPost));
@@ -284,9 +348,8 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(screenPost.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovObjectCustom4_7));
             Assert.That(screenPost.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovSurfaceData));
             Assert.That(screenPost.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3));
-            Assert.That(screenPost.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovSssSource));
-            Assert.That(screenPost.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.SssSource));
-            Assert.That(screenPost.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.SssDiffusion));
+            Assert.That(screenPost.ConsumedResources, Does.Not.Contain(HoUrpBuiltInNames.Resources.SssSource));
+            Assert.That(screenPost.ConsumedResources, Does.Not.Contain(HoUrpBuiltInNames.Resources.SssDiffusion));
         }
 
         [Test]
@@ -351,7 +414,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(feature.ProducedResources.Count, Is.EqualTo(0));
             Assert.That(feature.ConsumedResources.Count, Is.EqualTo(0));
             Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.MaterialClass));
-            Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.ShadingSssWeight));
+            Assert.That(feature.ProducedSemantics, Does.Not.Contain(HoUrpBuiltInNames.Semantics.ShadingSssWeight));
             Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.TransparentColor));
             Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.TransparentAlpha));
             Assert.That(feature.ProducedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.TransparentCoverage));
@@ -426,7 +489,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(feature.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovMaskId));
             Assert.That(feature.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovNormalDepth));
             Assert.That(feature.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovSurfaceData));
-            Assert.That(feature.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovSssSource));
+            Assert.That(feature.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovDiffuse));
             Assert.That(sssSource.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.SubsurfaceScattering));
             Assert.That(sssDiffusion.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.SubsurfaceScattering));
             Assert.That(sssSource.DebugView, Is.EqualTo(HoUrpBuiltInNames.DebugViews.SssSource));
@@ -441,7 +504,7 @@ namespace HoUrp.Extensions.Tests.Runtime
                 registry.Resources.Get(HoUrpBuiltInNames.Resources.AovSurfaceData).ConsumerFeatures,
                 Contains.Item(HoUrpBuiltInNames.Features.SubsurfaceScattering));
             Assert.That(
-                registry.Resources.Get(HoUrpBuiltInNames.Resources.AovSssSource).ConsumerFeatures,
+                registry.Resources.Get(HoUrpBuiltInNames.Resources.AovDiffuse).ConsumerFeatures,
                 Contains.Item(HoUrpBuiltInNames.Features.SubsurfaceScattering));
         }
 
@@ -466,7 +529,7 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
-        public void MinimalAovRegistryLinksDebugCompositeToRegisteredAovDebugViews()
+        public void MinimalAovRegistryLinksDebugCompositeToRegisteredRenderCacheDebugViews()
         {
             HoUrpContractRegistry registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
 
@@ -482,8 +545,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovObjectCustom7));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovThickness));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovMaterialCustom3));
-            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovSssSource));
-            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovSssWeight));
+            Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.AovDiffuse));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.SssMask));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.SssSource));
             Assert.That(debugComposite.DebugViews, Contains.Item(HoUrpBuiltInNames.DebugViews.SssDiffusion));
@@ -498,7 +560,8 @@ namespace HoUrp.Extensions.Tests.Runtime
         public void MinimalAovShaderBindingsUseNewHoUrpNames()
         {
             Assert.That(HoUrpShaderPropertyIds.AovOutputFallbackShaderName, Is.EqualTo("Hidden/HoURP/AOV/AovOutputFallback"));
-            Assert.That(HoUrpShaderPropertyIds.AovDebugShaderName, Is.EqualTo("Hidden/HoURP/Debug/AovDebug"));
+            Assert.That(HoUrpShaderPropertyIds.RenderCacheDebugShaderName, Is.EqualTo("Hidden/HoURP/Debug/RenderCacheDebug"));
+            Assert.That(HoUrpShaderPropertyIds.AovDebugShaderName, Is.EqualTo(HoUrpShaderPropertyIds.RenderCacheDebugShaderName));
             Assert.That(HoUrpShaderPropertyIds.SubsurfaceScatteringShaderName, Is.EqualTo("Hidden/HoURP/SSS/SubsurfaceScattering"));
             Assert.That(HoUrpShaderPropertyIds.ScreenPostPrototypeShaderName, Is.EqualTo("Hidden/HoURP/ScreenPost/Prototype"));
             Assert.That(HoUrpShaderPropertyIds.ImagePostPrototypeShaderName, Is.EqualTo("Hidden/HoURP/ImagePost/Prototype"));
@@ -509,7 +572,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.AovObjectCustom4_7Texture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovObjectCustom4_7Texture")));
             Assert.That(HoUrpShaderPropertyIds.AovSurfaceDataTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovSurfaceDataTexture")));
             Assert.That(HoUrpShaderPropertyIds.AovMaterialCustom0_3Texture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovMaterialCustom0_3Texture")));
-            Assert.That(HoUrpShaderPropertyIds.AovSssSourceTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovSssSourceTexture")));
+            Assert.That(HoUrpShaderPropertyIds.AovDiffuseTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDiffuseTexture")));
             Assert.That(HoUrpShaderPropertyIds.SssSourceTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssSourceTexture")));
             Assert.That(HoUrpShaderPropertyIds.SssDiffusionTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssDiffusionTexture")));
             Assert.That(HoUrpShaderPropertyIds.SourceColorTexture, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSourceColorTexture")));
@@ -521,8 +584,14 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.ScreenPostLayerParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpScreenPostLayerParams")));
             Assert.That(HoUrpShaderPropertyIds.ScreenPostRuleParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpScreenPostRuleParams")));
             Assert.That(HoUrpShaderPropertyIds.ScreenPostRuleValues, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpScreenPostRuleValues")));
-            Assert.That(HoUrpShaderPropertyIds.AovDebugMode, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDebugMode")));
-            Assert.That(HoUrpShaderPropertyIds.AovDebugTileGrid, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovDebugTileGrid")));
+            Assert.That(HoUrpShaderPropertyIds.RenderCacheDebugMode, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpRenderCacheDebugMode")));
+            Assert.That(HoUrpShaderPropertyIds.AovDebugMode, Is.EqualTo(HoUrpShaderPropertyIds.RenderCacheDebugMode));
+            Assert.That(HoUrpShaderPropertyIds.RenderCacheDebugTileGrid, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpRenderCacheDebugTileGrid")));
+            Assert.That(HoUrpShaderPropertyIds.RenderCacheDebugTileLabel0, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpRenderCacheDebugTileLabel0")));
+            Assert.That(HoUrpShaderPropertyIds.RenderCacheDebugTileLabel1, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpRenderCacheDebugTileLabel1")));
+            Assert.That(HoUrpShaderPropertyIds.RenderCacheDebugTileLabel2, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpRenderCacheDebugTileLabel2")));
+            Assert.That(HoUrpShaderPropertyIds.RenderCacheDebugTileLabel3, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpRenderCacheDebugTileLabel3")));
+            Assert.That(HoUrpShaderPropertyIds.AovDebugTileGrid, Is.EqualTo(HoUrpShaderPropertyIds.RenderCacheDebugTileGrid));
             Assert.That(HoUrpShaderPropertyIds.AovMaskWeight, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpAovMaskWeight")));
             Assert.That(HoUrpShaderPropertyIds.ObjectId, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpObjectId")));
             Assert.That(HoUrpShaderPropertyIds.ObjectGroupId, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpObjectGroupId")));

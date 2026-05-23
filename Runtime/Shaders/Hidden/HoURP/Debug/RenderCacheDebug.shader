@@ -1,4 +1,4 @@
-Shader "Hidden/HoURP/Debug/AovDebug"
+Shader "Hidden/HoURP/Debug/RenderCacheDebug"
 {
     SubShader
     {
@@ -6,7 +6,7 @@ Shader "Hidden/HoURP/Debug/AovDebug"
 
         Pass
         {
-            Name "AovDebug"
+            Name "RenderCacheDebug"
             ZTest Always
             ZWrite Off
             Cull Off
@@ -18,12 +18,16 @@ Shader "Hidden/HoURP/Debug/AovDebug"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            TEXTURE2D_X(_HoUrpAovDebugSourceTexture);
+            TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture);
 
-            int _HoUrpAovDebugMode;
-            int _HoUrpAovDebugTileMode;
-            float4 _HoUrpAovDebugTileRect;
-            float4 _HoUrpAovDebugTileGrid;
+            int _HoUrpRenderCacheDebugMode;
+            int _HoUrpRenderCacheDebugTileMode;
+            float4 _HoUrpRenderCacheDebugTileRect;
+            float4 _HoUrpRenderCacheDebugTileGrid;
+            float4 _HoUrpRenderCacheDebugTileLabel0;
+            float4 _HoUrpRenderCacheDebugTileLabel1;
+            float4 _HoUrpRenderCacheDebugTileLabel2;
+            float4 _HoUrpRenderCacheDebugTileLabel3;
 
             Varyings VertTile(Attributes input)
             {
@@ -42,8 +46,8 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 };
 
                 float2 uv = quadUv[input.vertexID];
-                float2 tileMin = _HoUrpAovDebugTileRect.xy;
-                float2 tileSize = _HoUrpAovDebugTileRect.zw;
+                float2 tileMin = _HoUrpRenderCacheDebugTileRect.xy;
+                float2 tileSize = _HoUrpRenderCacheDebugTileRect.zw;
                 float2 position = tileMin + uv * tileSize;
 
                 output.positionCS = float4(position * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
@@ -115,19 +119,19 @@ Shader "Hidden/HoURP/Debug/AovDebug"
             {
                 half4 resolvedColor = half4(0.0h, 0.0h, 0.0h, 1.0h);
 
-                if (_HoUrpAovDebugMode == 1)
+                if (_HoUrpRenderCacheDebugMode == 1)
                 {
-                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugIdColor(maskId.g);
                 }
-                else if (_HoUrpAovDebugMode == 2)
+                else if (_HoUrpRenderCacheDebugMode == 2)
                 {
-                    half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(VisualizeLinearDepth01(normalDepth.a));
                 }
-                else if (_HoUrpAovDebugMode == 3)
+                else if (_HoUrpRenderCacheDebugMode == 3)
                 {
-                    half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     if (!HasValidNormal(normalDepth))
                     {
                         resolvedColor = half4(0.0h, 0.0h, 0.0h, 0.0h);
@@ -137,27 +141,27 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                         resolvedColor = half4(normalDepth.rgb, 1.0h);
                     }
                 }
-                else if (_HoUrpAovDebugMode >= 4 && _HoUrpAovDebugMode <= 7)
+                else if (_HoUrpRenderCacheDebugMode >= 4 && _HoUrpRenderCacheDebugMode <= 7)
                 {
-                    half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    resolvedColor = DebugScalar(PickChannel(objectCustom, _HoUrpAovDebugMode - 4));
+                    half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(PickChannel(objectCustom, _HoUrpRenderCacheDebugMode - 4));
                 }
-                else if (_HoUrpAovDebugMode >= 8 && _HoUrpAovDebugMode <= 11)
+                else if (_HoUrpRenderCacheDebugMode >= 8 && _HoUrpRenderCacheDebugMode <= 11)
                 {
-                    half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    resolvedColor = DebugScalar(PickChannel(objectCustom, _HoUrpAovDebugMode - 8));
+                    half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(PickChannel(objectCustom, _HoUrpRenderCacheDebugMode - 8));
                 }
-                else if (_HoUrpAovDebugMode >= 12 && _HoUrpAovDebugMode <= 15)
+                else if (_HoUrpRenderCacheDebugMode >= 12 && _HoUrpRenderCacheDebugMode <= 15)
                 {
-                    half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    half value = PickChannel(surfaceData, _HoUrpAovDebugMode - 12);
-                    if (_HoUrpAovDebugMode == 12 || _HoUrpAovDebugMode == 13)
+                    half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    half value = PickChannel(surfaceData, _HoUrpRenderCacheDebugMode - 12);
+                    if (_HoUrpRenderCacheDebugMode == 12 || _HoUrpRenderCacheDebugMode == 13)
                     {
                         resolvedColor = DebugIdColor(value);
                     }
                     else
                     {
-                        if (_HoUrpAovDebugMode == 15)
+                        if (_HoUrpRenderCacheDebugMode == 15)
                         {
                             value = saturate(value);
                         }
@@ -165,59 +169,79 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                         resolvedColor = DebugScalar(value);
                     }
                 }
-                else if (_HoUrpAovDebugMode >= 16 && _HoUrpAovDebugMode <= 19)
+                else if (_HoUrpRenderCacheDebugMode >= 16 && _HoUrpRenderCacheDebugMode <= 19)
                 {
-                    half4 materialCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    resolvedColor = DebugScalar(PickChannel(materialCustom, _HoUrpAovDebugMode - 16));
+                    half4 materialCustom = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(PickChannel(materialCustom, _HoUrpRenderCacheDebugMode - 16));
                 }
-                else if (_HoUrpAovDebugMode == 20)
+                else if (_HoUrpRenderCacheDebugMode == 20)
                 {
-                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    resolvedColor = half4(sssSource.rgb, 1.0h);
+                    half4 diffuse = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = half4(diffuse.rgb, 1.0h);
                 }
-                else if (_HoUrpAovDebugMode == 21)
+                else if (_HoUrpRenderCacheDebugMode == 21)
                 {
-                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(sssSource.a);
                 }
-                else if (_HoUrpAovDebugMode == 22)
+                else if (_HoUrpRenderCacheDebugMode == 22)
                 {
-                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(sssSource.a);
                 }
-                else if (_HoUrpAovDebugMode == 23)
+                else if (_HoUrpRenderCacheDebugMode == 23)
                 {
-                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = half4(sssSource.rgb, 1.0h);
                 }
-                else if (_HoUrpAovDebugMode == 24)
+                else if (_HoUrpRenderCacheDebugMode == 24)
                 {
-                    half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = half4(sssDiffusion.rgb, 1.0h);
                 }
-                else if (_HoUrpAovDebugMode == 25)
+                else if (_HoUrpRenderCacheDebugMode == 25)
                 {
-                    half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(sssDiffusion.a);
                 }
-                else if (_HoUrpAovDebugMode == 26)
+                else if (_HoUrpRenderCacheDebugMode == 26)
                 {
-                    half4 semanticPostMask = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 semanticPostMask = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(max(max(semanticPostMask.r, semanticPostMask.g), max(semanticPostMask.b, semanticPostMask.a)));
                 }
-                else if (_HoUrpAovDebugMode >= 27 && _HoUrpAovDebugMode <= 34)
+                else if (_HoUrpRenderCacheDebugMode >= 27 && _HoUrpRenderCacheDebugMode <= 34)
                 {
-                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    resolvedColor = DebugScalar(PickFlagBit(maskId.a, _HoUrpAovDebugMode - 27));
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(PickFlagBit(maskId.a, _HoUrpRenderCacheDebugMode - 27));
                 }
-                else if (_HoUrpAovDebugMode >= 35 && _HoUrpAovDebugMode <= 39)
+                else if (_HoUrpRenderCacheDebugMode >= 35 && _HoUrpRenderCacheDebugMode <= 39)
                 {
-                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    resolvedColor = DebugScalar(PickFlagBit(maskId.b, _HoUrpAovDebugMode - 32));
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(PickFlagBit(maskId.b, _HoUrpRenderCacheDebugMode - 32));
+                }
+                else if (_HoUrpRenderCacheDebugMode == 40)
+                {
+                    half4 accumulation = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = half4(saturate(accumulation.rgb), 1.0h);
+                }
+                else if (_HoUrpRenderCacheDebugMode == 41)
+                {
+                    half4 revealage = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    resolvedColor = DebugScalar(revealage.r);
+                }
+                else if (_HoUrpRenderCacheDebugMode == 42 || _HoUrpRenderCacheDebugMode == 43)
+                {
+                    half4 shadowDepth = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+#if UNITY_REVERSED_Z
+                    half visibleDepth = 1.0h - shadowDepth.r;
+#else
+                    half visibleDepth = shadowDepth.r;
+#endif
+                    resolvedColor = DebugScalar(visibleDepth);
                 }
                 else
                 {
-                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     resolvedColor = DebugScalar(maskId.r);
                 }
 
@@ -240,7 +264,7 @@ Shader "Hidden/HoURP/Debug/AovDebug"
 
         Pass
         {
-            Name "AovDebugTile"
+            Name "RenderCacheDebugTile"
             ZTest Always
             ZWrite Off
             Cull Off
@@ -252,12 +276,16 @@ Shader "Hidden/HoURP/Debug/AovDebug"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            TEXTURE2D_X(_HoUrpAovDebugSourceTexture);
+            TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture);
 
-            int _HoUrpAovDebugMode;
-            int _HoUrpAovDebugTileMode;
-            float4 _HoUrpAovDebugTileRect;
-            float4 _HoUrpAovDebugTileGrid;
+            int _HoUrpRenderCacheDebugMode;
+            int _HoUrpRenderCacheDebugTileMode;
+            float4 _HoUrpRenderCacheDebugTileRect;
+            float4 _HoUrpRenderCacheDebugTileGrid;
+            float4 _HoUrpRenderCacheDebugTileLabel0;
+            float4 _HoUrpRenderCacheDebugTileLabel1;
+            float4 _HoUrpRenderCacheDebugTileLabel2;
+            float4 _HoUrpRenderCacheDebugTileLabel3;
 
             Varyings VertTile(Attributes input)
             {
@@ -276,8 +304,8 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 };
 
                 float2 uv = quadUv[input.vertexID];
-                float2 tileMin = _HoUrpAovDebugTileRect.xy;
-                float2 tileSize = _HoUrpAovDebugTileRect.zw;
+                float2 tileMin = _HoUrpRenderCacheDebugTileRect.xy;
+                float2 tileSize = _HoUrpRenderCacheDebugTileRect.zw;
                 float2 position = tileMin + uv * tileSize;
 
                 output.positionCS = float4(position * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
@@ -345,52 +373,30 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 return dot(abs(normalDepth.rgb), half3(1.0h, 1.0h, 1.0h)) > 0.0h;
             }
 
-            uint PickLabelChar(int index, uint c0, uint c1, uint c2, uint c3, uint c4, uint c5, uint c6, uint c7, uint c8, uint c9)
+            uint PickVectorChar(float4 chars, int index)
             {
-                if (index == 0) return c0;
-                if (index == 1) return c1;
-                if (index == 2) return c2;
-                if (index == 3) return c3;
-                if (index == 4) return c4;
-                if (index == 5) return c5;
-                if (index == 6) return c6;
-                if (index == 7) return c7;
-                if (index == 8) return c8;
-                if (index == 9) return c9;
-                return 32u;
+                if (index == 0) return (uint)round(chars.x);
+                if (index == 1) return (uint)round(chars.y);
+                if (index == 2) return (uint)round(chars.z);
+                return (uint)round(chars.w);
             }
 
-            uint LabelChar(int mode, int index)
+            uint PickPackedLabelChar(int index, float4 c0, float4 c1, float4 c2, float4 c3)
             {
-                if (mode == 0) return PickLabelChar(index, 65u, 79u, 86u, 32u, 77u, 65u, 83u, 75u, 32u, 32u);
-                if (mode == 1) return PickLabelChar(index, 79u, 66u, 74u, 69u, 67u, 84u, 32u, 73u, 68u, 32u);
-                if (mode == 2) return PickLabelChar(index, 68u, 69u, 80u, 84u, 72u, 32u, 32u, 32u, 32u, 32u);
-                if (mode == 3) return PickLabelChar(index, 78u, 79u, 82u, 77u, 65u, 76u, 32u, 32u, 32u, 32u);
-                if (mode == 4) return PickLabelChar(index, 83u, 85u, 66u, 74u, 69u, 67u, 84u, 32u, 32u, 32u);
-                if (mode == 5) return PickLabelChar(index, 70u, 65u, 67u, 69u, 32u, 32u, 32u, 32u, 32u, 32u);
-                if (mode == 6) return PickLabelChar(index, 72u, 65u, 73u, 82u, 32u, 32u, 32u, 32u, 32u, 32u);
-                if (mode == 7) return PickLabelChar(index, 69u, 89u, 69u, 32u, 32u, 32u, 32u, 32u, 32u, 32u);
-                if (mode == 8) return PickLabelChar(index, 65u, 67u, 67u, 69u, 83u, 83u, 32u, 32u, 32u, 32u);
-                if (mode == 9) return PickLabelChar(index, 67u, 76u, 79u, 84u, 72u, 32u, 32u, 32u, 32u, 32u);
-                if (mode == 10) return PickLabelChar(index, 80u, 82u, 79u, 80u, 32u, 32u, 32u, 32u, 32u, 32u);
-                if (mode == 11) return PickLabelChar(index, 82u, 69u, 83u, 69u, 82u, 86u, 69u, 68u, 32u, 32u);
-                if (mode == 12) return PickLabelChar(index, 77u, 65u, 84u, 32u, 67u, 76u, 65u, 83u, 83u, 32u);
-                if (mode == 13) return PickLabelChar(index, 83u, 83u, 83u, 32u, 80u, 82u, 79u, 70u, 32u, 32u);
-                if (mode == 14) return PickLabelChar(index, 84u, 72u, 73u, 67u, 75u, 32u, 32u, 32u, 32u, 32u);
-                if (mode == 15) return PickLabelChar(index, 67u, 85u, 82u, 86u, 69u, 32u, 32u, 32u, 32u, 32u);
-                if (mode >= 16 && mode <= 19) return PickLabelChar(index, 77u, 65u, 84u, 32u, 67u, uint(48 + mode - 16), 32u, 32u, 32u, 32u);
-                if (mode == 20) return PickLabelChar(index, 83u, 83u, 83u, 32u, 83u, 82u, 67u, 32u, 32u, 32u);
-                if (mode == 21) return PickLabelChar(index, 83u, 83u, 83u, 32u, 87u, 71u, 84u, 32u, 32u, 32u);
-                if (mode == 22) return PickLabelChar(index, 83u, 83u, 83u, 32u, 77u, 65u, 83u, 75u, 32u, 32u);
-                if (mode == 23) return PickLabelChar(index, 83u, 83u, 83u, 32u, 83u, 82u, 67u, 50u, 32u, 32u);
-                if (mode == 24) return PickLabelChar(index, 83u, 83u, 83u, 32u, 68u, 73u, 70u, 70u, 32u, 32u);
-                if (mode == 25) return PickLabelChar(index, 83u, 83u, 83u, 32u, 67u, 77u, 80u, 32u, 87u, 32u);
-                if (mode == 26) return PickLabelChar(index, 80u, 79u, 83u, 84u, 32u, 77u, 65u, 83u, 75u, 32u);
-                if (mode == 27) return PickLabelChar(index, 70u, 76u, 65u, 71u, 32u, 48u, 32u, 32u, 32u, 32u);
-                if (mode == 28) return PickLabelChar(index, 80u, 79u, 83u, 84u, 32u, 82u, 88u, 32u, 32u, 32u);
-                if (mode >= 29 && mode <= 34) return PickLabelChar(index, 70u, 76u, 65u, 71u, 32u, uint(48 + mode - 27), 32u, 32u, 32u, 32u);
-                if (mode >= 35 && mode <= 39) return PickLabelChar(index, 70u, 76u, 65u, 71u, uint(48 + ((mode - 27) / 10)), uint(48 + ((mode - 27) % 10)), 32u, 32u, 32u, 32u);
-                return 32u;
+                if (index < 4) return PickVectorChar(c0, index);
+                if (index < 8) return PickVectorChar(c1, index - 4);
+                if (index < 12) return PickVectorChar(c2, index - 8);
+                return PickVectorChar(c3, index - 12);
+            }
+
+            uint LabelChar(int index)
+            {
+                return PickPackedLabelChar(
+                    index,
+                    _HoUrpRenderCacheDebugTileLabel0,
+                    _HoUrpRenderCacheDebugTileLabel1,
+                    _HoUrpRenderCacheDebugTileLabel2,
+                    _HoUrpRenderCacheDebugTileLabel3);
             }
 
             uint GlyphRow(uint c, uint row)
@@ -433,9 +439,9 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 return 0u;
             }
 
-            half DrawLabel(float2 uv, int mode)
+            half DrawLabel(float2 uv)
             {
-                float density = max(_HoUrpAovDebugTileGrid.x, _HoUrpAovDebugTileGrid.y);
+                float density = max(_HoUrpRenderCacheDebugTileGrid.x, _HoUrpRenderCacheDebugTileGrid.y);
                 float labelScale = saturate((density - 2.0) / 4.0);
                 float cellHeight = lerp(0.085, 0.14, labelScale);
                 float cellWidth = cellHeight * 0.42;
@@ -450,28 +456,34 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 int charIndex = (int)floor(xCell);
                 int col = (int)floor(frac(xCell) * 6.0);
                 int row = (int)floor(yCell * 8.0);
-                if (charIndex < 0 || charIndex >= 10 || col < 0 || col >= 5 || row < 0 || row >= 7)
+                if (charIndex < 0 || charIndex >= 16 || col < 0 || col >= 5 || row < 0 || row >= 7)
                 {
                     return 0.0h;
                 }
 
-                uint rowBits = GlyphRow(LabelChar(mode, charIndex), (uint)row);
+                uint rowBits = GlyphRow(LabelChar(charIndex), (uint)row);
                 return half((rowBits >> (uint)(4 - col)) & 1u);
             }
 
             half4 ApplyTileOverlay(half4 color, float2 uv)
             {
-                half border = half(step(uv.x, 0.015) + step(uv.y, 0.015) + step(0.985, uv.x) + step(0.985, uv.y));
-                if (border > 0.0h)
+                half outerBorder = half(step(uv.x, 0.018) + step(uv.y, 0.018) + step(0.982, uv.x) + step(0.982, uv.y));
+                if (outerBorder > 0.0h)
                 {
-                    return half4(1.0h, 0.0h, 0.0h, 1.0h);
+                    return half4(0.02h, 0.02h, 0.02h, 1.0h);
                 }
 
-                float density = max(_HoUrpAovDebugTileGrid.x, _HoUrpAovDebugTileGrid.y);
+                half innerBorder = half(step(uv.x, 0.026) + step(uv.y, 0.026) + step(0.974, uv.x) + step(0.974, uv.y));
+                if (innerBorder > 0.0h)
+                {
+                    return half4(0.92h, 0.92h, 0.86h, 1.0h);
+                }
+
+                float density = max(_HoUrpRenderCacheDebugTileGrid.x, _HoUrpRenderCacheDebugTileGrid.y);
                 float labelScale = saturate((density - 2.0) / 4.0);
                 float labelHeight = lerp(0.11, 0.18, labelScale);
                 half labelBackground = half(step(uv.y, 0.985) * step(1.0 - labelHeight, uv.y) * step(uv.x, 0.52));
-                half label = DrawLabel(uv, _HoUrpAovDebugMode);
+                half label = DrawLabel(uv);
                 color.rgb = lerp(color.rgb, color.rgb * 0.2h, labelBackground);
                 color.rgb = lerp(color.rgb, half3(1.0h, 1.0h, 1.0h), label);
                 color.a = 1.0h;
@@ -483,21 +495,21 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float2 uv = input.texcoord;
 
-                if (_HoUrpAovDebugMode == 1)
+                if (_HoUrpRenderCacheDebugMode == 1)
                 {
-                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugIdColor(maskId.g), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 2)
+                if (_HoUrpRenderCacheDebugMode == 2)
                 {
-                    half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugScalar(VisualizeLinearDepth01(normalDepth.a)), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 3)
+                if (_HoUrpRenderCacheDebugMode == 3)
                 {
-                    half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     if (!HasValidNormal(normalDepth))
                     {
                         return ApplyTileOverlay(half4(0.0h, 0.0h, 0.0h, 0.0h), uv);
@@ -506,28 +518,28 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                     return ApplyTileOverlay(half4(normalDepth.rgb, 1.0h), uv);
                 }
 
-                if (_HoUrpAovDebugMode >= 4 && _HoUrpAovDebugMode <= 7)
+                if (_HoUrpRenderCacheDebugMode >= 4 && _HoUrpRenderCacheDebugMode <= 7)
                 {
-                    half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    return ApplyTileOverlay(DebugScalar(PickChannel(objectCustom, _HoUrpAovDebugMode - 4)), uv);
+                    half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(PickChannel(objectCustom, _HoUrpRenderCacheDebugMode - 4)), uv);
                 }
 
-                if (_HoUrpAovDebugMode >= 8 && _HoUrpAovDebugMode <= 11)
+                if (_HoUrpRenderCacheDebugMode >= 8 && _HoUrpRenderCacheDebugMode <= 11)
                 {
-                    half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    return ApplyTileOverlay(DebugScalar(PickChannel(objectCustom, _HoUrpAovDebugMode - 8)), uv);
+                    half4 objectCustom = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(PickChannel(objectCustom, _HoUrpRenderCacheDebugMode - 8)), uv);
                 }
 
-                if (_HoUrpAovDebugMode >= 12 && _HoUrpAovDebugMode <= 15)
+                if (_HoUrpRenderCacheDebugMode >= 12 && _HoUrpRenderCacheDebugMode <= 15)
                 {
-                    half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    half value = PickChannel(surfaceData, _HoUrpAovDebugMode - 12);
-                    if (_HoUrpAovDebugMode == 12 || _HoUrpAovDebugMode == 13)
+                    half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    half value = PickChannel(surfaceData, _HoUrpRenderCacheDebugMode - 12);
+                    if (_HoUrpRenderCacheDebugMode == 12 || _HoUrpRenderCacheDebugMode == 13)
                     {
                         return ApplyTileOverlay(DebugIdColor(value), uv);
                     }
 
-                    if (_HoUrpAovDebugMode == 15)
+                    if (_HoUrpRenderCacheDebugMode == 15)
                     {
                         value = saturate(value);
                     }
@@ -535,67 +547,90 @@ Shader "Hidden/HoURP/Debug/AovDebug"
                     return ApplyTileOverlay(DebugScalar(value), uv);
                 }
 
-                if (_HoUrpAovDebugMode >= 16 && _HoUrpAovDebugMode <= 19)
+                if (_HoUrpRenderCacheDebugMode >= 16 && _HoUrpRenderCacheDebugMode <= 19)
                 {
-                    half4 materialCustom = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    return ApplyTileOverlay(DebugScalar(PickChannel(materialCustom, _HoUrpAovDebugMode - 16)), uv);
+                    half4 materialCustom = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(PickChannel(materialCustom, _HoUrpRenderCacheDebugMode - 16)), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 20)
+                if (_HoUrpRenderCacheDebugMode == 20)
                 {
-                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    return ApplyTileOverlay(half4(sssSource.rgb, 1.0h), uv);
+                    half4 diffuse = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(half4(diffuse.rgb, 1.0h), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 21)
+                if (_HoUrpRenderCacheDebugMode == 21)
                 {
-                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugScalar(sssSource.a), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 22)
+                if (_HoUrpRenderCacheDebugMode == 22)
                 {
-                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugScalar(sssSource.a), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 23)
+                if (_HoUrpRenderCacheDebugMode == 23)
                 {
-                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(half4(sssSource.rgb, 1.0h), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 24)
+                if (_HoUrpRenderCacheDebugMode == 24)
                 {
-                    half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(half4(sssDiffusion.rgb, 1.0h), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 25)
+                if (_HoUrpRenderCacheDebugMode == 25)
                 {
-                    half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 sssDiffusion = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugScalar(sssDiffusion.a), uv);
                 }
 
-                if (_HoUrpAovDebugMode == 26)
+                if (_HoUrpRenderCacheDebugMode == 26)
                 {
-                    half4 semanticPostMask = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                    half4 semanticPostMask = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                     return ApplyTileOverlay(DebugScalar(max(max(semanticPostMask.r, semanticPostMask.g), max(semanticPostMask.b, semanticPostMask.a))), uv);
                 }
 
-                if (_HoUrpAovDebugMode >= 27 && _HoUrpAovDebugMode <= 34)
+                if (_HoUrpRenderCacheDebugMode >= 27 && _HoUrpRenderCacheDebugMode <= 34)
                 {
-                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    return ApplyTileOverlay(DebugScalar(PickFlagBit(maskId.a, _HoUrpAovDebugMode - 27)), uv);
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(PickFlagBit(maskId.a, _HoUrpRenderCacheDebugMode - 27)), uv);
                 }
 
-                if (_HoUrpAovDebugMode >= 35 && _HoUrpAovDebugMode <= 39)
+                if (_HoUrpRenderCacheDebugMode >= 35 && _HoUrpRenderCacheDebugMode <= 39)
                 {
-                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
-                    return ApplyTileOverlay(DebugScalar(PickFlagBit(maskId.b, _HoUrpAovDebugMode - 32)), uv);
+                    half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(PickFlagBit(maskId.b, _HoUrpRenderCacheDebugMode - 32)), uv);
                 }
 
-                half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovDebugSourceTexture, sampler_PointClamp, uv);
+                if (_HoUrpRenderCacheDebugMode == 40)
+                {
+                    half4 accumulation = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(half4(saturate(accumulation.rgb), 1.0h), uv);
+                }
+
+                if (_HoUrpRenderCacheDebugMode == 41)
+                {
+                    half4 revealage = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+                    return ApplyTileOverlay(DebugScalar(revealage.r), uv);
+                }
+
+                if (_HoUrpRenderCacheDebugMode == 42 || _HoUrpRenderCacheDebugMode == 43)
+                {
+                    half4 shadowDepth = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
+#if UNITY_REVERSED_Z
+                    half visibleDepth = 1.0h - shadowDepth.r;
+#else
+                    half visibleDepth = shadowDepth.r;
+#endif
+                    return ApplyTileOverlay(DebugScalar(visibleDepth), uv);
+                }
+
+                half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpRenderCacheDebugSourceTexture, sampler_PointClamp, uv);
                 return ApplyTileOverlay(DebugScalar(maskId.r), uv);
             }
             ENDHLSL

@@ -16,7 +16,7 @@
 
 - 承认 HoNpr 已有 DSL、preset、block、generated shader 和 Material UI。
 - 明确 `Character_LilToon_Skin_fSSS` 只验证 forward/fake SSS。
-- 明确真 screen-space SSS 必须由独立 block / preset 生产 HoURP SSS source。
+- 明确真 screen-space SSS 必须由独立 block / preset 贡献 HoAOV 基础语义输入，SSS runtime 再消费这些输入。
 - 明确 HoShadowReceiver 当前仍是 `1.0h` 占位。
 
 验收：
@@ -40,7 +40,7 @@ HoNpr/ShaderSystem/Features/Subsurface/ScreenSpaceSssSourceProducer/
 block MaterialBlock.ScreenSpaceSssSourceProducer : SemanticProducer in ShadingDomain
 {
     consumes HoUrpSurfaceData SemanticMap;
-    produces Shading.SssSourceColor Shading.SssWeight Aov.SssSource;
+    produces Shading.SssSourceColor Aov.Diffuse; // SSS weight/control uses SSS-owned RDG/MRT
     requires include HoNpr.SemanticSurface;
     requires define HONPR_HAS_SCREEN_SPACE_SSS_SOURCE;
     entry HoNprCreateMaterialSemanticProducer;
@@ -58,7 +58,7 @@ block MaterialBlock.ScreenSpaceSssSourceProducer : SemanticProducer in ShadingDo
 验收：
 
 - `FEATURE_BLOCK_TABLE.md` 重建后出现 `MaterialBlock.ScreenSpaceSssSourceProducer`。
-- 该 block 产出 `Aov.SssSource`。
+- 该 block 产出 `Shading.SssSourceColor` / `Aov.Diffuse` 等可进入 HoAOV 基础语义缓存 的通用输入语义。
 
 ## Step 3. 补 HoNpr 真 SSS Preset
 
@@ -87,7 +87,7 @@ HoNpr/ShaderSystem/Presets/Character/Character_LilToon_Skin_SSS.honprpreset
   - `Material.Curvature`
   - `Shading.SssSourceColor`
   - `Shading.SssWeight`
-  - `Aov.SssSource`
+  - HoAOV 中可供 SSS 消费的颜色输入语义；权重/控制量走 SSS 自己的 RDG/MRT
 
 验收：
 
@@ -214,7 +214,8 @@ lighting = HoNprResolveHoShadowReceiver(lighting, hoShadow);
 
 检查：
 
-- AOV Debug 能看到 material class / custom / SSS source。
+- Render Cache Debug 能看到 AOV material class / custom / surface data。
+- SSS Debug / Render Cache Debug 能看到 HoAOV 基础语义输入被 SSS runtime 消费后的 source / diffusion / composite 输出。
 - SSS Debug / composite 能看到真 SSS preset 贡献。
 - `Skin_fSSS` 只用于对比 forward/fake SSS。
 - ShadowCast Inspector 能看到参与光源。

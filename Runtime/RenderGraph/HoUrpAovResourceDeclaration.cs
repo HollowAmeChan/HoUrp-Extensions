@@ -60,7 +60,7 @@ namespace HoUrp.Extensions.RenderGraph
                 renderGraph,
                 resources,
                 registry,
-                HoUrpBuiltInNames.Resources.AovSssSource,
+                HoUrpBuiltInNames.Resources.AovDiffuse,
                 cameraTextureDescriptor);
         }
 

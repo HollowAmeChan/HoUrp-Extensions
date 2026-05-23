@@ -77,9 +77,11 @@ namespace HoUrp.Extensions.Tests.Runtime
                 .Resources;
             ResourceDefinition surfaceData = resources.Get(HoUrpBuiltInNames.Resources.AovSurfaceData);
             ResourceDefinition materialCustom = resources.Get(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3);
+            ResourceDefinition diffuse = resources.Get(HoUrpBuiltInNames.Resources.AovDiffuse);
 
             TextureDesc surfaceDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(surfaceData, CreateCameraDescriptor());
             TextureDesc customDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(materialCustom, CreateCameraDescriptor());
+            TextureDesc diffuseDesc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(diffuse, CreateCameraDescriptor());
 
             Assert.That(surfaceDesc.name, Is.EqualTo("Aov.SurfaceData"));
             Assert.That(surfaceDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
@@ -89,22 +91,10 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(customDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
             Assert.That(customDesc.clearBuffer, Is.True);
             Assert.That(customDesc.clearColor, Is.EqualTo(Color.clear));
-        }
-
-        [Test]
-        public void SssSourceResourceDescriptorUsesHighPrecisionFormatAndZeroClear()
-        {
-            ResourceDefinition sssSource = HoUrpBuiltInContracts
-                .CreateMinimalAovRegistry()
-                .Resources
-                .Get(HoUrpBuiltInNames.Resources.AovSssSource);
-
-            TextureDesc desc = HoUrpRenderGraphTextureDescFactory.CreateColorDesc(sssSource, CreateCameraDescriptor());
-
-            Assert.That(desc.name, Is.EqualTo("Aov.SssSource"));
-            Assert.That(desc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
-            Assert.That(desc.clearBuffer, Is.True);
-            Assert.That(desc.clearColor, Is.EqualTo(Color.clear));
+            Assert.That(diffuseDesc.name, Is.EqualTo("Aov.Diffuse"));
+            Assert.That(diffuseDesc.format, Is.EqualTo(GraphicsFormat.R16G16B16A16_SFloat));
+            Assert.That(diffuseDesc.clearBuffer, Is.True);
+            Assert.That(diffuseDesc.clearColor, Is.EqualTo(Color.clear));
         }
 
         [Test]

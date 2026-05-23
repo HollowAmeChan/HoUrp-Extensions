@@ -241,7 +241,7 @@ namespace HoUrp.Extensions.Features
                 if (!resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovMaskId, out TextureHandle maskIdTexture)
                     || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovNormalDepth, out TextureHandle normalDepthTexture)
                     || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovSurfaceData, out TextureHandle surfaceDataTexture)
-                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovSssSource, out TextureHandle aovSssSourceTexture))
+                    || !resources.TryGetTexture(HoUrpBuiltInNames.Resources.AovDiffuse, out TextureHandle diffuseTexture))
                 {
                     return;
                 }
@@ -264,7 +264,7 @@ namespace HoUrp.Extensions.Features
                     maskIdTexture,
                     normalDepthTexture,
                     surfaceDataTexture,
-                    aovSssSourceTexture,
+                    diffuseTexture,
                     sssSourceTexture);
 
                 if (resourceData.isActiveTargetBackBuffer)
@@ -300,7 +300,7 @@ namespace HoUrp.Extensions.Features
                 TextureHandle maskIdTexture,
                 TextureHandle normalDepthTexture,
                 TextureHandle surfaceDataTexture,
-                TextureHandle aovSssSourceTexture,
+                TextureHandle diffuseTexture,
                 TextureHandle sssSourceTexture)
             {
                 RecordGlobalTextureBinding(renderGraph, maskIdTexture, HoUrpShaderPropertyIds.AovMaskIdTexture, "HoURP SSS Bind AOV MaskId");
@@ -309,13 +309,13 @@ namespace HoUrp.Extensions.Features
 
                 RenderGraphUtils.BlitMaterialParameters blitParameters =
                     new RenderGraphUtils.BlitMaterialParameters(
-                        aovSssSourceTexture,
+                        diffuseTexture,
                         sssSourceTexture,
                         material,
                         SourcePassIndex)
                     {
                         propertyBlock = CreatePropertyBlock(),
-                        sourceTexturePropertyID = HoUrpShaderPropertyIds.AovSssSourceTexture
+                        sourceTexturePropertyID = HoUrpShaderPropertyIds.AovDiffuseTexture
                     };
 
                 renderGraph.AddBlitPass(blitParameters, passName: "HoURP SSS Source");

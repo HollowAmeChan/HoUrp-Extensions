@@ -83,20 +83,22 @@
 
 ---
 
-## 4. HoAOV 是 Semantic Collection，不是一个万能 RT
+## 4. HoAOV 是 MBuffer / Semantic Collection，不是一个万能 RT
 
 HoAOV 不能再被理解成“一张或一组随手写的后处理辅助图”。
 
-HoAOV 的职责是生产和缓存**跨 Feature 可复用的基础语义**，尤其是后处理、语义合成、角色特化和材质系统共同需要查询的数据。它不是所有中间 RT 的归档层，也不是 Debug 系统的资源列表来源。
+HoAOV 的长期概念名应收敛为 **MBuffer（Material / Mask / Metadata Buffer）**。MBuffer 的职责是生产和缓存**跨 Feature 可复用的基础语义**，尤其是后处理、语义合成、角色特化、材质系统和屏幕空间 shading 共同需要查询的数据。它不是所有中间 RT 的归档层，也不是 Debug 系统的资源列表来源。
 
-HoAOV 可以承载的内容必须满足至少一个条件：
+MBuffer 类似 GBuffer，但边界不同：GBuffer 面向延迟光照的几何/材质着色输入，MBuffer 面向 HoRP 的语义、材质、对象、区域和屏幕空间效果输入。它可以被 HoAOV pass 暂时实现，但概念上不等于旧 HoAOV 黑箱。
+
+MBuffer / HoAOV 可以承载的内容必须满足至少一个条件：
 
 - 语义本身具有跨系统复用价值，而不是某个效果的内部计算结果。
 - 数据表达的是对象、材质、几何或通用着色语义，而不是某个 RenderFeature 的私有执行状态。
 - 其它系统即使不运行某个具体效果，也能独立理解这份数据的含义。
 - 它能通过 Semantic / Resource Registry 说明 producer、consumer、生命周期、格式和 debug view。
 
-HoAOV 应该被拆成不同生命周期的语义集合：
+MBuffer / HoAOV 应该被拆成不同生命周期的语义集合：
 
 - Object / Renderer 静态语义。
 - Geometry 可绘制语义。
@@ -105,11 +107,12 @@ HoAOV 应该被拆成不同生命周期的语义集合：
 
 当前旧实现里的 `MaskId`、`NormalDepth`、`TangentNormal`、`SurfaceData`、`Custom`、`ObjectCustom`、`SssSource` 可以作为第一版资源映射参考，但新系统必须重新定义正式语义表。旧实现里写在 HoAOV MRT 里的内容，不等于新系统里都属于 HoAOV 所有。
 
-第一版 HoAOV 的正向职责：
+第一版 MBuffer / HoAOV 的正向职责：
 
 - `MaskId`：对象覆盖、对象 id、分组 id、基础 flags。
 - `ObjectCustom`：角色部位、区域、对象级开关等可复用对象语义。
 - `SurfaceData`：材质 class、profile、厚度、曲率等材质/表面语义；其中 SSS profile 可以被 SSS 消费，但它仍然是材质语义，不是 SSS 运行时资源。
+- `DiffuseColor` / `BaseColor` / `SubsurfaceColor` 这类可复用材质颜色输入：如果表达的是材质或表面本身，而不是 SSS 已经计算出的 runtime source，就应归 MBuffer，而不是归 SSS 私有生产。
 - `MaterialCustom`：可登记、可解释的通用材质自定义通道。
 - `NormalDepth` / `TangentNormal`：当前阶段可由 HoAOV 生产，服务后处理和屏幕空间语义查询；长期如果 GeometryDomain 独立，应迁出为 Geometry cache，而不是继续扩大 HoAOV 概念。
 
@@ -121,7 +124,7 @@ HoAOV 不应该拥有的内容：
 - ScreenPost rule mask、ImagePost work texture、最终合成中间图等 Post / Image / Composite 资源。
 - Debug tile、debug mode、debug overlay、debug atlas 等 DebugDomain 状态。
 
-SSS 与 HoAOV 的正确关系是：SSS 可以消费 HoAOV 的通用材质、几何和对象语义，也可以因为当前物理 MRT 布局暂时复用 AOV pass 写入一份 SSS source input；但这份 input 的正式所有权、命名、debug view 和生命周期应归 `SubsurfaceScattering` 或 `ShadingDomain`，不能长期命名为 `Aov.SssSource`，也不能让 HoAOV Debug 代替 SSS Debug。
+SSS 与 MBuffer / HoAOV 的正确关系是：SSS 可以消费 MBuffer 的通用材质、几何和对象语义，例如 normal/depth、mask、material profile、thickness、curvature、diffuse/base color、subsurface color、SSS weight。SSS 不应该自己重新生产这些通用输入。SSS 自己拥有的是经过 feature 策略筛选、扩散、模糊和合成后的 runtime 资源，例如 `Sss.Source`、`Sss.Diffusion`、composite weight。旧 `Aov.SssSource` 这类名字应拆解：通用输入归 MBuffer，SSS 中间结果归 `SubsurfaceScattering`。
 
 Debug 与 HoAOV 的正确关系是：Debug 可以观察 HoAOV 资源，但 Debug 不是 HoAOV 的子功能。跨 AOV、SSS、OIT、ShadowCast、Post cache 的调试视图应归 `DebugDomain` / Render Cache Debug 统一管理，由注册表声明每个 view 的 source resource 与 decode 方式，不能通过一个 `AovDebugMode` 枚举混合所有 Feature 的内部资源。
 

@@ -59,7 +59,9 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(shaderText, Does.Not.Contain("_HoUrpObjectFlags(\""));
             Assert.That(shaderText, Does.Not.Contain("_HoUrpObjectCustomMask(\""));
             Assert.That(shaderText, Does.Contain("HoUrpResolveObjectSemanticData"));
+            Assert.That(shaderText, Does.Contain("SV_Target5"));
             Assert.That(shaderText, Does.Contain("SV_Target6"));
+            Assert.That(shaderText, Does.Contain("half4 diffuse : SV_Target6"));
             Assert.That(shaderText, Does.Not.Contain("SV_Target7"));
         }
 
@@ -72,7 +74,10 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(aovAbiText, Does.Contain("data.surfaceData = half4("));
             Assert.That(aovAbiText, Does.Contain(") * semanticGate;"));
             Assert.That(aovAbiText, Does.Not.Contain("data.materialCustom0_3 = saturate(semantic.materialCustom0_3) * coverage;"));
-            Assert.That(aovAbiText, Does.Contain("data.sssSource = half4(max(semantic.sssSourceColor, 0.0h) * coverage"));
+            Assert.That(aovAbiText, Does.Not.Contain("sssSource"));
+            Assert.That(aovAbiText, Does.Not.Contain("semantic.sssWeight"));
+            Assert.That(aovAbiText, Does.Contain("data.diffuse = half4(max(semantic.sssSourceColor, 0.0h) * coverage, 0.0h);"));
+            Assert.That(aovAbiText, Does.Contain("diffuse"));
         }
 
         [Test]

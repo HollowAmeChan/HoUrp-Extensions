@@ -12,6 +12,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier ShadowCast = "ShadowCast";
             public static readonly HoUrpIdentifier GeneratedMaterial = "GeneratedMaterial";
             public static readonly HoUrpIdentifier DebugComposite = "DebugComposite";
+            public static readonly HoUrpIdentifier RenderCacheDebug = DebugComposite;
         }
 
         public static class PostEffects
@@ -83,7 +84,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovObjectCustom4_7 = "Aov.ObjectCustom4_7";
             public static readonly HoUrpIdentifier AovSurfaceData = "Aov.SurfaceData";
             public static readonly HoUrpIdentifier AovMaterialCustom0_3 = "Aov.MaterialCustom0_3";
-            public static readonly HoUrpIdentifier AovSssSource = "Aov.SssSource";
+            public static readonly HoUrpIdentifier AovDiffuse = "Aov.Diffuse";
             public static readonly HoUrpIdentifier SssSource = "Sss.Source";
             public static readonly HoUrpIdentifier SssDiffusion = "Sss.Diffusion";
             public static readonly HoUrpIdentifier OitOpaqueColor = "Oit.OpaqueColor";
@@ -130,8 +131,7 @@ namespace HoUrp.Extensions.Core
             public static readonly HoUrpIdentifier AovMaterialCustom1 = "AOV.MaterialCustom1";
             public static readonly HoUrpIdentifier AovMaterialCustom2 = "AOV.MaterialCustom2";
             public static readonly HoUrpIdentifier AovMaterialCustom3 = "AOV.MaterialCustom3";
-            public static readonly HoUrpIdentifier AovSssSource = "AOV.SssSource";
-            public static readonly HoUrpIdentifier AovSssWeight = "AOV.SssWeight";
+            public static readonly HoUrpIdentifier AovDiffuse = "AOV.Diffuse";
             public static readonly HoUrpIdentifier SssMask = "SSS.Mask";
             public static readonly HoUrpIdentifier SssSource = "SSS.Source";
             public static readonly HoUrpIdentifier SssDiffusion = "SSS.Diffusion";

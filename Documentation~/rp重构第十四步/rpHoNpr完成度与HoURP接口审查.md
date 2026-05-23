@@ -55,14 +55,13 @@ HoNpr 当前有：
 
 - `Shading.SssSourceColor`
 - `Shading.SssWeight`
-- `Aov.SssSource`
 
 但当前 preset 名和能力边界仍偏 `fSSS`。第十四步需要补一个明确的 screen-space SSS block / preset 身份，例如：
 
 - `MaterialBlock.ScreenSpaceSssSourceProducer`
 - `MaterialPreset.Character_LilToon_Skin_SSS`
 
-验收真 SSS 时，不能用 `Character_LilToon_Skin_fSSS` 的 forward 视觉效果替代。必须观察 HoURP `SubsurfaceScatteringRendererFeature` 是否消费了材质写入的 `Aov.SssSource`。
+验收真 SSS 时，不能用 `Character_LilToon_Skin_fSSS` 的 forward 视觉效果替代。必须观察 `ScreenSpaceSssSourceProducer` 是否贡献 HoAOV 基础语义输入，以及 HoURP `SubsurfaceScatteringRendererFeature` 是否消费这些输入并生成 SSS runtime 输出。
 
 ### 3.2 HoShadowReceiver 占位缺口
 

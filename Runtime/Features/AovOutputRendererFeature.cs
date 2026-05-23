@@ -110,7 +110,6 @@ namespace HoUrp.Extensions.Features
                     fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.MaterialCurvature, 0.0f);
                     fallbackMaterial.SetVector(HoUrpShaderPropertyIds.MaterialCustom0_3, Vector4.zero);
                     fallbackMaterial.SetColor(HoUrpShaderPropertyIds.SssSourceColor, Color.black);
-                    fallbackMaterial.SetFloat(HoUrpShaderPropertyIds.SssWeight, 0.0f);
                 }
             }
 
@@ -146,7 +145,7 @@ namespace HoUrp.Extensions.Features
                 TextureHandle objectCustom1Texture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovObjectCustom4_7);
                 TextureHandle surfaceDataTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovSurfaceData);
                 TextureHandle materialCustomTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovMaterialCustom0_3);
-                TextureHandle sssSourceTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovSssSource);
+                TextureHandle diffuseTexture = resources.GetTexture(HoUrpBuiltInNames.Resources.AovDiffuse);
 
                 FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.opaque, layerMask);
                 DrawingSettings drawingSettings = RenderingUtils.CreateDrawingSettings(
@@ -187,7 +186,7 @@ namespace HoUrp.Extensions.Features
                     passData.objectCustom1Texture = objectCustom1Texture;
                     passData.surfaceDataTexture = surfaceDataTexture;
                     passData.materialCustomTexture = materialCustomTexture;
-                    passData.sssSourceTexture = sssSourceTexture;
+                    passData.diffuseTexture = diffuseTexture;
                     passData.fallbackRendererList = renderGraph.CreateRendererList(rendererListParams);
                     passData.explicitAovRendererList = renderGraph.CreateRendererList(explicitAovRendererListParams);
 
@@ -211,7 +210,7 @@ namespace HoUrp.Extensions.Features
                     builder.SetRenderAttachment(objectCustom1Texture, 3, AccessFlags.ReadWrite);
                     builder.SetRenderAttachment(surfaceDataTexture, 4, AccessFlags.ReadWrite);
                     builder.SetRenderAttachment(materialCustomTexture, 5, AccessFlags.ReadWrite);
-                    builder.SetRenderAttachment(sssSourceTexture, 6, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachment(diffuseTexture, 6, AccessFlags.ReadWrite);
 
                     if (resourceData.activeDepthTexture.IsValid())
                     {
@@ -228,7 +227,7 @@ namespace HoUrp.Extensions.Features
                         _ = data.objectCustom1Texture;
                         _ = data.surfaceDataTexture;
                         _ = data.materialCustomTexture;
-                        _ = data.sssSourceTexture;
+                        _ = data.diffuseTexture;
                         if (data.fallbackRendererList.IsValid())
                         {
                             context.cmd.DrawRendererList(data.fallbackRendererList);
@@ -250,7 +249,7 @@ namespace HoUrp.Extensions.Features
                 public TextureHandle objectCustom1Texture;
                 public TextureHandle surfaceDataTexture;
                 public TextureHandle materialCustomTexture;
-                public TextureHandle sssSourceTexture;
+                public TextureHandle diffuseTexture;
                 public RendererListHandle fallbackRendererList;
                 public RendererListHandle explicitAovRendererList;
             }

@@ -61,7 +61,7 @@
 HoNpr 当前的皮肤 preset 是 `Character_LilToon_Skin_fSSS`，它包含：
 
 - `MaterialBlock.ForwardThinSss`：forward/fake SSS 视觉 lobe，产出 `HoNprLobeOutput.transmission`。
-- `MaterialBlock.SssSourceProducer`：输出 `Shading.SssSourceColor`、`Shading.SssWeight`、`Aov.SssSource`。
+- `MaterialBlock.SssSourceProducer`：输出 `Shading.SssSourceColor`、`Aov.Diffuse`；`Shading.SssWeight` 走 SSS 自己的 RDG/MRT。
 
 这说明 HoNpr 已经有 SSS source 语义输出基础，但还没有一个命名清楚的“真屏幕空间 SSS 参与 block / preset”。如果直接用 `Character_LilToon_Skin_fSSS` 做验收，很容易把 forward transmission 视觉效果误判成 HoURP 真 SSS runtime 已经被材质消费。
 
@@ -75,7 +75,7 @@ HoNpr 当前的皮肤 preset 是 `Character_LilToon_Skin_fSSS`，它包含：
 - `MaterialPreset.Character_LilToon_Skin_SSS`
 - 或 `MaterialPreset.Character_LilToon_Skin_ScreenSSS`
 
-该 preset 可以选择是否同时保留 `ForwardThinSss` 作为视觉 lobe，但验收真 SSS 时必须以 `SssSourceProducer` / `ScreenSpaceSssSourceProducer` 写入的 HoURP AOV SSS source 被 `SubsurfaceScatteringRendererFeature` 消费为准。
+该 preset 可以选择是否同时保留 `ForwardThinSss` 作为视觉 lobe，但验收真 SSS 时必须以 `SssSourceProducer` / `ScreenSpaceSssSourceProducer` 写入的 HoURP AOV diffuse input 被 `SubsurfaceScatteringRendererFeature` 消费为准。
 
 ### 1.2 ShadowCast receiver 仍是占位
 
@@ -126,7 +126,7 @@ HoNpr 侧：
 - 审查 HoNpr 现有 DSL、include、generated shader 与 HoURP 契约的真实差异。
 - 补 HoNpr 真屏幕空间 SSS block / preset 身份，避免用 fSSS preset 代替真 SSS 验收。
 - 明确 `ForwardThinSss` 与 HoURP screen-space SSS 的边界。
-- 确认 HoNpr 真 SSS preset 的 `HoUrpAovOutput` 能写入 `Aov.SssSource`，并被 `SubsurfaceScatteringRendererFeature` 消费。
+- 确认 HoNpr 真 SSS preset 的 `HoUrpAovOutput` 能写入 `Aov.Diffuse`，并被 `SubsurfaceScatteringRendererFeature` 消费。
 - 把 ShadowCast receiver 从占位 `1.0h` 接到 `HoUrpSampleShadowCastAttenuation(positionWS, normalWS)` 或正式 wrapper。
 - 明确 HoNpr 中 `HoShadowReceiver` 与 URP main light / additional light / indirect light 的边界。
 - 确认 HoNpr generated shader 的 `ShadowCaster` pass 能被 HoShadowCast atlas 绘制。
@@ -182,7 +182,7 @@ HoNpr 侧：
 block MaterialBlock.ScreenSpaceSssSourceProducer : SemanticProducer in ShadingDomain
 {
     consumes HoUrpSurfaceData SemanticMap;
-    produces Shading.SssSourceColor Shading.SssWeight Aov.SssSource;
+    produces Shading.SssSourceColor Aov.Diffuse;
     requires include HoNpr.SemanticSurface;
     requires define HONPR_HAS_SCREEN_SPACE_SSS_SOURCE;
     entry HoNprCreateMaterialSemanticProducer;
@@ -201,7 +201,7 @@ block MaterialBlock.ScreenSpaceSssSourceProducer : SemanticProducer in ShadingDo
 验收要求：
 
 - 真 SSS block 必须出现在 generated shader 顶部 block 注释中。
-- 真 SSS preset 必须产生 `Aov.SssSource`。
+- 真 SSS preset 必须产生 `Aov.Diffuse`。
 - 开启 HoURP `SubsurfaceScatteringRendererFeature` 后，SSS debug / composite 能观察到该材质贡献。
 - 关闭 HoURP SSS runtime 后，只剩 forward/fake SSS 视觉 lobe，不应误判为 screen-space SSS。
 
@@ -277,7 +277,7 @@ lighting = HoNprResolveHoShadowReceiver(lighting, hoShadow);
   - `ShadowCaster`
 - 真 SSS generated shader / preset 包含：
   - `MaterialBlock.ScreenSpaceSssSourceProducer`
-  - `Aov.SssSource`
+  - `Aov.Diffuse`
   - `Shading.SssSourceColor`
   - `Shading.SssWeight`
 - `Character_LilToon_Skin_fSSS` 不作为真 screen-space SSS 验收 shader。
@@ -351,7 +351,7 @@ lighting = HoNprResolveHoShadowReceiver(lighting, hoShadow);
 - 文档明确承认 HoNpr 已有 DSL、Preset、Feature Block、生成器、Material UI 和 generated shader。
 - HoNpr 存在独立真 screen-space SSS source block / preset，不再只依赖 `Character_LilToon_Skin_fSSS` 验证 SSS。
 - `ForwardThinSss` 与 HoURP screen-space SSS source producer 的职责分离清楚。
-- 真 SSS preset 的 `Aov.SssSource` 能被 HoURP `SubsurfaceScatteringRendererFeature` 消费。
+- 真 SSS preset 的 `Aov.Diffuse` 能被 HoURP `SubsurfaceScatteringRendererFeature` 消费。
 - `MaterialBlock.HoShadowReceiver` 不再只是占位；HoNpr forward lighting 真实调用 HoURP ShadowCast sampling。
 - HoCast 保持独立 `hoShadow` term，不污染 URP main light shadow。
 - HoNpr generated shader 的 `ShadowCaster` pass 能被 HoShadowCast 绘制。

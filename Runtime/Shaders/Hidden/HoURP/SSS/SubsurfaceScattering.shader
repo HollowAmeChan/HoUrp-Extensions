@@ -21,7 +21,7 @@ Shader "Hidden/HoURP/SSS/SubsurfaceScattering"
             TEXTURE2D_X(_HoUrpAovMaskIdTexture);
             TEXTURE2D_X(_HoUrpAovNormalDepthTexture);
             TEXTURE2D_X(_HoUrpAovSurfaceDataTexture);
-            TEXTURE2D_X(_HoUrpAovSssSourceTexture);
+            TEXTURE2D_X(_HoUrpAovDiffuseTexture);
 
             half4 FragSource(Varyings input) : SV_Target
             {
@@ -31,12 +31,13 @@ Shader "Hidden/HoURP/SSS/SubsurfaceScattering"
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoUrpAovMaskIdTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovNormalDepthTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoUrpAovSurfaceDataTexture, sampler_PointClamp, uv);
-                half4 sssSource = SAMPLE_TEXTURE2D_X(_HoUrpAovSssSourceTexture, sampler_PointClamp, uv);
+                half4 diffuse = SAMPLE_TEXTURE2D_X(_HoUrpAovDiffuseTexture, sampler_PointClamp, uv);
 
                 half validNormal = dot(abs(normalDepth.rgb), half3(1.0h, 1.0h, 1.0h)) > 0.0h ? 1.0h : 0.0h;
                 half thicknessGate = saturate(surfaceData.b * 4.0h);
-                half weight = saturate(sssSource.a * maskId.r * validNormal * thicknessGate);
-                return half4(sssSource.rgb, weight);
+                half profileGate = step(0.5h / 255.0h, surfaceData.g);
+                half weight = saturate(maskId.r * validNormal * thicknessGate * profileGate);
+                return half4(diffuse.rgb, weight);
             }
             ENDHLSL
         }

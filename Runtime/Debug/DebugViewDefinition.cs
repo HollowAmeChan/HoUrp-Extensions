@@ -14,7 +14,8 @@ namespace HoUrp.Extensions.Debugging
             DebugValueRange range,
             HoUrpIdentifier ownerFeature,
             string legacyReference = null,
-            string description = null)
+            string description = null,
+            string previewLabel = null)
         {
             Id = id;
             Domain = domain;
@@ -26,6 +27,7 @@ namespace HoUrp.Extensions.Debugging
             OwnerFeature = ownerFeature;
             LegacyReference = legacyReference ?? string.Empty;
             Description = description ?? string.Empty;
+            PreviewLabel = previewLabel ?? string.Empty;
         }
 
         public HoUrpIdentifier Id { get; }
@@ -38,5 +40,6 @@ namespace HoUrp.Extensions.Debugging
         public HoUrpIdentifier OwnerFeature { get; }
         public string LegacyReference { get; }
         public string Description { get; }
+        public string PreviewLabel { get; }
     }
 }

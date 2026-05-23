@@ -15,6 +15,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(blocks[0].Id, Is.EqualTo(HoUrpMaterialContracts.FeatureBlocks.BaseColorConstant));
             Assert.That(blocks[5].Id, Is.EqualTo(HoUrpMaterialContracts.FeatureBlocks.AovOutputStandard));
             Assert.That(blocks[5].ProducedFields, Contains.Item(HoUrpBuiltInNames.Semantics.ShadingSssSourceColor));
+            Assert.That(blocks[5].ProducedFields, Does.Not.Contain(HoUrpBuiltInNames.Semantics.ShadingSssWeight));
             Assert.That(blocks[5].RequiredIncludes, Contains.Item("HoUrpMaterialAov.hlsl"));
 
             MaterialFeatureBlockDefinition oitBlock = blocks[6];

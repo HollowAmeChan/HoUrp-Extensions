@@ -10,7 +10,7 @@
 - Subsurface Scattering
 - Weighted OIT
 - ShadowCast
-- AOV / SSS / ShadowCast debug view
+- Render Cache Debug / SSS / ShadowCast debug view
 
 ShadowCast 设置：
 
@@ -39,19 +39,18 @@ ShadowCast 设置：
 步骤：
 
 1. 给不透明角色物体使用 HoNpr generated shader。
-2. 开启 AOV Debug。
-3. 切换 material class / material custom / surface data / SSS source 相关 debug view。
+2. 开启 Render Cache Debug。
+3. 切换 material class / material custom / surface data 相关 debug view。
 
 通过标准：
 
 - `HoUrpAovOutput` pass 被绘制。
-- material class / custom 能被 AOV Debug 观察到。
-- 真 SSS preset 能写入 `Aov.SssSource`。
-- 关闭对应材质或切换无 SSS preset 后，SSS source 贡献消失或明显变化。
+- material class / custom / surface data 能被 Render Cache Debug 观察到。
+- 真 SSS source 不通过 HoAOV MRT 写入。
 
 失败判定：
 
-- 只看到 forward/fake SSS 颜色变化，但 AOV SSS source 没有变化。
+- 只看到 forward/fake SSS 颜色变化，却没有 HoAOV 基础语义输入进入 SSS runtime。
 - 需要旧 `HoAOV` / `HoAOVSSS` pass 才能看到输出。
 
 ## 4. SSS Runtime 验收
@@ -66,7 +65,7 @@ ShadowCast 设置：
 通过标准：
 
 - HoURP SSS runtime 对参数变化有响应。
-- `Aov.SssSource` 被消费后能影响 SSS source / diffusion / composite。
+- HoAOV 中的 SSS 基础输入语义能影响 SSS source / diffusion / composite。
 - 关闭 SSS runtime 后，screen-space SSS 消失；如果 preset 同时含 `ForwardThinSss`，只保留 forward/fake SSS lobe。
 
 失败判定：

@@ -44,7 +44,7 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                 half4 objectCustom1 : SV_Target3;
                 half4 surfaceData : SV_Target4;
                 half4 materialCustom0 : SV_Target5;
-                half4 sssSource : SV_Target6;
+                half4 diffuse : SV_Target6;
             };
 
             float _HoUrpMaterialClass;
@@ -53,7 +53,6 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
             float _HoUrpMaterialCurvature;
             float4 _HoUrpMaterialCustom0_3;
             float4 _HoUrpSssSourceColor;
-            float _HoUrpSssWeight;
 
             Varyings Vert(Attributes input)
             {
@@ -93,8 +92,7 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                     half(saturate(_HoUrpMaterialThickness)),
                     half(saturate(_HoUrpMaterialCurvature * 0.5 + 0.5))) * semanticGate;
                 output.materialCustom0 = half4(saturate(_HoUrpMaterialCustom0_3)) * semanticGate;
-                half sssWeight = half(saturate(_HoUrpSssWeight)) * maskWeight;
-                output.sssSource = half4(half3(max(_HoUrpSssSourceColor.rgb, 0.0)) * maskWeight, sssWeight);
+                output.diffuse = half4(max(half3(_HoUrpSssSourceColor.rgb), half3(0.0h, 0.0h, 0.0h)) * maskWeight, 1.0h);
                 return output;
             }
             ENDHLSL
