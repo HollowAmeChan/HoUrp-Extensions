@@ -157,3 +157,4 @@
 - `Material.Custom0-3` 第一版进入正式能力。
 - `RSUV` 并入 Object semantic，不作为独立 Domain。
 - Debug overlay 和 Debug capture 第一阶段进入契约。
+> 补充命名边界：RP 公共契约不以旧实现来源命名；`HoNpr` 材质组分例外，凡仍以旧实现算法为行为基线的 Feature Block、entry、DebugView、shader property 和 UI 标签必须带来源后缀，例如 `SecondaryMatCapLilToon`、`GlitterLilToon`、`_HoNprGlitterLilToonColor`。来源后缀只标记迁移责任，不允许污染 Semantic / Resource / Feature ABI。

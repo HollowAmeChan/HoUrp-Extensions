@@ -1016,3 +1016,4 @@ Documentation~/rp第一阶段验收清单.md
 第一阶段做的是 **契约冻结**，不是 **代码搬家**。
 
 只有当契约足够清楚，后续 RenderGraph pass、资源系统、Debug 系统和新材质系统才不会再次被旧项目结构牵着走。
+> 补充命名边界：RP 的 Semantic / Resource / Feature 公共 ABI 仍然按 Domain 和用途命名，不表达旧实现来源；但 `HoNpr` 材质 Feature Block、entry、DebugView、shader property 和 UI 标签如果仍以旧实现算法为行为基线，必须带来源后缀，例如 `GlitterLilToon`、`_HoNprGlitterLilToonColor`。这是迁移责任标记，不是 ABI 继承。

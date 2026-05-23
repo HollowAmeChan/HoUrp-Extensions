@@ -281,3 +281,17 @@ Debug 系统必须能：
 新 RP 的核心是 **显式语义、显式资源、显式依赖、显式能力、显式调试**。
 
 旧系统可以证明能力，但不能定义未来；材质系统可以接入 RP，但不能反向绑架 RP；RenderFeature 可以实现效果，但必须先声明自己在整个架构中的生产、消费和生命周期。
+## 新增底线：旧实现来源必须进入组分身份
+
+迁移旧实现时，不能只把来源写在文档注释里。任何从 `lilToon`、`lilPBR` 或旧 RP 扩展迁移出来的材质组分、算法组分或 pass 原型，如果仍以旧实现作为行为参考或验收基线，名字必须显式携带来源。
+
+要求：
+
+- `HoNpr` Feature Block ID、entry 函数、DebugView、生成 shader 属性名/显示名和 UI 标签都要能看出来源。
+- 例：`SecondaryMatCapLilToon`、`GlitterLilToon`、`HoNprEvaluateGlitterLilToon`、`Lobe.GlitterLilToon`、`_HoNprGlitterLilToonColor`。
+- 来源后缀是迁移责任标记，不是兼容承诺。`LilToon` 后缀不允许带入 `_lil*`、旧 inspector、旧 include、旧 pass 名或旧属性 ABI。
+- 如果一个能力已经脱离旧实现，成为 HoNpr 原生通用组分，必须另行登记并说明去来源化的原因。
+
+底线：**旧实现可以提供能力来源，但来源必须显式；显式来源不能变成隐式 ABI。**
+
+---

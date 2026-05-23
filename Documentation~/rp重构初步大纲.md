@@ -2226,3 +2226,10 @@ Final Output
 如果后续继续推进，最值得优先完善的不是某个具体效果，而是这套系统的 **术语、分层、注册表、能力模型、调试体系和资源流向**。
 
 一旦这些基础打稳，后面再加体积雾、水体、粒子、SSS、透明、风格化效果，都会顺很多。
+## 新增原则：组分来源可追踪
+
+新 RP / HoNpr 迁移旧能力时，来源必须作为正式元数据和命名的一部分。凡是仍以 `lilToon`、`lilPBR` 或旧 `lilToon-URP-Extensions` 行为作为验收基线的组分，都必须带来源后缀，例如 `GlitterLilToon`、`SecondaryMatCapLilToon`。来源后缀只说明迁移参考，不说明 ABI 继承。
+
+这条规则服务于 RenderGraph-first 和显式语义原则：人和工具必须能从表格、preset、generated shader、debug view 看出某个组分是 HoNpr 原生能力，还是旧实现迁移能力。
+
+---

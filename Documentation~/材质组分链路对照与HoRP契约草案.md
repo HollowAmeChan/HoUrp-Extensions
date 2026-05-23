@@ -1823,3 +1823,31 @@ HoStandardSurface
 lilPBR 更适合提供 PBR lobe 和材质输入规范化参考；lilToon 更适合提供 toon shadow、matcap、rim、emission 的顺序和组分经验；旧 HoAOV/HoSSS 更适合提供语义输出和 consumer 链路参考；glTF / USD Preview / OpenPBR / MaterialX / URP 更适合提供“哪些字段是公开可交换 surface，哪些字段必须留在 HoRP 扩展层”的判断边界。
 
 真正要继承的是能力边界和行为经验，不是旧 shader 结构。
+## 新增规则：组分来源后缀
+
+本对照表后续登记旧实现能力时，必须把“来源”作为组分身份字段处理，而不是只作为备注。
+
+新增或迁移规则：
+
+- `NewComponent` 如果直接迁移、复刻或以旧实现行为为验收基线，必须带来源后缀。
+- lilToon 来源示例：`ToonShadowLilToon`、`SecondaryMatCapLilToon`、`GlitterLilToon`、`DistanceFadeLilToon`。
+- lilPBR 来源示例后续统一为 `*LilPbr` 或另行登记的来源后缀。
+- `MigrationDecision = KeepConcept` 且已经重写为 HoNpr 原生行为时，才允许使用无来源后缀的通用组件名。
+- `Notes` 必须写清楚来源后缀只是行为参考，不继承旧属性名、旧 pass 名、旧 include 或旧 inspector。
+
+建议扩展机器可读表字段：
+
+```text
+SourcePackage
+SourceComponent
+NewComponent
+SourceSuffixRequired
+SourceSuffix
+MigrationDecision
+AbiInheritance
+Notes
+```
+
+`AbiInheritance` 默认必须是 `None`。任何需要兼容旧 ABI 的临时工具，都只能放在 `LegacyInterop`，不能进入 HoNpr 正式组分。
+
+---
