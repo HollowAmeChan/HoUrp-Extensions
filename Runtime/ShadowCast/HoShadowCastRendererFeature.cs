@@ -21,11 +21,18 @@ namespace HoUrp.Extensions.ShadowCast
         private HoShadowCastPass shadowPass;
         private HoShadowCastDebugPass debugPass;
         private Material debugMaterial;
+        private HoShadowCastRuntimeReport runtimeReport = new HoShadowCastRuntimeReport();
 
         public HoShadowCastSettings Settings => settings;
+        public HoShadowCastRuntimeReport RuntimeReport => runtimeReport;
 
         public override void Create()
         {
+            if (runtimeReport == null)
+            {
+                runtimeReport = new HoShadowCastRuntimeReport();
+            }
+
             registry = HoUrpBuiltInContracts.CreateMinimalAovRegistry();
             shadowPass = new HoShadowCastPass(registry)
             {
@@ -49,7 +56,7 @@ namespace HoUrp.Extensions.ShadowCast
                 settings = new HoShadowCastSettings();
             }
             settings.Validate();
-            shadowPass.Setup(settings);
+            shadowPass.Setup(settings, runtimeReport);
             renderer.EnqueuePass(shadowPass);
 
             if (settings.debugMode == HoShadowCastDebugMode.Off || debugPass == null)
@@ -115,6 +122,7 @@ namespace HoUrp.Extensions.ShadowCast
 
             private readonly HoUrpContractRegistry registry;
             private HoShadowCastSettings settings;
+            private HoShadowCastRuntimeReport runtimeReport;
 
             public HoShadowCastPass(HoUrpContractRegistry registry)
             {
@@ -122,9 +130,10 @@ namespace HoUrp.Extensions.ShadowCast
                 ConfigureInput(ScriptableRenderPassInput.None);
             }
 
-            public void Setup(HoShadowCastSettings settings)
+            public void Setup(HoShadowCastSettings settings, HoShadowCastRuntimeReport runtimeReport)
             {
                 this.settings = settings;
+                this.runtimeReport = runtimeReport;
                 renderPassEvent = settings.passEvent;
             }
 
@@ -134,15 +143,18 @@ namespace HoUrp.Extensions.ShadowCast
                 UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
                 UniversalLightData lightData = frameData.Get<UniversalLightData>();
                 HoUrpRenderGraphResources resources = frameData.GetOrCreate<HoUrpRenderGraphResources>();
+                int visibleLightCount = lightData.visibleLights.IsCreated ? lightData.visibleLights.Length : 0;
 
                 if (settings == null || !settings.ShouldRender(cameraData.cameraType))
                 {
+                    runtimeReport?.Reset(cameraData.camera, visibleLightCount, "Skipped by camera type or disabled settings.");
                     RecordResetPass(renderGraph, "HoURP ShadowCast Reset");
                     return;
                 }
 
                 HoShadowCastFrame frame = new HoShadowCastFrame();
                 HoShadowCastSecondDirectionalFrame secondDirectionalFrame = new HoShadowCastSecondDirectionalFrame();
+                runtimeReport?.Reset(cameraData.camera, visibleLightCount, "Collected, no atlases rendered yet.");
                 bool hasFrame = BuildFrameData(
                     settings,
                     ref renderingData.cullResults,
@@ -156,9 +168,11 @@ namespace HoUrp.Extensions.ShadowCast
                     lightData.mainLightIndex,
                     cameraData.camera,
                     secondDirectionalFrame);
+                runtimeReport?.CopyFromFrames(frame.report, secondDirectionalFrame.report);
 
                 if (!hasFrame && !hasSecondDirectionalFrame)
                 {
+                    runtimeReport?.MarkNotRendered("No eligible ShadowCast lights after collection.");
                     RecordResetPass(renderGraph, "HoURP ShadowCast Reset");
                     return;
                 }
@@ -186,6 +200,7 @@ namespace HoUrp.Extensions.ShadowCast
                 }
 
                 RecordPublishPass(renderGraph, frame, hasFrame, secondDirectionalFrame, hasSecondDirectionalFrame);
+                runtimeReport?.MarkRendered("ShadowCast globals published.");
             }
 
             private static void RecordResetPass(UnityRenderGraph renderGraph, string passName)
@@ -369,8 +384,14 @@ namespace HoUrp.Extensions.ShadowCast
                 target.casterLayerMask = settings.casterLayerMask.value;
 
                 int requestedSliceCount = CountRequestedSlices(settings, visibleLights, mainLightIndex);
+                target.report.requestedSlices = requestedSliceCount;
                 int maxSliceResolution = GetMaxResolutionForSliceCount(target.atlasSize, requestedSliceCount);
                 HoShadowCastAtlasPacker packer = new HoShadowCastAtlasPacker(target.atlasSize);
+                if (settings.collectVisibleSceneLights)
+                {
+                    AddVisibleLightArray(visibleLights, settings, ref cullResults, mainLightIndex, maxSliceResolution, ref packer, target);
+                }
+
                 AddLightArray(settings.spotLights, LightType.Spot, settings, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
                 AddLightArray(settings.pointLights, LightType.Point, settings, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
 
@@ -395,98 +416,246 @@ namespace HoUrp.Extensions.ShadowCast
                 target.casterLayerMask = settings.casterLayerMask.value;
 
                 int cascadeCount = Mathf.Clamp(settings.secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
-                int requestedSliceCount = CountRequestedSecondDirectionalSlices(settings.secondDirectionalLights, visibleLights, mainLightIndex, cascadeCount);
+                int requestedSliceCount = CountRequestedSecondDirectionalSlices(settings, visibleLights, mainLightIndex, cascadeCount);
+                target.report.requestedSlices = requestedSliceCount;
                 if (requestedSliceCount <= 0)
                 {
                     return false;
                 }
 
                 int atlasSize = Mathf.Max(1, settings.secondDirectionalAtlasSize);
-                int gridSize = Mathf.CeilToInt(Mathf.Sqrt(requestedSliceCount));
-                int resolution = Mathf.Max(64, atlasSize / Mathf.Max(1, gridSize));
+                int resolution = Mathf.Clamp(settings.secondDirectionalCascadeResolution, 64, atlasSize);
+                HoShadowCastAtlasPacker packer = new HoShadowCastAtlasPacker(atlasSize);
                 float nearDistance = Mathf.Max(0.001f, camera.nearClipPlane);
                 float farDistance = Mathf.Min(Mathf.Max(nearDistance + 0.01f, settings.secondDirectionalMaxDistance), Mathf.Max(nearDistance + 0.01f, camera.farClipPlane));
 
                 target.atlasSize = atlasSize;
                 target.cascadeCountPerLight = cascadeCount;
 
+                if (settings.collectVisibleSceneLights)
+                {
+                    AddVisibleSecondDirectionalLights(settings, visibleLights, mainLightIndex, camera, atlasSize, resolution, nearDistance, farDistance, ref packer, target);
+                }
+
                 Light[] lights = settings.secondDirectionalLights;
                 for (int lightSlot = 0; lights != null && lightSlot < lights.Length; lightSlot++)
                 {
                     Light light = lights[lightSlot];
-                    if (light == null || light.type != LightType.Directional || !light.isActiveAndEnabled)
+                    if (light == null)
                     {
+                        continue;
+                    }
+
+                    if (!IsLightCollectable(light, settings, LightType.Directional))
+                    {
+                        target.report.skippedNotCollectableCount++;
+                        continue;
+                    }
+
+                    if (target.Contains(light))
+                    {
+                        target.report.skippedDuplicateCount++;
                         continue;
                     }
 
                     int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, LightType.Directional);
                     if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
                     {
+                        target.report.skippedMainDirectionalCount++;
                         continue;
                     }
 
-                    if (target.lightCount >= HoShadowCastShaderConstants.MaxDirectionalLights
-                        || target.sliceCount + cascadeCount > HoShadowCastShaderConstants.MaxSecondDirectionalSlices)
-                    {
-                        break;
-                    }
-
-                    int firstSlice = target.sliceCount;
-                    float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
-                    float shadowStrength = Mathf.Clamp01(settings.secondDirectionalShadowStrength * lightShadowStrength);
-                    float previousDistance = nearDistance;
-                    bool completed = true;
-
-                    for (int cascadeIndex = 0; cascadeIndex < cascadeCount; cascadeIndex++)
-                    {
-                        float splitRatio = GetSecondDirectionalCascadeSplit(settings.secondDirectionalCascadeSplits, cascadeCount, cascadeIndex);
-                        float cascadeFarDistance = cascadeIndex == cascadeCount - 1
-                            ? farDistance
-                            : Mathf.Lerp(nearDistance, farDistance, splitRatio);
-                        cascadeFarDistance = Mathf.Max(previousDistance + 0.01f, cascadeFarDistance);
-
-                        int tileIndex = target.sliceCount;
-                        int tileX = tileIndex % gridSize;
-                        int tileY = tileIndex / gridSize;
-                        int offsetX = tileX * resolution;
-                        int offsetY = tileY * resolution;
-
-                        if (!TryBuildSecondDirectionalCascadeSlice(
-                                light,
-                                camera,
-                                previousDistance,
-                                cascadeFarDistance,
-                                settings,
-                                atlasSize,
-                                resolution,
-                                offsetX,
-                                offsetY,
-                                out ShadowSliceInfo slice))
-                        {
-                            completed = false;
-                            break;
-                        }
-
-                        target.slices[target.sliceCount] = slice;
-                        target.worldToShadow[target.sliceCount] = slice.worldToShadow;
-                        target.sliceData[target.sliceCount] = slice.sliceData;
-                        target.sliceCount++;
-                        previousDistance = cascadeFarDistance;
-                    }
-
-                    if (!completed)
-                    {
-                        target.sliceCount = firstSlice;
-                        continue;
-                    }
-
-                    int lightIndex = target.lightCount++;
-                    target.sourceLights[lightIndex] = light;
-                    target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength, 0.0f);
+                    AddSecondDirectionalLight(light, settings, camera, atlasSize, resolution, nearDistance, farDistance, ref packer, target, "Explicit");
                 }
 
                 target.FillUnused();
                 return target.lightCount > 0 && target.sliceCount > 0;
+            }
+
+            private static void AddVisibleLightArray(
+                NativeArray<VisibleLight> visibleLights,
+                HoShadowCastSettings settings,
+                ref CullingResults cullResults,
+                int mainLightIndex,
+                int maxSliceResolution,
+                ref HoShadowCastAtlasPacker packer,
+                HoShadowCastFrame target)
+            {
+                if (!visibleLights.IsCreated)
+                {
+                    return;
+                }
+
+                for (int visibleLightIndex = 0; visibleLightIndex < visibleLights.Length; visibleLightIndex++)
+                {
+                    if (visibleLightIndex == mainLightIndex)
+                    {
+                        continue;
+                    }
+
+                    VisibleLight visibleLight = visibleLights[visibleLightIndex];
+                    LightType lightType = visibleLight.lightType;
+                    if (lightType != LightType.Spot && lightType != LightType.Point)
+                    {
+                        continue;
+                    }
+
+                    Light light = visibleLight.light;
+                    if (!IsLightCollectable(light, settings, lightType))
+                    {
+                        target.report.skippedNotCollectableCount++;
+                        continue;
+                    }
+
+                    if (target.Contains(light))
+                    {
+                        target.report.skippedDuplicateCount++;
+                        continue;
+                    }
+
+                    AddLightByVisibleIndex(light, lightType, visibleLightIndex, settings, ref cullResults, maxSliceResolution, ref packer, target, "Visible");
+                }
+            }
+
+            private static void AddVisibleSecondDirectionalLights(
+                HoShadowCastSettings settings,
+                NativeArray<VisibleLight> visibleLights,
+                int mainLightIndex,
+                Camera camera,
+                int atlasSize,
+                int resolution,
+                float nearDistance,
+                float farDistance,
+                ref HoShadowCastAtlasPacker packer,
+                HoShadowCastSecondDirectionalFrame target)
+            {
+                if (!visibleLights.IsCreated)
+                {
+                    return;
+                }
+
+                for (int visibleLightIndex = 0; visibleLightIndex < visibleLights.Length; visibleLightIndex++)
+                {
+                    if (visibleLightIndex == mainLightIndex)
+                    {
+                        continue;
+                    }
+
+                    VisibleLight visibleLight = visibleLights[visibleLightIndex];
+                    if (visibleLight.lightType != LightType.Directional)
+                    {
+                        continue;
+                    }
+
+                    if (!IsLightCollectable(visibleLight.light, settings, LightType.Directional))
+                    {
+                        target.report.skippedNotCollectableCount++;
+                        continue;
+                    }
+
+                    if (target.Contains(visibleLight.light))
+                    {
+                        target.report.skippedDuplicateCount++;
+                        continue;
+                    }
+
+                    AddSecondDirectionalLight(visibleLight.light, settings, camera, atlasSize, resolution, nearDistance, farDistance, ref packer, target, "Visible");
+                }
+            }
+
+            private static void AddSecondDirectionalLight(
+                Light light,
+                HoShadowCastSettings settings,
+                Camera camera,
+                int atlasSize,
+                int resolution,
+                float nearDistance,
+                float farDistance,
+                ref HoShadowCastAtlasPacker packer,
+                HoShadowCastSecondDirectionalFrame target,
+                string source)
+            {
+                int cascadeCount = target.cascadeCountPerLight;
+                if (target.lightCount >= HoShadowCastShaderConstants.MaxDirectionalLights
+                    || target.sliceCount + cascadeCount > HoShadowCastShaderConstants.MaxSecondDirectionalSlices
+                    || target.Contains(light))
+                {
+                    if (target.Contains(light))
+                    {
+                        target.report.skippedDuplicateCount++;
+                    }
+                    else
+                    {
+                        target.report.skippedCapacityCount++;
+                    }
+
+                    return;
+                }
+
+                int firstSlice = target.sliceCount;
+                HoShadowCastAtlasPacker packerBeforeLight = packer;
+                GetSecondDirectionalCascadeBlock(cascadeCount, out int cascadeColumns, out int cascadeRows);
+                bool allocatedBlock = packer.TryAllocate(
+                    resolution * cascadeColumns,
+                    resolution * cascadeRows,
+                    out int blockOffsetX,
+                    out int blockOffsetY);
+                if (!allocatedBlock)
+                {
+                    target.report.skippedCapacityCount++;
+                    return;
+                }
+
+                float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
+                float shadowStrength = Mathf.Clamp01(settings.secondDirectionalShadowStrength * lightShadowStrength);
+                float previousDistance = nearDistance;
+                bool completed = true;
+
+                for (int cascadeIndex = 0; cascadeIndex < cascadeCount; cascadeIndex++)
+                {
+                    float splitRatio = GetSecondDirectionalCascadeSplit(settings.secondDirectionalCascadeSplits, cascadeCount, cascadeIndex);
+                    float cascadeFarDistance = cascadeIndex == cascadeCount - 1
+                        ? farDistance
+                        : Mathf.Lerp(nearDistance, farDistance, splitRatio);
+                    cascadeFarDistance = Mathf.Max(previousDistance + 0.01f, cascadeFarDistance);
+
+                    int offsetX = blockOffsetX + (cascadeIndex % cascadeColumns) * resolution;
+                    int offsetY = blockOffsetY + (cascadeIndex / cascadeColumns) * resolution;
+                    if (!TryBuildSecondDirectionalCascadeSlice(
+                            light,
+                            camera,
+                            previousDistance,
+                            cascadeFarDistance,
+                            settings,
+                            atlasSize,
+                            resolution,
+                            offsetX,
+                            offsetY,
+                            out ShadowSliceInfo slice))
+                    {
+                        completed = false;
+                        target.report.skippedMatrixCount++;
+                        break;
+                    }
+
+                    target.slices[target.sliceCount] = slice;
+                    target.worldToShadow[target.sliceCount] = slice.worldToShadow;
+                    target.sliceData[target.sliceCount] = slice.sliceData;
+                    target.sliceCount++;
+                    previousDistance = cascadeFarDistance;
+                }
+
+                if (!completed)
+                {
+                    target.sliceCount = firstSlice;
+                    packer = packerBeforeLight;
+                    return;
+                }
+
+                int lightIndex = target.lightCount++;
+                target.sourceLights[lightIndex] = light;
+                target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength, 0.0f);
+                target.report.AddAccepted(light, firstSlice, cascadeCount, source);
             }
 
             private static void AddLightArray(
@@ -507,7 +676,13 @@ namespace HoUrp.Extensions.ShadowCast
 
                 for (int i = 0; i < lights.Length; i++)
                 {
-                    AddLight(lights[i], requiredType, settings, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+                    Light light = lights[i];
+                    if (light == null)
+                    {
+                        continue;
+                    }
+
+                    AddLight(light, requiredType, settings, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, "Explicit");
                 }
             }
 
@@ -520,21 +695,59 @@ namespace HoUrp.Extensions.ShadowCast
                 int mainLightIndex,
                 int maxSliceResolution,
                 ref HoShadowCastAtlasPacker packer,
-                HoShadowCastFrame target)
+                HoShadowCastFrame target,
+                string source)
             {
-                if (light == null || light.type != requiredType || !light.isActiveAndEnabled || target.Contains(light))
+                if (!IsLightCollectable(light, settings, requiredType))
                 {
+                    target.report.skippedNotCollectableCount++;
+                    return;
+                }
+
+                if (target.Contains(light))
+                {
+                    target.report.skippedDuplicateCount++;
                     return;
                 }
 
                 if (target.lightCount >= HoShadowCastShaderConstants.MaxLights)
                 {
+                    target.report.skippedCapacityCount++;
                     return;
                 }
 
                 int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, requiredType);
                 if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
                 {
+                    target.report.skippedMainDirectionalCount++;
+                    return;
+                }
+
+                AddLightByVisibleIndex(light, requiredType, visibleLightIndex, settings, ref cullResults, maxSliceResolution, ref packer, target, source);
+            }
+
+            private static void AddLightByVisibleIndex(
+                Light light,
+                LightType requiredType,
+                int visibleLightIndex,
+                HoShadowCastSettings settings,
+                ref CullingResults cullResults,
+                int maxSliceResolution,
+                ref HoShadowCastAtlasPacker packer,
+                HoShadowCastFrame target,
+                string source)
+            {
+                if (target.lightCount >= HoShadowCastShaderConstants.MaxLights || target.Contains(light))
+                {
+                    if (target.Contains(light))
+                    {
+                        target.report.skippedDuplicateCount++;
+                    }
+                    else
+                    {
+                        target.report.skippedCapacityCount++;
+                    }
+
                     return;
                 }
 
@@ -542,6 +755,7 @@ namespace HoUrp.Extensions.ShadowCast
                 int requestedSlices = requiredType == LightType.Point ? 6 : 1;
                 if (firstSlice + requestedSlices > HoShadowCastShaderConstants.MaxShadowSlices)
                 {
+                    target.report.skippedCapacityCount++;
                     return;
                 }
 
@@ -566,6 +780,7 @@ namespace HoUrp.Extensions.ShadowCast
                             out ShadowSliceInfo slice))
                     {
                         completed = false;
+                        target.report.skippedMatrixCount++;
                         break;
                     }
 
@@ -590,6 +805,17 @@ namespace HoUrp.Extensions.ShadowCast
                 target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
                 target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, settings.punctualShadowFadeSpeed);
                 target.lightColor[lightIndex] = new Vector4(finalColor.r, finalColor.g, finalColor.b, 1.0f);
+                target.report.AddAccepted(light, requiredType, visibleLightIndex, firstSlice, writtenSlices, source);
+            }
+
+            private static bool IsLightCollectable(Light light, HoShadowCastSettings settings, LightType requiredType)
+            {
+                if (light == null || light.type != requiredType || !light.isActiveAndEnabled)
+                {
+                    return false;
+                }
+
+                return (settings.lightLayerMask.value & (1 << light.gameObject.layer)) != 0;
             }
 
             private static bool TryBuildSlice(
@@ -940,12 +1166,33 @@ namespace HoUrp.Extensions.ShadowCast
             private static int CountRequestedSlices(HoShadowCastSettings settings, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
             {
                 int count = 0;
-                count += CountRequestedSlices(settings.spotLights, LightType.Spot, visibleLights, mainLightIndex);
-                count += CountRequestedSlices(settings.pointLights, LightType.Point, visibleLights, mainLightIndex);
-                return count;
+                if (settings.collectVisibleSceneLights && visibleLights.IsCreated)
+                {
+                    for (int i = 0; i < visibleLights.Length; i++)
+                    {
+                        if (i == mainLightIndex)
+                        {
+                            continue;
+                        }
+
+                        VisibleLight visibleLight = visibleLights[i];
+                        if (visibleLight.lightType == LightType.Spot && IsLightCollectable(visibleLight.light, settings, LightType.Spot))
+                        {
+                            count++;
+                        }
+                        else if (visibleLight.lightType == LightType.Point && IsLightCollectable(visibleLight.light, settings, LightType.Point))
+                        {
+                            count += 6;
+                        }
+                    }
+                }
+
+                count += CountRequestedSlices(settings.spotLights, LightType.Spot, visibleLights, mainLightIndex, settings);
+                count += CountRequestedSlices(settings.pointLights, LightType.Point, visibleLights, mainLightIndex, settings);
+                return Mathf.Min(count, HoShadowCastShaderConstants.MaxShadowSlices);
             }
 
-            private static int CountRequestedSlices(Light[] lights, LightType requiredType, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
+            private static int CountRequestedSlices(Light[] lights, LightType requiredType, NativeArray<VisibleLight> visibleLights, int mainLightIndex, HoShadowCastSettings settings)
             {
                 if (lights == null)
                 {
@@ -956,7 +1203,7 @@ namespace HoUrp.Extensions.ShadowCast
                 for (int i = 0; i < lights.Length; i++)
                 {
                     Light light = lights[i];
-                    if (light == null || light.type != requiredType || !light.isActiveAndEnabled)
+                    if (!IsLightCollectable(light, settings, requiredType))
                     {
                         continue;
                     }
@@ -973,18 +1220,36 @@ namespace HoUrp.Extensions.ShadowCast
                 return count;
             }
 
-            private static int CountRequestedSecondDirectionalSlices(Light[] lights, NativeArray<VisibleLight> visibleLights, int mainLightIndex, int cascadeCount)
+            private static int CountRequestedSecondDirectionalSlices(HoShadowCastSettings settings, NativeArray<VisibleLight> visibleLights, int mainLightIndex, int cascadeCount)
             {
-                if (lights == null)
+                int count = 0;
+                if (settings.collectVisibleSceneLights && visibleLights.IsCreated)
                 {
-                    return 0;
+                    for (int i = 0; i < visibleLights.Length; i++)
+                    {
+                        if (i == mainLightIndex)
+                        {
+                            continue;
+                        }
+
+                        VisibleLight visibleLight = visibleLights[i];
+                        if (visibleLight.lightType == LightType.Directional && IsLightCollectable(visibleLight.light, settings, LightType.Directional))
+                        {
+                            count += cascadeCount;
+                        }
+                    }
                 }
 
-                int count = 0;
+                Light[] lights = settings.secondDirectionalLights;
                 for (int i = 0; i < lights.Length; i++)
                 {
                     Light light = lights[i];
-                    if (light == null || light.type != LightType.Directional || !light.isActiveAndEnabled)
+                    if (light == null)
+                    {
+                        continue;
+                    }
+
+                    if (!IsLightCollectable(light, settings, LightType.Directional))
                     {
                         continue;
                     }
@@ -1018,6 +1283,26 @@ namespace HoUrp.Extensions.ShadowCast
                 int atlasSize = Mathf.Max(1, settings.atlasSize);
                 int resolution = type == LightType.Point ? settings.pointFaceResolution : settings.spotResolution;
                 return Mathf.Clamp(resolution, 64, Mathf.Min(atlasSize, maxSliceResolution));
+            }
+
+            private static void GetSecondDirectionalCascadeBlock(int cascadeCount, out int columns, out int rows)
+            {
+                if (cascadeCount <= 1)
+                {
+                    columns = 1;
+                    rows = 1;
+                    return;
+                }
+
+                if (cascadeCount == 2)
+                {
+                    columns = 2;
+                    rows = 1;
+                    return;
+                }
+
+                columns = 2;
+                rows = 2;
             }
 
             private static float GetLightTypeId(LightType type)
@@ -1385,6 +1670,7 @@ namespace HoUrp.Extensions.ShadowCast
             public readonly Vector4[] lightAttenuation = new Vector4[HoShadowCastShaderConstants.MaxLights];
             public readonly Vector4[] lightColor = new Vector4[HoShadowCastShaderConstants.MaxLights];
             public readonly Vector4[] sliceData = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
+            public readonly HoShadowCastFrameReport report = new HoShadowCastFrameReport();
 
             public void Clear()
             {
@@ -1398,6 +1684,7 @@ namespace HoUrp.Extensions.ShadowCast
                 cameraProjectionMatrix = Matrix4x4.identity;
                 pcssParams = Vector4.zero;
                 pcssParams2 = Vector4.zero;
+                report.Clear();
 
                 for (int i = 0; i < sourceLights.Length; i++)
                 {
@@ -1464,6 +1751,7 @@ namespace HoUrp.Extensions.ShadowCast
             public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
             public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
             public readonly Vector4[] sliceData = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+            public readonly HoShadowCastSecondDirectionalFrameReport report = new HoShadowCastSecondDirectionalFrameReport();
 
             public void Clear()
             {
@@ -1478,6 +1766,7 @@ namespace HoUrp.Extensions.ShadowCast
                 cameraProjectionMatrix = Matrix4x4.identity;
                 pcssParams = Vector4.zero;
                 pcssParams2 = Vector4.zero;
+                report.Clear();
 
                 for (int i = 0; i < sourceLights.Length; i++)
                 {
@@ -1491,6 +1780,19 @@ namespace HoUrp.Extensions.ShadowCast
                     worldToShadow[i] = Matrix4x4.identity;
                     sliceData[i] = Vector4.zero;
                 }
+            }
+
+            public bool Contains(Light light)
+            {
+                for (int i = 0; i < lightCount; i++)
+                {
+                    if (sourceLights[i] == light)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
             public void FillUnused()

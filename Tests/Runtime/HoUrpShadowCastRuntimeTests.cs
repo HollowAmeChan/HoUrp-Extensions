@@ -52,6 +52,18 @@ namespace HoUrp.Extensions.Tests.Runtime
         }
 
         [Test]
+        public void AtlasPackerAllocatesRectangularBlocks()
+        {
+            var packer = new HoShadowCastAtlasPacker(8);
+
+            Assert.That(packer.TryAllocate(4, 8, out int x0, out int y0), Is.True);
+            Assert.That(new Vector2Int(x0, y0), Is.EqualTo(new Vector2Int(0, 0)));
+            Assert.That(packer.TryAllocate(4, 4, out int x1, out int y1), Is.True);
+            Assert.That(new Vector2Int(x1, y1), Is.EqualTo(new Vector2Int(4, 0)));
+            Assert.That(packer.TryAllocate(1, 1, out _, out _), Is.False);
+        }
+
+        [Test]
         public void SettingsValidateClampArraysAndNumericRanges()
         {
             var settings = new HoShadowCastSettings
@@ -65,6 +77,7 @@ namespace HoUrp.Extensions.Tests.Runtime
                 spotResolution = 1,
                 pointFaceResolution = 1,
                 secondDirectionalAtlasSize = 1,
+                secondDirectionalCascadeResolution = 1,
                 secondDirectionalCascadeCount = 99
             };
 
@@ -79,7 +92,50 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(settings.spotResolution, Is.EqualTo(64));
             Assert.That(settings.pointFaceResolution, Is.EqualTo(64));
             Assert.That(settings.secondDirectionalAtlasSize, Is.EqualTo(256));
+            Assert.That(settings.secondDirectionalCascadeResolution, Is.EqualTo(64));
             Assert.That(settings.secondDirectionalCascadeCount, Is.EqualTo(HoShadowCastShaderConstants.MaxSecondDirectionalCascades));
+        }
+
+        [Test]
+        public void RuntimeReportCopiesAcceptedLightsAndSkipCounters()
+        {
+            var punctualFrame = new HoShadowCastFrameReport
+            {
+                requestedSlices = 7,
+                skippedDuplicateCount = 1,
+                skippedCapacityCount = 2
+            };
+            punctualFrame.AddAccepted(null, LightType.Spot, 3, 0, 1, "Visible");
+
+            var directionalFrame = new HoShadowCastSecondDirectionalFrameReport
+            {
+                requestedSlices = 4,
+                skippedNotCollectableCount = 1,
+                skippedMainDirectionalCount = 1
+            };
+            directionalFrame.AddAccepted(null, 1, 4, "Explicit");
+
+            var report = new HoShadowCastRuntimeReport();
+            report.Reset(null, 5, "Collecting");
+            report.CopyFromFrames(punctualFrame, directionalFrame);
+            report.MarkRendered("Published");
+
+            Assert.That(report.rendered, Is.True);
+            Assert.That(report.status, Is.EqualTo("Published"));
+            Assert.That(report.visibleLightCount, Is.EqualTo(5));
+            Assert.That(report.requestedPunctualSlices, Is.EqualTo(7));
+            Assert.That(report.punctualLightCount, Is.EqualTo(1));
+            Assert.That(report.punctualSliceCount, Is.EqualTo(1));
+            Assert.That(report.punctualLights[0].lightType, Is.EqualTo(LightType.Spot));
+            Assert.That(report.punctualLights[0].source, Is.EqualTo("Visible"));
+            Assert.That(report.requestedSecondDirectionalSlices, Is.EqualTo(4));
+            Assert.That(report.secondDirectionalLightCount, Is.EqualTo(1));
+            Assert.That(report.secondDirectionalSliceCount, Is.EqualTo(4));
+            Assert.That(report.secondDirectionalLights[0].source, Is.EqualTo("Explicit"));
+            Assert.That(report.skippedNotCollectableCount, Is.EqualTo(1));
+            Assert.That(report.skippedMainDirectionalCount, Is.EqualTo(1));
+            Assert.That(report.skippedDuplicateCount, Is.EqualTo(1));
+            Assert.That(report.skippedCapacityCount, Is.EqualTo(2));
         }
     }
 }

@@ -20,6 +20,12 @@ namespace HoUrp.Extensions.ShadowCast
         [Tooltip("Objects on these layers can write to ShadowCast atlases.")]
         public LayerMask casterLayerMask = -1;
 
+        [Tooltip("Scene lights on these layers can be collected from the camera visible light list.")]
+        public LayerMask lightLayerMask = -1;
+
+        [Tooltip("Collect camera-visible scene lights at runtime. This is the default path because renderer assets cannot reference scene Light objects.")]
+        public bool collectVisibleSceneLights = true;
+
         [Tooltip("Spot lights rendered into the punctual atlas.")]
         public Light[] spotLights = new Light[HoShadowCastShaderConstants.MaxSpotLights];
 
@@ -52,6 +58,9 @@ namespace HoUrp.Extensions.ShadowCast
 
         [Min(256)]
         public int secondDirectionalAtlasSize = 4096;
+
+        [Min(64)]
+        public int secondDirectionalCascadeResolution = 1024;
 
         [Range(1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades)]
         public int secondDirectionalCascadeCount = 4;
@@ -107,6 +116,11 @@ namespace HoUrp.Extensions.ShadowCast
             EnsureArraySize(ref spotLights, HoShadowCastShaderConstants.MaxSpotLights);
             EnsureArraySize(ref pointLights, HoShadowCastShaderConstants.MaxPointLights);
             EnsureArraySize(ref secondDirectionalLights, HoShadowCastShaderConstants.MaxDirectionalLights);
+            if (lightLayerMask.value == 0)
+            {
+                lightLayerMask = -1;
+            }
+
             receiverStrength = Mathf.Clamp01(receiverStrength);
             punctualShadowStrength = Mathf.Clamp01(punctualShadowStrength);
             punctualShadowFadeSpeed = Mathf.Clamp(punctualShadowFadeSpeed, 0.1f, 4.0f);
@@ -115,6 +129,7 @@ namespace HoUrp.Extensions.ShadowCast
             spotResolution = Mathf.Max(64, spotResolution);
             pointFaceResolution = Mathf.Max(64, pointFaceResolution);
             secondDirectionalAtlasSize = Mathf.Max(256, secondDirectionalAtlasSize);
+            secondDirectionalCascadeResolution = Mathf.Max(64, secondDirectionalCascadeResolution);
             secondDirectionalCascadeCount = Mathf.Clamp(secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
             secondDirectionalMaxDistance = Mathf.Max(0.01f, secondDirectionalMaxDistance);
             secondDirectionalShadowDepth = Mathf.Max(0.01f, secondDirectionalShadowDepth);
