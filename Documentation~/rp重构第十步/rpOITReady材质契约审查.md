@@ -2,7 +2,7 @@
 
 ## 目标
 
-第十阶段不实现 Weighted OIT runtime，但必须让材质侧提前可用。第十一步应该可以直接做：
+第十阶段不实现 Weighted OIT runtime，但必须让材质侧提前可用。后续透明阶段应该可以直接做：
 
 ```text
 DrawRenderers(shaderTag = HoUrpOitAccumulation)
@@ -36,7 +36,7 @@ DrawRenderers(shaderTag = HoUrpOitAccumulation)
 - 不采样 live camera color。
 - 不依赖旧 OIT 全局状态。
 
-第十阶段可以只保证 pass 编译和能被 Frame Debugger / RenderDoc 识别；真正 MRT attachment 和 composite 由第十一步实现。
+第十阶段可以只保证 pass 编译和能被 Frame Debugger / RenderDoc 识别；真正 MRT attachment 和 composite 由后续 Weighted OIT runtime 实现。
 
 ## Phase Policy
 
@@ -61,9 +61,9 @@ NormalTransparentForward = Skip
 
 如果第十步还没有普通透明 forward runtime，就只记录策略并通过 descriptor / preset 测试验证。
 
-## 与第十一步的接口
+## 与后续 OIT runtime 的接口
 
-第十一步 Weighted OIT runtime 只应该依赖：
+后续 Weighted OIT runtime 只应该依赖：
 
 - pass 名：`HoUrpOitAccumulation`
 - material / preset capability：`SupportsOit`、`ParticipatesOit`
@@ -100,7 +100,7 @@ NormalTransparentForward = Skip
 
 ## 风险
 
-- 第十步只做 opaque AOV shader，第十一步 runtime 无法绘制透明 accumulation。
+- 第十步只做 opaque AOV shader，后续 OIT runtime 无法绘制透明 accumulation。
 - 让 OIT pass 读取旧 `_lilOITActive`，导致旧 runtime phase 泄漏进新 ABI。
-- `HoUrpOitAccumulation` 输出结构和第十一步 `Oit.Accumulation` 格式不匹配。
+- `HoUrpOitAccumulation` 输出结构和后续 `Oit.Accumulation` 格式不匹配。
 - 把 OIT runtime 的 clear / composite 逻辑提前塞进材质 shader。

@@ -1294,34 +1294,29 @@ Layer/Tag 的问题是：
 
 第十阶段先做 **材质系统接入新 RP 的契约准备**：冻结 SurfaceData / MaterialSemanticData / AOV 输出 ABI，建立 Feature Block / Preset 最小描述模型，并用一个 generated shader 原型证明材质可以直接生产新 `Aov.*` / `Sss.*` 语义。第十阶段执行按 `Documentation~/rp重构第十步执行计划.md` 推进。
 
-### 第十一优先级：Weighted OIT runtime 验证
+### 第十一优先级：HoPost / Shoost 搬迁前置契约与最小 Stack
 
-旧项目里的 Weighted OIT 已经证明能力可行，但它依赖旧 `lilToonOIT` pass、`_lilOITEnabled` 材质开关和 `_lilOITActive` 全局握手。新 RP 不能直接把这些名字提升为长期 ABI。
+HoNpr 侧已经开始把材质系统重构为更显式、可管理的声明系统。HoUrp-Extensions 侧因此可以暂时跳过原本排在第十步后的 Weighted OIT runtime 视觉验证，优先搬迁旧 `HoPost` 与 `Shoost` stack。但这里的“跳过验证”只表示不把 OIT runtime 作为第十一步优先项，不表示 HoPost / Shoost 可以绕过契约、注册、RenderGraph 声明和测试。
 
-第十阶段已经要求独立最小 shader 提供 `HoUrpOitAccumulation` pass、`SupportsOit` / `ParticipatesOit` 元数据、transparent alpha / coverage / weight 输出和 normal forward phase policy。因此第十一阶段可以直接做 **Weighted OIT runtime 最小验证**：
+第十一阶段改为建立后处理搬迁的基础设施：
 
-- 声明 `Oit.OpaqueColor`、`Oit.Accumulation`、`Oit.Revealage`、`Oit.CompositeSource`。
-- clear accumulation / revealage。
-- opaque copy 在 accumulation 前完成。
-- draw `HoUrpOitAccumulation` pass。
-- composite source copy 遵守第六阶段 camera color copy 规则。
-- composite 回 camera color。
-- debug view 覆盖 accumulation、revealage、opaque color、composite source。
+- 区分 `HoPost` 语义感知后处理和 `Shoost` 最终图像风格栈。
+- 定义 post effect / layer / stack descriptor，禁止直接复制旧 enum / shader property 作为新 ABI。
+- 建立 frame-local PostGraph / ImageChain 计划层，让启用的 layer/effect 在当前 frame 动态声明需要的资源、输入和 debug view。
+- 引入可动态注册/注销的 RenderGraph 资源请求模型：启用的 effect 才请求 transient resources，关闭后不保留 stale handle、全局纹理或 debug active 状态。
+- 让纯图像链默认走 `ImageChain.Read -> pass -> ImageChain.Write -> swap` 双缓冲；多输入、多输出、多分辨率、history、AOV/depth/normal/original source 等需求必须显式升级资源类型。
+- 先迁移最小可验证集合：HoPost rule mask / layer blit 与 Shoost single-pass image effect，不急于搬完整 effect catalog。
 
-第十一阶段仍不迁移旧 `WeightedOITRendererFeature` 的全部 settings / compatibility path。验收重点是 **RenderGraph 资源链路和第十阶段 OIT-ready shader 能跑通**。
+第十一阶段执行按 `Documentation~/rp重构第十一步执行计划.md` 推进。验收重点是 **Post stack 的显式声明、动态资源生命周期、多输入约束和双缓冲资源复用**，不是一次性完成旧 HoPost / Shoost 的视觉等价。
 
-### 第十二优先级：Weighted OIT 完整化与透明语义扩展
+### 第十二优先级：Weighted OIT runtime 验证或 Post Stack 扩展
 
-第十二阶段在第十一阶段最小 runtime 成立后，再补完整化能力：
+第十二阶段根据第十一步结果再决定优先方向：
 
-- render scale / quality policy。
-- alpha clip threshold / weight policy。
-- transparent AOV / transparent SSS 是否进入正式语义。
-- 与 CharacterSpecialization 的半透明部件排序。
-- 与 ImagePost / SemanticPost 的最终时机。
-- 旧 Weighted OIT 行为差异验收。
+- 如果透明链路需要先闭环，则回到 Weighted OIT runtime 最小验证：`Oit.OpaqueColor`、`Oit.Accumulation`、`Oit.Revealage`、`Oit.CompositeSource`、clear、draw `HoUrpOitAccumulation`、composite 和 debug view。
+- 如果后处理搬迁成为主线，则扩展 PostGraph：HoPost rule language 完整化、Shoost effect catalog 分批迁移、AOV composite 约束、多 pass effect、history / pyramid / original source 资源策略。
 
-旧 `WeightedOITRendererFeature`、`WeightedOITSettings`、`WeightedOIT.hlsl` 和 `WeightedOITComposite.shader` 是行为参照；新实现应使用 `Oit.*` 资源名、RenderGraph 声明和新材质 pass 契约。
+旧 `WeightedOITRendererFeature`、`WeightedOITSettings`、`WeightedOIT.hlsl`、`WeightedOITComposite.shader`、旧 `HoPostProcessRendererFeature` 和旧 `ShoostPostProcessRendererFeature` 都只作为行为参照。新实现必须使用新资源名、RenderGraph 声明、Feature Descriptor 和 frame-local resolve，不继承旧全局名、compatibility path 或隐式执行顺序。
 
 ---
 

@@ -13,6 +13,12 @@
   OIT-ready material pass
 
 第十一步:
+  HoPost / Shoost 搬迁前置契约
+  PostGraph / ImageChain
+  dynamic resource request / release
+  minimal semantic post + image stack
+
+后续透明阶段:
   Weighted OIT RenderGraph runtime
   Oit.* resources
   accumulation / revealage / composite
@@ -78,12 +84,12 @@
 第十阶段也必须遵守 `rp重构初步大纲.md`：
 
 - 第十优先级是材质系统接入新 RP 的契约准备。
-- 第十一优先级才是 Weighted OIT runtime 验证。
-- 第十二优先级才是 Weighted OIT 完整化与透明语义扩展。
+- 第十一步当前改为 HoPost / Shoost 搬迁前置契约与最小 stack。
+- Weighted OIT runtime 验证保留为后续透明阶段，不取消第十阶段 OIT-ready 材质契约。
 
 ## 风险
 
-- 因为要给第十一步 OIT 铺路，越界实现 OIT runtime。
+- 因为要给后续 OIT 铺路，越界实现 OIT runtime。
 - 因为想快速看到 lit 效果，继承 URP Lit 全套结构。
 - 因为旧项目已有 weighted OIT，直接复制旧 pass / global 名。
 - 因为 AOV 输出需要材质语义，重新把材质 UI 变成 shader 结构控制器。

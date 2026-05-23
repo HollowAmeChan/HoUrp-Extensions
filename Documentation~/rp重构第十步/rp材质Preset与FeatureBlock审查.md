@@ -70,7 +70,7 @@ Character_DebugLit_SSS_OITReady
 
 - AOV / SSS / SemanticPost 可以在第十步验证。
 - `HoUrpOitAccumulation` 可以在第十步被 Frame Debugger / RenderDoc 识别。
-- 第十一步可以直接接 Weighted OIT runtime。
+- 后续透明阶段可以直接接 Weighted OIT runtime。
 
 ## Preset 必须声明的内容
 
@@ -104,4 +104,4 @@ Character_DebugLit_SSS_OITReady
 - FeatureBlock 变成 UI 面板，而不是编译期结构描述。
 - Preset 变成无限 keyword 组合。
 - `SupportsOit` 被做成旧 `_lilOITEnabled` 的别名。
-- 只做 AOV preset，忘记第十一步 OIT 需要 `HoUrpOitAccumulation`。
+- 只做 AOV preset，忘记后续 OIT runtime 需要 `HoUrpOitAccumulation`。

@@ -10,7 +10,7 @@ Generated material
   -> SSS / SemanticPost / Debug
 ```
 
-同时它还必须给第十一步 Weighted OIT runtime 铺路：
+同时它还必须给后续 Weighted OIT runtime 铺路：
 
 ```text
 Generated transparent material
@@ -58,7 +58,7 @@ Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl
 | `emission` | 可选 | 后续 composite |
 | `occlusion` | 可选 | 后续 shading |
 
-`alpha` 在第十阶段必须进入统一结构，因为第十一步 OIT runtime 直接依赖它。
+`alpha` 在第十阶段必须进入统一结构，因为后续 OIT runtime 直接依赖它。
 
 ### `MaterialSemanticData`
 
@@ -116,7 +116,7 @@ Runtime/Shaders/ShaderLibrary/HoUrpMaterialOit.hlsl
 | --- | --- | --- |
 | Forward | `UniversalForward` | 独立最小显示，基础 base color / simple light / debug normal |
 | AOV Output | `HoUrpAovOutput` | 必须写出材质语义和 SSS 输入 |
-| OIT Accumulation | `HoUrpOitAccumulation` | 必须存在，供第十一步 runtime 绘制 |
+| OIT Accumulation | `HoUrpOitAccumulation` | 必须存在，供后续 OIT runtime 绘制 |
 | DepthOnly | `DepthOnly` | 可只定义边界 |
 | ShadowCaster | `ShadowCaster` | 可只定义边界 |
 

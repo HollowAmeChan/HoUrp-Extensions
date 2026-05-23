@@ -169,14 +169,14 @@ Tests/Runtime/HoUrpMaterialShaderAbiTests.cs
 | 完整 shader generator | 不做，第十步只允许最小原型 |
 | 材质 inspector | 不做 |
 | HoNpr 统一材质系统接入 | 后续 |
-| Weighted OIT runtime | 第十一步 |
-| OIT composite shader | 第十一步 |
+| Weighted OIT runtime | 后续透明阶段 |
+| OIT composite shader | 后续透明阶段 |
 | transparent SSS / transparent AOV | 第十二步或后续 |
 | HoShadow receiver | 后续 shadow/material 阶段 |
 
 ## 风险点
 
-- 第十步没有 OIT pass，导致第十一步无法直接测 OIT。
+- 第十步没有 OIT pass，导致后续无法直接测 OIT。
 - 第十步做了 OIT runtime，越过大纲边界。
 - generated shader 仍引用旧材质 include。
 - preset 描述缺少 `SupportedPasses`，后续 runtime 无法查询。

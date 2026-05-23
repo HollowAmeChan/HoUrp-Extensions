@@ -28,7 +28,7 @@ Generated / authored material
   -> SSS / SemanticPost / Debug
 ```
 
-第十步还必须给后续 Weighted OIT 铺路：最小 shader 侧要先具备透明/OIT accumulation pass、alpha / weight / coverage 输出和 `SupportsOit` / `ParticipatesOit` 元数据。第十一步才能直接测试 OIT runtime，而不是回头补材质 pass。
+第十步还必须给后续 Weighted OIT 铺路：最小 shader 侧要先具备透明/OIT accumulation pass、alpha / weight / coverage 输出和 `SupportsOit` / `ParticipatesOit` 元数据。后续透明阶段才能直接测试 OIT runtime，而不是回头补材质 pass。
 
 第十步要解决的是：新材质系统应该怎样稳定地产生这些语义和透明输出，而不是继续依赖临时 `MaterialSemanticAuthoring` 或旧材质包的属性/keyword。
 
@@ -96,7 +96,7 @@ Object / Material Authoring
   - 不继承 URP Lit 的 keyword、Inspector 和属性体系。
   - 能写入新 `Aov.*` 资源。
   - 能被 SSS / SemanticPost / Debug 正确消费。
-  - 能提供独立 OIT accumulation pass，供第十一步 Weighted OIT runtime 直接绘制。
+  - 能提供独立 OIT accumulation pass，供后续 Weighted OIT runtime 直接绘制。
 - 更新 contract / docs，标记材质语义可以来自 `GeneratedMaterial` producer，而不是只能来自 `MaterialSemanticAuthoring`。
 - 补测试：
   - ABI 名称稳定。
@@ -178,7 +178,7 @@ HoToon as lightweight legacy reference
 | `emission` | 自发光 | 后续 composite 使用 |
 | `occlusion` | AO | 后续 shading / composite 使用 |
 
-第十步不要求一次性使用全部字段，但结构必须先稳定，避免 feature block 之间各自发明数据。`alpha` 在第十步必须能被 forward、AOV 和 OIT accumulation pass 读取，避免第十一步再改 SurfaceData ABI。
+第十步不要求一次性使用全部字段，但结构必须先稳定，避免 feature block 之间各自发明数据。`alpha` 在第十步必须能被 forward、AOV 和 OIT accumulation pass 读取，避免后续透明阶段再改 SurfaceData ABI。
 
 ### 4.2 `MaterialSemanticData`
 
@@ -261,7 +261,7 @@ HoToon as lightweight legacy reference
 | `revealage` | 透明遮挡项，第一版可用 `alpha` 推导 |
 | `weight` | weighted blended OIT 权重，初版可由统一函数计算 |
 
-第十步只定义 shader 输出和最小 pass，不创建 `Oit.*` RenderGraph resource。第十一步由 Weighted OIT runtime 接管 resource、clear、draw 和 composite。
+第十步只定义 shader 输出和最小 pass，不创建 `Oit.*` RenderGraph resource。后续 Weighted OIT runtime 由透明阶段接管 resource、clear、draw 和 composite。
 
 ---
 
@@ -273,13 +273,13 @@ HoToon as lightweight legacy reference
 | --- | --- | --- | --- |
 | AOV Output | `HoUrpAovOutput` | 必做 | generated shader 必须能生产 AOV |
 | Forward | `UniversalForward` | 独立最小实现 | 只做可见性和基础漫反射调试，不接完整 URP Lit |
-| OIT Accumulation | `HoUrpOitAccumulation` | 必做占位 | 第十步只提供材质 pass；第十一步 runtime 绘制此 pass |
+| OIT Accumulation | `HoUrpOitAccumulation` | 必做占位 | 第十步只提供材质 pass；后续 OIT runtime 绘制此 pass |
 | DepthOnly | `DepthOnly` | 只定义边界 | 保持 URP 兼容语义 |
 | ShadowCaster | `ShadowCaster` | 只定义边界 | 不接 HoShadow receiver |
 | Meta | `Meta` | 不做 | 材质烘焙后续再处理 |
 | MotionVectors | `MotionVectors` | 不做 | 形变 / motion 阶段再处理 |
 
-第十步重点是 AOV output 和 OIT-ready material pass：AOV 是 SSS、SemanticPost 和 Debug 的共同入口；OIT accumulation pass 是第十一步直接测试 Weighted OIT 的前置条件。
+第十步重点是 AOV output 和 OIT-ready material pass：AOV 是 SSS、SemanticPost 和 Debug 的共同入口；OIT accumulation pass 是后续直接测试 Weighted OIT 的前置条件。
 
 AOV runtime 应区分两条路径：
 
@@ -352,7 +352,7 @@ MaterialPreset
 
 第十步只需要一个 prototype preset 真正生成或落地，其余可以先登记为规划项。
 
-prototype preset 应优先选择 OIT-ready 版本，保证第十一步能直接进入 Weighted OIT runtime 验证。
+prototype preset 应优先选择 OIT-ready 版本，保证后续透明阶段能直接进入 Weighted OIT runtime 验证。
 
 ---
 
@@ -566,7 +566,7 @@ HoUrpDebugLitMinimal
 - `SemanticPost.Mask` 能按材质语义规则响应。
 - `AllRegistered` 中相关 debug view 不缺失。
 - generated shader 的透明材质实例能被 Frame Debugger / RenderDoc 识别出 `HoUrpOitAccumulation` pass。
-- 第十步不要求画出 OIT composite，但要求材质 pass 已经能被第十一步 runtime 直接按 pass 名绘制。
+- 第十步不要求画出 OIT composite，但要求材质 pass 已经能被后续 OIT runtime 直接按 pass 名绘制。
 - 控制台无 RenderGraph attachment / 未声明 texture 读写错误。
 
 ---
@@ -581,13 +581,16 @@ HoUrpDebugLitMinimal
 - Feature Block / Preset 的最小描述模型能表达固定组合。
 - 没有把旧 `lilToon/lilPBR` property、keyword、include、inspector 结构提升为新 ABI。
 - 第十一步可以继续推进：
+  - HoPost / Shoost 搬迁前置契约与最小 stack。
   - Weighted OIT runtime 最小验证。
   - 完整材质生成器。
   - HoNpr 统一材质包接入。
   - 材质 inspector 轻量化。
   - 或者回到 Debug Framework 读取 material preset / producer 信息。
 
-第十一步的默认推荐方向是 **Weighted OIT runtime 最小验证**。第十步已经准备好新 `SupportsOit` / `ParticipatesOit` capability、新 OIT pass 名和透明材质 phase 规则；第十一步应直接接 `Oit.*` RenderGraph resources、clear、draw accumulation 和 debug/composite 验收。
+第十一步的当前推荐方向改为 **HoPost / Shoost 搬迁前置契约与最小 stack**。原因是 HoNpr 侧已经开始把材质生产者变得更显式、可管理，HoUrp-Extensions 可以暂时跳过原本排队的 OIT runtime 视觉验证，优先把旧 `HoPost` 与 `Shoost` 搬迁所需的 PostGraph、ImageChain、动态资源请求、多输入声明和双缓冲策略定下来。
+
+这不取消第十步已经准备好的 OIT-ready 材质契约。`SupportsOit` / `ParticipatesOit` capability、新 OIT pass 名和透明材质 phase 规则继续保留，后续回到 Weighted OIT runtime 时仍应直接接 `Oit.*` RenderGraph resources、clear、draw accumulation 和 debug/composite 验收。
 
 ---
 
@@ -600,7 +603,7 @@ HoUrpDebugLitMinimal
 - 让 generated material 私自写全局纹理或私有 RT，绕过 RenderGraph / resource registry。
 - 忘记把 generated material producer 登记进 contract，导致 Debug 只能看到资源，不能解释来源。
 - AOV output pass 继续膨胀 MRT 数量，重新触发 RenderGraph attachment 上限问题。
-- 第十步没有提前落地 OIT accumulation pass，导致第十一步迁移 runtime 时又反向修改材质 ABI。
+- 第十步没有提前落地 OIT accumulation pass，导致后续迁移 OIT runtime 时又反向修改材质 ABI。
 - 把旧 `_lilOITEnabled` / `_lilOITActive` / `lilToonOIT` 当成新 ABI，而不是 legacy mapping。
 
 第十步的验收重点是 **材质生产者契约清晰、shader ABI 稳定、AOV/SSS/SemanticPost 可消费、旧材质系统不污染新核心**，不是一次性完成全新的 PBR/NPR 材质体系。

@@ -139,13 +139,13 @@ Key decisions:
 
 ## 5. OIT Scheduling Note
 
-Weighted OIT runtime is not implemented in stages 2-10, but stage 10 prepares the material side so stage 11 can test OIT directly:
+Weighted OIT runtime is not implemented in stages 2-10, but stage 10 prepares the material side so a later transparent stage can test OIT directly. The original baseline placed this at stage 11; the current stage 11 priority has moved to HoPost / Shoost PostGraph and ImageChain planning.
 
 | Stage | Scope | Notes |
 | --- | --- | --- |
 | Stage 10 | OIT-ready material ABI | Define `SupportsOit` / `ParticipatesOit`, `HoUrpOitAccumulation`, transparent alpha / coverage / weight output, and phase policy. |
-| Stage 11 | Weighted OIT runtime minimum | Create `Oit.*` resources, clear accumulation/revealage, draw `HoUrpOitAccumulation`, composite, and expose debug views. |
-| Stage 12 | Weighted OIT completion | Add quality policy, alpha clip / weight policy, transparent semantic expansion, character ordering, and old behavior parity checks. |
+| Later transparent stage | Weighted OIT runtime minimum | Create `Oit.*` resources, clear accumulation/revealage, draw `HoUrpOitAccumulation`, composite, and expose debug views. |
+| Later transparent stage | Weighted OIT completion | Add quality policy, alpha clip / weight policy, transparent semantic expansion, character ordering, and old behavior parity checks. |
 
 This split prevents old `lilToonOIT`, `_lilOITEnabled`, and `_lilOITActive` from becoming new long-term ABI.
 
