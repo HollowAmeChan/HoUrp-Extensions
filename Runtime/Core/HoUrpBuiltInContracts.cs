@@ -160,8 +160,8 @@ namespace HoUrp.Extensions.Core
                 registry,
                 HoUrpBuiltInNames.DebugViews.AovObjectFlag2,
                 "HoAovDebugMode.ObjectFlag2",
-                "Displays Object.FeatureFlags bit 2 as written to Aov.MaskId.a.",
-                "Flag2");
+                "Displays Object.FeatureFlags bit 2 as written to Aov.MaskId.a; this is the SSS receiver gate.",
+                "SssReceiver");
 
             RegisterObjectFlagDebugView(
                 registry,
@@ -1601,6 +1601,7 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Semantics.ShadingSssCompositeWeight),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.ObjectMaskWeight,
+                    HoUrpBuiltInNames.Semantics.ObjectFlags,
                     HoUrpBuiltInNames.Semantics.GeometryWorldNormal,
                     HoUrpBuiltInNames.Semantics.GeometryLinearDepth,
                     HoUrpBuiltInNames.Semantics.MaterialSssProfile,

@@ -23,6 +23,11 @@ Shader "Hidden/HoURP/SSS/SubsurfaceScattering"
             TEXTURE2D_X(_HoUrpAovSurfaceDataTexture);
             TEXTURE2D_X(_HoUrpAovDiffuseTexture);
 
+            half PickLowObjectFlag(half packedFlags, half bitValue)
+            {
+                return step(0.5h, fmod(floor(round(saturate(packedFlags) * 255.0h) / bitValue), 2.0h));
+            }
+
             half4 FragSource(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -36,8 +41,9 @@ Shader "Hidden/HoURP/SSS/SubsurfaceScattering"
                 half validNormal = dot(abs(normalDepth.rgb), half3(1.0h, 1.0h, 1.0h)) > 0.0h ? 1.0h : 0.0h;
                 half thicknessGate = saturate(surfaceData.b * 4.0h);
                 half profileGate = step(0.5h / 255.0h, surfaceData.g);
-                half weight = saturate(maskId.r * validNormal * thicknessGate * profileGate);
-                return half4(diffuse.rgb, weight);
+                half receivesSss = PickLowObjectFlag(maskId.a, 4.0h);
+                half weight = saturate(maskId.r * receivesSss * validNormal * thicknessGate * profileGate);
+                return half4(diffuse.rgb * receivesSss, weight);
             }
             ENDHLSL
         }
@@ -166,6 +172,11 @@ Shader "Hidden/HoURP/SSS/SubsurfaceScattering"
 
                 half4 centerSource = SAMPLE_TEXTURE2D_X(_HoUrpSssSourceTexture, sampler_PointClamp, uv);
                 half3 centerSceneColor = SAMPLE_TEXTURE2D_X(_HoUrpSourceColorTexture, sampler_PointClamp, uv).rgb;
+                if (centerSource.a <= 0.0001h)
+                {
+                    return half4(centerSceneColor, 0.0h);
+                }
+
                 half4 centerNormalDepth = SAMPLE_TEXTURE2D_X(_HoUrpAovNormalDepthTexture, sampler_PointClamp, uv);
                 half4 centerSurface = SAMPLE_TEXTURE2D_X(_HoUrpAovSurfaceDataTexture, sampler_PointClamp, uv);
                 half centerThickness = SurfaceThinness(centerSurface);

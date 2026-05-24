@@ -110,6 +110,8 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(postReceiver.Description, Does.Contain("screen post receiver gate"));
             Assert.That(postReceiver.Description, Does.Contain("Aov.MaskId.a"));
             Assert.That(flag2.Description, Does.Contain("Object.FeatureFlags bit 2"));
+            Assert.That(flag2.Description, Does.Contain("SSS receiver gate"));
+            Assert.That(flag2.PreviewLabel, Is.EqualTo("SssReceiver"));
             Assert.That(flag7.SourceResource, Is.EqualTo(HoUrpBuiltInNames.Resources.AovMaskId));
             Assert.That(flag7.SourceSemantic, Is.EqualTo(HoUrpBuiltInNames.Semantics.ObjectFlags));
             Assert.That(flag7.Range, Is.EqualTo(DebugValueRange.ZeroToOne));
@@ -490,6 +492,7 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(feature.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovNormalDepth));
             Assert.That(feature.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovSurfaceData));
             Assert.That(feature.ConsumedResources, Contains.Item(HoUrpBuiltInNames.Resources.AovDiffuse));
+            Assert.That(feature.ConsumedSemantics, Contains.Item(HoUrpBuiltInNames.Semantics.ObjectFlags));
             Assert.That(sssSource.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.SubsurfaceScattering));
             Assert.That(sssDiffusion.ProducerFeature, Is.EqualTo(HoUrpBuiltInNames.Features.SubsurfaceScattering));
             Assert.That(sssSource.DebugView, Is.EqualTo(HoUrpBuiltInNames.DebugViews.SssSource));

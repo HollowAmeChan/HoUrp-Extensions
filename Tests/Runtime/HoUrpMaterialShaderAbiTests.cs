@@ -11,6 +11,7 @@ namespace HoUrp.Extensions.Tests.Runtime
         private const string PackageRoot = "Packages/com.hollow.hourp-extensions";
         private const string ShaderPath = PackageRoot + "/Runtime/Shaders/Generated/HoUrpDebugLitMinimal.shader";
         private const string OitCompositeShaderPath = PackageRoot + "/Runtime/Shaders/Hidden/HoURP/OIT/WeightedComposite.shader";
+        private const string SubsurfaceScatteringShaderPath = PackageRoot + "/Runtime/Shaders/Hidden/HoURP/SSS/SubsurfaceScattering.shader";
         private const string ShadowCastSamplingPath = PackageRoot + "/Runtime/Shaders/ShaderLibrary/HoUrpShadowCastSampling.hlsl";
         private const string ShadowCastDebugPath = PackageRoot + "/Runtime/Shaders/Hidden/HoURP/ShadowCast/Debug.shader";
         private const string ShadowCastReceiverDebugPath = PackageRoot + "/Runtime/Shaders/Generated/HoUrpShadowCastReceiverDebug.shader";
@@ -107,6 +108,19 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(shaderText, Does.Contain("_HoUrpOitRevealageTexture"));
             Assert.That(shaderText, Does.Not.Contain("_lilOIT"));
             Assert.That(shaderText, Does.Not.Contain("Hidden/lilToon/URP/WeightedOITComposite"));
+        }
+
+        [Test]
+        public void SubsurfaceScatteringShaderUsesObjectReceiverFlagAsRuntimeGate()
+        {
+            string shaderText = ReadPackageText(SubsurfaceScatteringShaderPath);
+
+            Assert.That(shaderText, Does.Contain("TEXTURE2D_X(_HoUrpAovMaskIdTexture)"));
+            Assert.That(shaderText, Does.Contain("PickLowObjectFlag(maskId.a, 4.0h)"));
+            Assert.That(shaderText, Does.Contain("maskId.r * receivesSss * validNormal * thicknessGate * profileGate"));
+            Assert.That(shaderText, Does.Contain("diffuse.rgb * receivesSss"));
+            Assert.That(shaderText, Does.Contain("if (centerSource.a <= 0.0001h)"));
+            Assert.That(shaderText, Does.Contain("return half4(centerSceneColor, 0.0h);"));
         }
 
         [Test]
