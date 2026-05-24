@@ -1,4 +1,5 @@
 using HoUrp.Extensions.Core;
+using HoUrp.Extensions.Filter;
 using HoUrp.Extensions.PostProcess;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -22,12 +23,17 @@ namespace HoUrp.Extensions.Features
         private ImagePostFilterSettings[] filters = { ImagePostFilterSettings.CreateDefault() };
 
         private ImagePostPrototypePass imagePostPass;
-        private Material material;
+        private Material colorAdjustMaterial;
+        private Material blurMaterial;
 
         public override void Create()
         {
             Shader shader = Shader.Find(HoUrpShaderPropertyIds.ImagePostPrototypeShaderName);
-            material = shader != null ? CoreUtils.CreateEngineMaterial(shader) : null;
+            colorAdjustMaterial = shader != null ? CoreUtils.CreateEngineMaterial(shader) : null;
+
+            Shader blurShader = Shader.Find(HoUrpFilterIds.BlurShaderName);
+            blurMaterial = blurShader != null ? CoreUtils.CreateEngineMaterial(blurShader) : null;
+
             imagePostPass = new ImagePostPrototypePass
             {
                 renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing
@@ -36,20 +42,22 @@ namespace HoUrp.Extensions.Features
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (!ShouldRender(in renderingData) || imagePostPass == null || material == null)
+            if (!ShouldRender(in renderingData) || imagePostPass == null || colorAdjustMaterial == null)
             {
                 return;
             }
 
             EnsureFilters();
-            imagePostPass.Setup(material, filters);
+            imagePostPass.Setup(colorAdjustMaterial, blurMaterial, filters);
             renderer.EnqueuePass(imagePostPass);
         }
 
         protected override void Dispose(bool disposing)
         {
-            CoreUtils.Destroy(material);
-            material = null;
+            CoreUtils.Destroy(colorAdjustMaterial);
+            CoreUtils.Destroy(blurMaterial);
+            colorAdjustMaterial = null;
+            blurMaterial = null;
             imagePostPass = null;
         }
 
@@ -86,7 +94,8 @@ namespace HoUrp.Extensions.Features
         private sealed class ImagePostPrototypePass : ScriptableRenderPass
         {
             private const int ColorAdjustPassIndex = 0;
-            private Material material;
+            private Material colorAdjustMaterial;
+            private Material blurMaterial;
             private ImagePostFilterSettings[] filters;
 
             public ImagePostPrototypePass()
@@ -95,16 +104,17 @@ namespace HoUrp.Extensions.Features
                 requiresIntermediateTexture = true;
             }
 
-            public void Setup(Material material, ImagePostFilterSettings[] filters)
+            public void Setup(Material colorAdjustMaterial, Material blurMaterial, ImagePostFilterSettings[] filters)
             {
-                this.material = material;
+                this.colorAdjustMaterial = colorAdjustMaterial;
+                this.blurMaterial = blurMaterial;
                 this.filters = filters;
                 requiresIntermediateTexture = true;
             }
 
             public override void RecordRenderGraph(UnityRenderGraph renderGraph, ContextContainer frameData)
             {
-                if (material == null || filters == null || filters.Length == 0)
+                if (colorAdjustMaterial == null || filters == null || filters.Length == 0)
                 {
                     return;
                 }
@@ -152,6 +162,27 @@ namespace HoUrp.Extensions.Features
 
                     RecordColorAdjustPass(renderGraph, current, alternate, filter, "HoURP ImagePost Filter " + i);
                     Swap(ref current, ref alternate);
+
+                    if (filter.blurEnabled && blurMaterial != null && filter.blurRadius > 0.0001f)
+                    {
+                        RecordFilterKitBlurPass(
+                            renderGraph,
+                            current,
+                            alternate,
+                            filter,
+                            HoUrpFilterUtils.NormalizeDirection(1.0f, 0.0f),
+                            "HoURP ImagePost FilterKit Blur X " + i);
+                        Swap(ref current, ref alternate);
+
+                        RecordFilterKitBlurPass(
+                            renderGraph,
+                            current,
+                            alternate,
+                            filter,
+                            HoUrpFilterUtils.NormalizeDirection(0.0f, 1.0f),
+                            "HoURP ImagePost FilterKit Blur Y " + i);
+                        Swap(ref current, ref alternate);
+                    }
                 }
 
                 renderGraph.AddBlitPass(current, cameraColor, Vector2.one, Vector2.zero, passName: "HoURP ImagePost Copy Back");
@@ -178,10 +209,34 @@ namespace HoUrp.Extensions.Features
                 string passName)
             {
                 RenderGraphUtils.BlitMaterialParameters blitParameters =
-                    new RenderGraphUtils.BlitMaterialParameters(source, destination, material, ColorAdjustPassIndex)
+                    new RenderGraphUtils.BlitMaterialParameters(source, destination, colorAdjustMaterial, ColorAdjustPassIndex)
                     {
                         propertyBlock = CreatePropertyBlock(filter),
                         sourceTexturePropertyID = HoUrpShaderPropertyIds.SourceColorTexture
+                    };
+
+                renderGraph.AddBlitPass(blitParameters, passName: passName);
+            }
+
+            private void RecordFilterKitBlurPass(
+                UnityRenderGraph renderGraph,
+                TextureHandle source,
+                TextureHandle destination,
+                ImagePostFilterSettings filter,
+                Vector4 direction,
+                string passName)
+            {
+                MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+                propertyBlock.SetVector(
+                    HoUrpFilterIds.Params0,
+                    HoUrpFilterUtils.CreateBlurParams(filter.blurRadius, filter.blurSampleCount, 0.03f, 0.25f));
+                propertyBlock.SetVector(HoUrpFilterIds.Direction, direction);
+
+                RenderGraphUtils.BlitMaterialParameters blitParameters =
+                    new RenderGraphUtils.BlitMaterialParameters(source, destination, blurMaterial, HoUrpFilterIds.SeparableBlurPass)
+                    {
+                        propertyBlock = propertyBlock,
+                        sourceTexturePropertyID = HoUrpFilterIds.SourceTex
                     };
 
                 renderGraph.AddBlitPass(blitParameters, passName: passName);

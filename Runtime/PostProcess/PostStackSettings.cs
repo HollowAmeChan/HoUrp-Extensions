@@ -104,6 +104,17 @@ namespace HoUrp.Extensions.PostProcess
         [Range(0.0f, 1.0f)]
         public float tintStrength = 0.15f;
 
+        [SerializeField]
+        public bool blurEnabled = false;
+
+        [SerializeField]
+        [Range(0.0f, 8.0f)]
+        public float blurRadius = 0.0f;
+
+        [SerializeField]
+        [Range(1, 13)]
+        public int blurSampleCount = 5;
+
         public static ImagePostFilterSettings CreateDefault(string name = "Color Adjust")
         {
             return new ImagePostFilterSettings
@@ -113,7 +124,10 @@ namespace HoUrp.Extensions.PostProcess
                 colorTint = Color.white,
                 brightness = 1.0f,
                 contrast = 1.0f,
-                tintStrength = 0.15f
+                tintStrength = 0.15f,
+                blurEnabled = false,
+                blurRadius = 0.0f,
+                blurSampleCount = 5
             };
         }
 
@@ -127,6 +141,8 @@ namespace HoUrp.Extensions.PostProcess
             brightness = Mathf.Max(0.0f, brightness);
             contrast = Mathf.Max(0.0f, contrast);
             tintStrength = Mathf.Clamp01(tintStrength);
+            blurRadius = Mathf.Max(0.0f, blurRadius);
+            blurSampleCount = Mathf.Clamp(blurSampleCount, 1, 13);
         }
 
         public PostLayerDefinition ToPostLayerDefinition(int index)

@@ -1,4 +1,5 @@
 using HoUrp.Extensions.Core;
+using HoUrp.Extensions.Filter;
 using HoUrp.Extensions.RenderGraph;
 using System;
 using UnityEngine;
@@ -21,11 +22,11 @@ namespace HoUrp.Extensions.Features
 
         [SerializeField]
         [Range(0.0f, 2.0f)]
-        private float strength = 0.65f;
+        private float strength = 1.0f;
 
         [SerializeField]
         [Range(0.25f, 8.0f)]
-        private float radius = 2.0f;
+        private float radius = 3.0f;
 
         [SerializeField]
         [Range(0.0001f, 0.25f)]
@@ -37,7 +38,7 @@ namespace HoUrp.Extensions.Features
 
         [SerializeField]
         [Range(0.0f, 1.0f)]
-        private float sourcePreserve = 0.35f;
+        private float sourcePreserve = 0.1f;
 
         [SerializeField]
         private SssProfileSettings[] profiles = SssProfileSettings.CreateDefaults();
@@ -59,7 +60,7 @@ namespace HoUrp.Extensions.Features
 
             sssPass = new SubsurfaceScatteringPass(registry)
             {
-                renderPassEvent = RenderPassEvent.BeforeRenderingTransparents
+                renderPassEvent = RenderPassEvent.AfterRenderingTransparents
             };
         }
 
@@ -149,7 +150,7 @@ namespace HoUrp.Extensions.Features
 
             [SerializeField]
             [Range(0.0f, 1.0f)]
-            public float sourcePreserve = 0.25f;
+            public float sourcePreserve = 0.1f;
 
             [SerializeField]
             [Range(0.0f, 4.0f)]
@@ -164,7 +165,7 @@ namespace HoUrp.Extensions.Features
                     profileId = 1,
                     diffusionColor = new Color(1.0f, 0.43f, 0.32f, 1.0f),
                     diffusionRadius = 8.0f,
-                    sourcePreserve = 0.25f,
+                    sourcePreserve = 0.1f,
                     thicknessScale = 1.0f
                 };
 
@@ -176,7 +177,7 @@ namespace HoUrp.Extensions.Features
                         profileId = i + 1,
                         diffusionColor = new Color(1.0f, 0.43f, 0.32f, 1.0f),
                         diffusionRadius = 8.0f,
-                        sourcePreserve = 0.25f,
+                        sourcePreserve = 0.1f,
                         thicknessScale = 1.0f
                     };
                 }
@@ -190,9 +191,6 @@ namespace HoUrp.Extensions.Features
             private static readonly Vector4[] ProfileIds = new Vector4[SssProfileSettings.MaxProfileCount];
             private static readonly Vector4[] ProfileDiffusionParams = new Vector4[SssProfileSettings.MaxProfileCount];
             private static readonly Vector4[] ProfileShapeParams = new Vector4[SssProfileSettings.MaxProfileCount];
-            private const int SourcePassIndex = 0;
-            private const int DiffusionPassIndex = 1;
-            private const int CompositePassIndex = 2;
             private static readonly ProfilingSampler SetGlobalTextureSampler = new ProfilingSampler("HoURP SSS Set Global Texture");
 
             private readonly HoUrpContractRegistry registry;
@@ -290,6 +288,7 @@ namespace HoUrp.Extensions.Features
                     renderGraph,
                     normalDepthTexture,
                     surfaceDataTexture,
+                    sssSourceTexture,
                     sssDiffusionTexture,
                     colorCopy,
                     sourceColor);
@@ -312,13 +311,13 @@ namespace HoUrp.Extensions.Features
                         diffuseTexture,
                         sssSourceTexture,
                         material,
-                        SourcePassIndex)
+                        HoUrpFilterIds.SssSourcePreparePass)
                     {
                         propertyBlock = CreatePropertyBlock(),
                         sourceTexturePropertyID = HoUrpShaderPropertyIds.AovDiffuseTexture
                     };
 
-                renderGraph.AddBlitPass(blitParameters, passName: "HoURP SSS Source");
+                renderGraph.AddBlitPass(blitParameters, passName: "HoURP SSS Source Prepare");
             }
 
             private void RecordDiffusionPass(
@@ -338,25 +337,27 @@ namespace HoUrp.Extensions.Features
                         sssSourceTexture,
                         sssDiffusionTexture,
                         material,
-                        DiffusionPassIndex)
+                        HoUrpFilterIds.SssDiffusionPass)
                     {
                         propertyBlock = CreatePropertyBlock(),
                         sourceTexturePropertyID = HoUrpShaderPropertyIds.SssSourceTexture
                     };
 
-                renderGraph.AddBlitPass(blitParameters, passName: "HoURP SSS Diffusion");
+                renderGraph.AddBlitPass(blitParameters, passName: "HoURP SSS Profile Diffusion");
             }
 
             private void RecordCompositePass(
                 UnityRenderGraph renderGraph,
                 TextureHandle normalDepthTexture,
                 TextureHandle surfaceDataTexture,
+                TextureHandle sssSourceTexture,
                 TextureHandle sssDiffusionTexture,
                 TextureHandle colorCopy,
                 TextureHandle destination)
             {
                 RecordGlobalTextureBinding(renderGraph, normalDepthTexture, HoUrpShaderPropertyIds.AovNormalDepthTexture, "HoURP SSS Bind AOV NormalDepth");
                 RecordGlobalTextureBinding(renderGraph, surfaceDataTexture, HoUrpShaderPropertyIds.AovSurfaceDataTexture, "HoURP SSS Bind AOV SurfaceData");
+                RecordGlobalTextureBinding(renderGraph, sssSourceTexture, HoUrpShaderPropertyIds.SssSourceTexture, "HoURP SSS Bind Source");
                 RecordGlobalTextureBinding(renderGraph, sssDiffusionTexture, HoUrpShaderPropertyIds.SssDiffusionTexture, "HoURP SSS Bind Diffusion");
 
                 RenderGraphUtils.BlitMaterialParameters blitParameters =
@@ -364,7 +365,7 @@ namespace HoUrp.Extensions.Features
                         colorCopy,
                         destination,
                         material,
-                        CompositePassIndex)
+                        HoUrpFilterIds.SssCompositePass)
                     {
                         propertyBlock = CreatePropertyBlock(),
                         sourceTexturePropertyID = HoUrpShaderPropertyIds.SourceColorTexture

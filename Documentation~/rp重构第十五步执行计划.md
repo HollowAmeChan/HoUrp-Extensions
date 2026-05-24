@@ -853,3 +853,34 @@ ImagePassDescriptor
 - FidelityFX-SDK / Falcor 的 upscale、denoise、frame generation、render graph 样例继续作为专项审查，不进入第十五步默认实现范围。
 
 第十五步底线：**先把滤波变成一组看得懂、调得动、能复用的 HLSL + C# 文件，再让 SSS 和后处理显式调用它；旧实现和外部渲染库都只能提供事实与算法参考，不能反向定义 HoURP 的资源和语义契约。**
+
+## 15. 本轮执行记录
+
+已落地：
+
+- 新增 `Runtime/Filter/` 轻量 FilterKit 骨架：`HoUrpFilterIds.cs`、`HoUrpFilterUtils.cs`、`HoUrpFilterResources.cs`。
+- 新增通用 include：`HoUrpFilterCommon.hlsl`、`HoUrpFilterSampling.hlsl`、`HoUrpFilterDepthNormalGate.hlsl`、`HoUrpFilterBurleyDiffusion.hlsl`。
+- 新增基础 shader：`Runtime/Filter/Shaders/HoUrpFilterBlur.shader`，包含 Copy、Separable Blur、Depth Normal Aware Blur 三个可定位 pass。
+- 新增 SSS glue include：`Runtime/Filter/SSS/HoUrpSssFilter.hlsl`。
+- `SubsurfaceScatteringRendererFeature` 已改用 `HoUrpFilterIds` 的 SSS pass index，RenderGraph pass name 与 shader pass name 对齐。
+- `SubsurfaceScattering.shader` 已 include FilterKit/SSS helper，Source / Diffusion / Composite pass 名称改为 `HoURP SSS Source Prepare`、`HoURP SSS Profile Diffusion`、`HoURP SSS Composite`。
+- ImagePost prototype 增加可选 simple blur 消费者，调用 `HoUrpFilterBlur.shader` 的 separable blur pass，并继续复用 ImageChain 风格的 WorkA / WorkB ping-pong，不增加长期 full-res RT 字段。
+- 新增 `Runtime/Filter/ThirdParty/EXTERNAL_RENDERING_REFERENCES.md`，登记旧 HoSSS、Falcor、Filament、FidelityFX、NRD、pbrt-v4 的本轮用途与 `reference only` 状态。
+- 新增 `Tests/Runtime/HoUrpFilterContractTests.cs`，覆盖 FilterKit 无 scheduler/request、通用 include 不绑定纹理、通用 blur 不读 AOV/SSS、SSS 不读旧 ABI、pass index 常量存在等静态契约。
+
+未做项：
+
+- 未实现 NRD backend。
+- 未做 temporal SSS / temporal denoise。
+- 未做 FidelityFX FSR / frame interpolation。
+- 未做 DOF。
+- 未实现完整 pyramid shader、Kuwahara、RGB blur、Glow 迁移。
+- 未在本轮引入任何外部库源码到 runtime。
+
+本轮静态验收：
+
+- `Runtime/Filter` 代码和 shader 中未发现 `FilterRequest`、`class .*FilterGraph`、`scheduler`。
+- `Runtime/Filter/HoUrpFilter*.cs` 未发现 `CreateTexture`、`RTHandle`、`TextureHandle` 长期资源字段。
+- `Runtime/Features`、`Runtime/Image`、`Runtime/PostProcess` 未发现新增 `material, [0-9]` 魔法 pass index。
+- `Runtime/Filter` 和 SSS shader 未发现 `_lilHoSSS` / `_lilHoAovSssTexture`。
+- `HoUrpFilterCommon.hlsl` 与 `HoUrpFilterBurleyDiffusion.hlsl` 未声明 `TEXTURE2D`。
