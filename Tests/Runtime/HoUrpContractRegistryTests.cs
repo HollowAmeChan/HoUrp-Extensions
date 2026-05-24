@@ -607,11 +607,11 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.MaterialUtility, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialUtility")));
             Assert.That(HoUrpShaderPropertyIds.MaterialCustom0_3, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialCustom0_3")));
             Assert.That(HoUrpShaderPropertyIds.SssSourceColor, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssSourceColor")));
-            Assert.That(HoUrpShaderPropertyIds.SssStrength, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssStrength")));
-            Assert.That(HoUrpShaderPropertyIds.SssRadius, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssRadius")));
             Assert.That(HoUrpShaderPropertyIds.SssDepthTolerance, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssDepthTolerance")));
             Assert.That(HoUrpShaderPropertyIds.SssNormalTolerance, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssNormalTolerance")));
             Assert.That(HoUrpShaderPropertyIds.SssSourcePreserve, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssSourcePreserve")));
+            Assert.That(HoUrpShaderPropertyIds.SssParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssParams")));
+            Assert.That(HoUrpShaderPropertyIds.SssDebugMode, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssDebugMode")));
             Assert.That(HoUrpShaderPropertyIds.SssProfileIds, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssProfileIds")));
             Assert.That(HoUrpShaderPropertyIds.SssProfileDiffusionParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssProfileDiffusionParams")));
             Assert.That(HoUrpShaderPropertyIds.SssProfileShapeParams, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssProfileShapeParams")));

@@ -116,11 +116,15 @@ namespace HoUrp.Extensions.Tests.Runtime
             string shaderText = ReadPackageText(SubsurfaceScatteringShaderPath);
 
             Assert.That(shaderText, Does.Contain("TEXTURE2D_X(_HoUrpAovMaskIdTexture)"));
-            Assert.That(shaderText, Does.Contain("PickLowObjectFlag(maskId.a, 4.0h)"));
-            Assert.That(shaderText, Does.Contain("maskId.r * receivesSss * validNormal * thicknessGate * profileGate"));
-            Assert.That(shaderText, Does.Contain("diffuse.rgb * receivesSss"));
+            Assert.That(shaderText, Does.Contain("HoUrpSssReceivesSss(maskId)"));
+            Assert.That(shaderText, Does.Contain("HoUrpSssSourceParticipation(maskId, normalDepth, surfaceData, 1.0)"));
+            Assert.That(shaderText, Does.Contain("return half4(diffuse.rgb * receivesSss, weight);"));
             Assert.That(shaderText, Does.Contain("if (centerSource.a <= 0.0001h)"));
-            Assert.That(shaderText, Does.Contain("return half4(centerSceneColor, 0.0h);"));
+            Assert.That(shaderText, Does.Contain("return half4(0.0h, 0.0h, 0.0h, 0.0h);"));
+            Assert.That(shaderText, Does.Contain("_HoUrpSssParams"));
+            Assert.That(shaderText, Does.Contain("_HoUrpSssDebugMode"));
+            Assert.That(shaderText, Does.Not.Contain("_HoUrpSssTransmission"));
+            Assert.That(shaderText, Does.Not.Contain("HoURP SSS Transmission"));
         }
 
         [Test]

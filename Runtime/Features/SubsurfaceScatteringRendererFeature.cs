@@ -15,32 +15,53 @@ namespace HoUrp.Extensions.Features
     public sealed class SubsurfaceScatteringRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]
+        [InspectorName("启用")]
+        private bool enabled = true;
+
+        [SerializeField]
+        [InspectorName("游戏视图")]
         private bool enabledForGameView = true;
 
         [SerializeField]
+        [InspectorName("场景视图")]
         private bool enabledForSceneView = true;
 
         [SerializeField]
+        [InspectorName("强度")]
         [Range(0.0f, 2.0f)]
         private float strength = 1.0f;
 
         [SerializeField]
-        [Range(0.25f, 8.0f)]
-        private float radius = 3.0f;
+        [InspectorName("半径")]
+        [Range(0.0f, 24.0f)]
+        private float radius = 8.0f;
 
         [SerializeField]
-        [Range(0.0001f, 0.25f)]
-        private float depthTolerance = 0.03f;
+        [InspectorName("采样数")]
+        [Range(1, 24)]
+        private int sampleCount = 16;
 
         [SerializeField]
+        [InspectorName("深度容差")]
+        [Range(0.0001f, 2.0f)]
+        private float depthTolerance = 0.08f;
+
+        [SerializeField]
+        [InspectorName("法线容差")]
         [Range(0.0f, 1.0f)]
         private float normalTolerance = 0.25f;
 
         [SerializeField]
+        [InspectorName("保留源色")]
         [Range(0.0f, 1.0f)]
         private float sourcePreserve = 0.1f;
 
         [SerializeField]
+        [InspectorName("调试模式")]
+        private SssDebugMode debugMode = SssDebugMode.Off;
+
+        [SerializeField]
+        [InspectorName("材质配置")]
         private SssProfileSettings[] profiles = SssProfileSettings.CreateDefaults();
 
         private HoUrpContractRegistry registry;
@@ -72,7 +93,7 @@ namespace HoUrp.Extensions.Features
             }
 
             EnsureProfiles();
-            sssPass.Setup(material, strength, radius, depthTolerance, normalTolerance, sourcePreserve, profiles);
+            sssPass.Setup(material, strength, radius, sampleCount, depthTolerance, normalTolerance, sourcePreserve, debugMode, profiles);
             renderer.EnqueuePass(sssPass);
         }
 
@@ -87,8 +108,9 @@ namespace HoUrp.Extensions.Features
         private bool ShouldRender(in RenderingData renderingData)
         {
             CameraType cameraType = renderingData.cameraData.cameraType;
-            return (enabledForGameView && cameraType == CameraType.Game)
-                || (enabledForSceneView && cameraType == CameraType.SceneView);
+            return enabled
+                && ((enabledForGameView && cameraType == CameraType.Game)
+                    || (enabledForSceneView && cameraType == CameraType.SceneView));
         }
 
         private void OnValidate()
@@ -135,24 +157,30 @@ namespace HoUrp.Extensions.Features
             public const int MaxProfileCount = 8;
 
             [SerializeField]
+            [InspectorName("启用")]
             public bool enabled = true;
 
             [SerializeField]
+            [InspectorName("配置 ID")]
             [Range(0, 255)]
             public int profileId = 1;
 
             [SerializeField]
+            [InspectorName("扩散颜色")]
             public Color diffusionColor = new Color(1.0f, 0.43f, 0.32f, 1.0f);
 
             [SerializeField]
+            [InspectorName("扩散半径")]
             [Range(0.0f, 24.0f)]
             public float diffusionRadius = 8.0f;
 
             [SerializeField]
+            [InspectorName("保留源色")]
             [Range(0.0f, 1.0f)]
             public float sourcePreserve = 0.1f;
 
             [SerializeField]
+            [InspectorName("厚度倍率")]
             [Range(0.0f, 4.0f)]
             public float thicknessScale = 1.0f;
 
@@ -186,6 +214,26 @@ namespace HoUrp.Extensions.Features
             }
         }
 
+        private enum SssDebugMode
+        {
+            [InspectorName("关闭")]
+            Off = 0,
+            [InspectorName("参与遮罩")]
+            Mask = 1,
+            [InspectorName("源颜色")]
+            Source = 2,
+            [InspectorName("扩散结果")]
+            Diffusion = 3,
+            [InspectorName("合成权重")]
+            CompositeWeight = 4,
+            [InspectorName("配置 ID")]
+            ProfileId = 5,
+            [InspectorName("厚度")]
+            Thickness = 6,
+            [InspectorName("配置半径")]
+            ProfileRadius = 7
+        }
+
         private sealed class SubsurfaceScatteringPass : ScriptableRenderPass
         {
             private static readonly Vector4[] ProfileIds = new Vector4[SssProfileSettings.MaxProfileCount];
@@ -197,9 +245,11 @@ namespace HoUrp.Extensions.Features
             private Material material;
             private float strength;
             private float radius;
+            private int sampleCount;
             private float depthTolerance;
             private float normalTolerance;
             private float sourcePreserve;
+            private int debugMode;
             private SssProfileSettings[] profiles;
 
             public SubsurfaceScatteringPass(HoUrpContractRegistry registry)
@@ -213,17 +263,21 @@ namespace HoUrp.Extensions.Features
                 Material material,
                 float strength,
                 float radius,
+                int sampleCount,
                 float depthTolerance,
                 float normalTolerance,
                 float sourcePreserve,
+                SssDebugMode debugMode,
                 SssProfileSettings[] profiles)
             {
                 this.material = material;
                 this.strength = Mathf.Max(0.0f, strength);
                 this.radius = Mathf.Max(0.0f, radius);
+                this.sampleCount = Mathf.Clamp(sampleCount, 1, 24);
                 this.depthTolerance = Mathf.Max(0.0001f, depthTolerance);
                 this.normalTolerance = Mathf.Clamp01(normalTolerance);
                 this.sourcePreserve = Mathf.Clamp01(sourcePreserve);
+                this.debugMode = Mathf.Max(0, (int)debugMode);
                 this.profiles = profiles;
                 requiresIntermediateTexture = true;
             }
@@ -377,8 +431,8 @@ namespace HoUrp.Extensions.Features
             private MaterialPropertyBlock CreatePropertyBlock()
             {
                 MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
-                propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssStrength, strength);
-                propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssRadius, radius);
+                propertyBlock.SetVector(HoUrpShaderPropertyIds.SssParams, new Vector4(strength, radius, sampleCount, 1.0f));
+                propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssDebugMode, debugMode);
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssDepthTolerance, depthTolerance);
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssNormalTolerance, normalTolerance);
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssSourcePreserve, sourcePreserve);
@@ -408,7 +462,7 @@ namespace HoUrp.Extensions.Features
                         0.0f);
 
                     ProfileDiffusionParams[i] = new Vector4(
-                        PackRadius(enabled ? profile.diffusionRadius : fallbackRadius, 24.0f),
+                        ClampRadius(enabled ? profile.diffusionRadius : fallbackRadius, 24.0f),
                         enabled ? Mathf.Clamp01(profile.sourcePreserve) : Mathf.Clamp01(fallbackSourcePreserve),
                         diffusionColor.r,
                         diffusionColor.g);
@@ -421,10 +475,9 @@ namespace HoUrp.Extensions.Features
                 }
             }
 
-            private static float PackRadius(float radius, float maxRadius)
+            private static float ClampRadius(float radius, float maxRadius)
             {
-                float normalized = Mathf.Clamp01(Mathf.Max(0.0f, radius) / Mathf.Max(0.0001f, maxRadius));
-                return normalized * normalized * maxRadius;
+                return Mathf.Clamp(Mathf.Max(0.0f, radius), 0.0f, Mathf.Max(0.0001f, maxRadius));
             }
 
             private static void RecordGlobalTextureBinding(

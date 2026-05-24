@@ -864,9 +864,19 @@ ImagePassDescriptor
 - 新增 SSS glue include：`Runtime/Filter/SSS/HoUrpSssFilter.hlsl`。
 - `SubsurfaceScatteringRendererFeature` 已改用 `HoUrpFilterIds` 的 SSS pass index，RenderGraph pass name 与 shader pass name 对齐。
 - `SubsurfaceScattering.shader` 已 include FilterKit/SSS helper，Source / Diffusion / Composite pass 名称改为 `HoURP SSS Source Prepare`、`HoURP SSS Profile Diffusion`、`HoURP SSS Composite`。
+- SSS 参数已从固定 8 sample 扩展为 `Low/Medium/High = 8/16/24`，并新增 Full/Half/Quarter render scale；Diffusion pass 会按 render scale 补偿半径。
+- SSS Profile 已新增 `compositeStrength` 与 `transmissionStrength`，profile 数据打包进 `_HoUrpSssProfileShapeParams`，不再只靠全局强度控制最终混合。
+- SSS Composite 已新增 debug mode：Source、SourceMask、Diffusion、CompositeWeight、ProfileId、Thickness、DiffusionRadius、TransmissionApprox。
+- SSS Composite 已加入无额外 RT 的近似透射项：全局 `transmissionStrength/radius/edgeBoost/color` 乘以 profile transmission、source alpha、surface guide 后叠加到 composite target。
+- SSS 已新增额外 RT `Sss.Transmission`：Source / Diffusion 后增加 `HoURP SSS Transmission` pass，显式写入 `_HoUrpSssTransmissionTexture`，Composite 只消费该 RT 并叠加 `transmission.rgb`。
+- `Sss.Transmission` 已进入 contract：新增 `Shading.SssTransmissionColor` semantic、`SSS.Transmission` debug view、RenderCacheDebug shader mode 44，以及资源声明/测试覆盖。
+- SSS Transmission 已补投射方向与投射轮廓：新增 `_HoUrpSssTransmissionDirection` 与 `_HoUrpSssTransmissionShapeParams`，Transmission pass 按旧 HoSSS 方向模型由主光 view-space 方向、view normal 出射方向、轮廓切线混合得到屏幕投射方向；显式方向只作为主光方向退化时的 fallback。
+- SSS Transmission 已针对方向性投射条带/分界做软化：depth / normal / thickness / profile gate 改为 smoothstep 过渡，方向投射 taps 提升到 6-16，并加入距离 falloff 与同 profile 小邻域稳定。
+- SSS feature debug mode 已拆出 Transmission、TransmissionDirection、TransmissionContour，方便分别验收透射 RT、方向场和轮廓权重。
 - ImagePost prototype 增加可选 simple blur 消费者，调用 `HoUrpFilterBlur.shader` 的 separable blur pass，并继续复用 ImageChain 风格的 WorkA / WorkB ping-pong，不增加长期 full-res RT 字段。
 - 新增 `Runtime/Filter/ThirdParty/EXTERNAL_RENDERING_REFERENCES.md`，登记旧 HoSSS、Falcor、Filament、FidelityFX、NRD、pbrt-v4 的本轮用途与 `reference only` 状态。
 - 新增 `Tests/Runtime/HoUrpFilterContractTests.cs`，覆盖 FilterKit 无 scheduler/request、通用 include 不绑定纹理、通用 blur 不读 AOV/SSS、SSS 不读旧 ABI、pass index 常量存在等静态契约。
+- 扩展 `HoUrpShaderPropertyIds` 与 ABI 静态测试，锁定 `_HoUrpSssParams`、`_HoUrpSssDebugMode`、`_HoUrpSssTransmissionParams`、`_HoUrpSssTransmissionColor`。
 
 未做项：
 
@@ -884,3 +894,5 @@ ImagePassDescriptor
 - `Runtime/Features`、`Runtime/Image`、`Runtime/PostProcess` 未发现新增 `material, [0-9]` 魔法 pass index。
 - `Runtime/Filter` 和 SSS shader 未发现 `_lilHoSSS` / `_lilHoAovSssTexture`。
 - `HoUrpFilterCommon.hlsl` 与 `HoUrpFilterBurleyDiffusion.hlsl` 未声明 `TEXTURE2D`。
+- `SubsurfaceScattering.shader` 中 `_HoUrpAovDiffuseTexture` 只在 Source Prepare pass 读取，Diffusion / Composite 不回读 diffuse AOV。
+- `git diff --check` 已通过，仅报告当前工作区 LF/CRLF 提示。
