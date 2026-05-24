@@ -154,6 +154,9 @@ namespace HoUrp.Extensions.Tests.Runtime
             string presetText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Presets/Character/Character_LilToon_Skin_SSS.honprpreset");
             string fsssPresetText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Presets/Character/Character_LilToon_Skin_fSSS.honprpreset");
             string fsssUiText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Features/PresetUi/Character/Character_LilToon_Skin_fSSS.honprui");
+            string fsssBlockText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Features/Subsurface/ForwardThinSss/Block.honprblock");
+            string fsssHlslText = ReadPackageText(HoNprPackageRoot + "/Shaders/ShaderLibrary/StandardSurface/HoNprSubsurface.hlsl");
+            string characterAssemblyText = ReadPackageText(HoNprPackageRoot + "/Shaders/ShaderLibrary/Assemblies/CharacterLilToon/HoNprCharacterLilToonShared.hlsl");
             string sssUiText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Features/PresetUi/Character/Character_LilToon_Skin_SSS.honprui");
             string sourceInlineTemplateText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Templates/Character/CharacterLilToonSourceInline.hlsl.template");
             string generatedShaderText = ReadPackageText(HoNprPackageRoot + "/Shaders/Generated/LilToon/Skin_SSS.shader");
@@ -199,17 +202,31 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(fsssPresetText, Does.Not.Contain("Material.Thickness"));
             Assert.That(fsssPresetText, Does.Not.Contain("Material.Curvature"));
             Assert.That(fsssUiText, Does.Contain("_HoNprForwardThinSssColor"));
+            Assert.That(fsssUiText, Does.Contain("_HoNprForwardThinSssMask"));
             Assert.That(fsssUiText, Does.Contain("_HoNprForwardThinSssThickness"));
             Assert.That(fsssUiText, Does.Contain("_HoNprForwardThinSssWeight"));
+            Assert.That(fsssUiText, Does.Contain("independent from Surface.RegionMask"));
             Assert.That(fsssUiText, Does.Not.Contain("_HoUrpGeneratedMaterialSssProfile"));
             Assert.That(fsssUiText, Does.Not.Contain("_HoUrpGeneratedMaterialThickness"));
             Assert.That(fsssUiText, Does.Not.Contain("_HoUrpGeneratedMaterialCurvature"));
             Assert.That(generatedFsssShaderText, Does.Contain("MaterialBlock.ForwardThinSss"));
+            Assert.That(generatedFsssShaderText, Does.Contain("_HoNprForwardThinSssMask(\"Forward Thin SSS Mask\", 2D)"));
             Assert.That(generatedFsssShaderText, Does.Not.Contain("MaterialBlock.ScreenSpaceSssSourceProducer"));
             Assert.That(generatedFsssShaderText, Does.Not.Contain("_HoUrpGeneratedMaterialSssProfile"));
             Assert.That(generatedFsssShaderText, Does.Not.Contain("_HoUrpGeneratedMaterialThickness"));
             Assert.That(generatedFsssShaderText, Does.Not.Contain("_HoUrpGeneratedMaterialCurvature"));
             Assert.That(generatedFsssShaderText, Does.Not.Contain("_HoUrpGeneratedSssSourceColor"));
+            Assert.That(fsssBlockText, Does.Contain("consumes HoUrpSurfaceData HoLightingContext ViewDirection ForwardThinSssMask"));
+            Assert.That(fsssBlockText, Does.Not.Contain("RegionMask"));
+            Assert.That(fsssHlslText, Does.Contain("half skinMask"));
+            Assert.That(fsssHlslText, Does.Contain("frontSuppression"));
+            Assert.That(fsssHlslText, Does.Contain("forwardScatter"));
+            Assert.That(fsssHlslText, Does.Contain("lighting.hoShadow"));
+            Assert.That(fsssHlslText, Does.Contain("output.semanticWeight = amount"));
+            Assert.That(characterAssemblyText, Does.Contain("TEXTURE2D(_HoNprForwardThinSssMask)"));
+            Assert.That(characterAssemblyText, Does.Contain("SAMPLE_TEXTURE2D(_HoNprForwardThinSssMask, sampler_HoNprForwardThinSssMask, input.uv).r"));
+            Assert.That(characterAssemblyText, Does.Contain("HoNprEvaluateForwardThinSss(surface, lighting, viewDirWS, fsssMask"));
+            Assert.That(characterAssemblyText, Does.Not.Contain("HoNprEvaluateForwardThinSss(surface, lighting, viewDirWS, regionMask.skin"));
         }
 
         [Test]
