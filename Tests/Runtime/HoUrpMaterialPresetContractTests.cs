@@ -16,9 +16,18 @@ namespace HoUrp.Extensions.Tests.Runtime
 
             MaterialFeatureBlockDefinition screenSss = FindBlock(blocks, HoUrpMaterialContracts.FeatureBlocks.ScreenSpaceSssSourceProducer);
             Assert.That(screenSss.Domain, Is.EqualTo(HoUrpDomain.Shading));
+            Assert.That(screenSss.ProducedFields, Contains.Item(HoUrpBuiltInNames.Semantics.MaterialSssProfile));
+            Assert.That(screenSss.ProducedFields, Contains.Item(HoUrpBuiltInNames.Semantics.MaterialThickness));
+            Assert.That(screenSss.ProducedFields, Contains.Item(HoUrpBuiltInNames.Semantics.MaterialCurvature));
             Assert.That(screenSss.ProducedFields, Contains.Item(HoUrpBuiltInNames.Semantics.ShadingSssSourceColor));
             Assert.That(screenSss.ProducedFields, Does.Not.Contain(HoUrpBuiltInNames.Semantics.ShadingSssWeight));
             Assert.That(screenSss.RequiredIncludes, Contains.Item("HoUrpMaterialAov.hlsl"));
+
+            MaterialFeatureBlockDefinition materialSemantic = FindBlock(blocks, HoUrpMaterialContracts.FeatureBlocks.MaterialSemanticProducer);
+            Assert.That(materialSemantic.ProducedFields, Contains.Item(HoUrpBuiltInNames.Semantics.MaterialClass));
+            Assert.That(materialSemantic.ProducedFields, Does.Not.Contain(HoUrpBuiltInNames.Semantics.MaterialSssProfile));
+            Assert.That(materialSemantic.ProducedFields, Does.Not.Contain(HoUrpBuiltInNames.Semantics.MaterialThickness));
+            Assert.That(materialSemantic.ProducedFields, Does.Not.Contain(HoUrpBuiltInNames.Semantics.MaterialCurvature));
 
             MaterialFeatureBlockDefinition aovBlock = FindBlock(blocks, HoUrpMaterialContracts.FeatureBlocks.AovOutputStandard);
             Assert.That(aovBlock.ProducedFields, Contains.Item(HoUrpBuiltInNames.Semantics.ShadingSssSourceColor));

@@ -153,14 +153,19 @@ namespace HoUrp.Extensions.Tests.Runtime
             string paramsText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Features/Subsurface/ScreenSpaceSssSourceProducer/Parameters.honprparams");
             string presetText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Presets/Character/Character_LilToon_Skin_SSS.honprpreset");
             string fsssPresetText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Presets/Character/Character_LilToon_Skin_fSSS.honprpreset");
+            string fsssUiText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Features/PresetUi/Character/Character_LilToon_Skin_fSSS.honprui");
             string sssUiText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Features/PresetUi/Character/Character_LilToon_Skin_SSS.honprui");
             string sourceInlineTemplateText = ReadPackageText(HoNprPackageRoot + "/ShaderSystem/Templates/Character/CharacterLilToonSourceInline.hlsl.template");
             string generatedShaderText = ReadPackageText(HoNprPackageRoot + "/Shaders/Generated/LilToon/Skin_SSS.shader");
+            string generatedFsssShaderText = ReadPackageText(HoNprPackageRoot + "/Shaders/Generated/LilToon/Skin_fSSS.shader");
 
             Assert.That(blockText, Does.Contain("block MaterialBlock.ScreenSpaceSssSourceProducer"));
-            Assert.That(blockText, Does.Contain("produces Shading.SssSourceColor Aov.Diffuse"));
+            Assert.That(blockText, Does.Contain("produces Material.SssProfile Material.Thickness Material.Curvature Shading.SssSourceColor Aov.Diffuse"));
             Assert.That(blockText, Does.Not.Contain("Shading.SssWeight"));
             Assert.That(blockText, Does.Contain("HONPR_HAS_SCREEN_SPACE_SSS_SOURCE"));
+            Assert.That(paramsText, Does.Contain("_HoUrpGeneratedMaterialSssProfile"));
+            Assert.That(paramsText, Does.Contain("_HoUrpGeneratedMaterialThickness"));
+            Assert.That(paramsText, Does.Contain("_HoUrpGeneratedMaterialCurvature"));
             Assert.That(paramsText, Does.Contain("_HoUrpGeneratedSssSourceColor"));
             Assert.That(paramsText, Does.Not.Contain("_HoUrpGeneratedSssWeight"));
             Assert.That(presetText, Does.Contain("preset MaterialPreset.Character_LilToon_Skin_SSS"));
@@ -190,6 +195,21 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(fsssPresetText, Does.Not.Contain("MaterialBlock.ScreenSpaceSssSourceProducer"));
             Assert.That(fsssPresetText, Does.Not.Contain("Shading.SssSourceColor"));
             Assert.That(fsssPresetText, Does.Not.Contain("Shading.SssWeight"));
+            Assert.That(fsssPresetText, Does.Not.Contain("Material.SssProfile"));
+            Assert.That(fsssPresetText, Does.Not.Contain("Material.Thickness"));
+            Assert.That(fsssPresetText, Does.Not.Contain("Material.Curvature"));
+            Assert.That(fsssUiText, Does.Contain("_HoNprForwardThinSssColor"));
+            Assert.That(fsssUiText, Does.Contain("_HoNprForwardThinSssThickness"));
+            Assert.That(fsssUiText, Does.Contain("_HoNprForwardThinSssWeight"));
+            Assert.That(fsssUiText, Does.Not.Contain("_HoUrpGeneratedMaterialSssProfile"));
+            Assert.That(fsssUiText, Does.Not.Contain("_HoUrpGeneratedMaterialThickness"));
+            Assert.That(fsssUiText, Does.Not.Contain("_HoUrpGeneratedMaterialCurvature"));
+            Assert.That(generatedFsssShaderText, Does.Contain("MaterialBlock.ForwardThinSss"));
+            Assert.That(generatedFsssShaderText, Does.Not.Contain("MaterialBlock.ScreenSpaceSssSourceProducer"));
+            Assert.That(generatedFsssShaderText, Does.Not.Contain("_HoUrpGeneratedMaterialSssProfile"));
+            Assert.That(generatedFsssShaderText, Does.Not.Contain("_HoUrpGeneratedMaterialThickness"));
+            Assert.That(generatedFsssShaderText, Does.Not.Contain("_HoUrpGeneratedMaterialCurvature"));
+            Assert.That(generatedFsssShaderText, Does.Not.Contain("_HoUrpGeneratedSssSourceColor"));
         }
 
         [Test]

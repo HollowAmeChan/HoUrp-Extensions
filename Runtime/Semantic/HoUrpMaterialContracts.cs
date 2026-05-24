@@ -59,10 +59,11 @@ namespace HoUrp.Extensions.Semantic
                     FeatureBlocks.ScreenSpaceSssSourceProducer,
                     "Screen Space SSS Source Producer",
                     HoUrpDomain.Shading,
+                    new ReadOnlyArray<HoUrpIdentifier>(),
                     new ReadOnlyArray<HoUrpIdentifier>(
+                        HoUrpBuiltInNames.Semantics.MaterialSssProfile,
                         HoUrpBuiltInNames.Semantics.MaterialThickness,
-                        HoUrpBuiltInNames.Semantics.MaterialCurvature),
-                    new ReadOnlyArray<HoUrpIdentifier>(
+                        HoUrpBuiltInNames.Semantics.MaterialCurvature,
                         HoUrpBuiltInNames.Semantics.ShadingSssSourceColor),
                     new ReadOnlyArray<string>("HoUrpMaterialSurface.hlsl", "HoUrpMaterialAov.hlsl"),
                     new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
@@ -96,9 +97,6 @@ namespace HoUrp.Extensions.Semantic
                     new ReadOnlyArray<HoUrpIdentifier>(),
                     new ReadOnlyArray<HoUrpIdentifier>(
                         HoUrpBuiltInNames.Semantics.MaterialClass,
-                        HoUrpBuiltInNames.Semantics.MaterialSssProfile,
-                        HoUrpBuiltInNames.Semantics.MaterialThickness,
-                        HoUrpBuiltInNames.Semantics.MaterialCurvature,
                         HoUrpBuiltInNames.Semantics.MaterialCustom0,
                         HoUrpBuiltInNames.Semantics.MaterialCustom1,
                         HoUrpBuiltInNames.Semantics.MaterialCustom2,
