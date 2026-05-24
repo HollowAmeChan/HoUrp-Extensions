@@ -604,7 +604,6 @@ namespace HoUrp.Extensions.Tests.Runtime
             Assert.That(HoUrpShaderPropertyIds.MaterialUtility, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialUtility")));
             Assert.That(HoUrpShaderPropertyIds.MaterialCustom0_3, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpMaterialCustom0_3")));
             Assert.That(HoUrpShaderPropertyIds.SssSourceColor, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssSourceColor")));
-            Assert.That(HoUrpShaderPropertyIds.SssWeight, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssWeight")));
             Assert.That(HoUrpShaderPropertyIds.SssStrength, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssStrength")));
             Assert.That(HoUrpShaderPropertyIds.SssRadius, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssRadius")));
             Assert.That(HoUrpShaderPropertyIds.SssDepthTolerance, Is.EqualTo(UnityEngine.Shader.PropertyToID("_HoUrpSssDepthTolerance")));

@@ -94,7 +94,6 @@ namespace HoUrp.Extensions.Core
         public static readonly int MaterialUtility = Shader.PropertyToID("_HoUrpMaterialUtility");
         public static readonly int MaterialCustom0_3 = Shader.PropertyToID("_HoUrpMaterialCustom0_3");
         public static readonly int SssSourceColor = Shader.PropertyToID("_HoUrpSssSourceColor");
-        public static readonly int SssWeight = Shader.PropertyToID("_HoUrpSssWeight");
         public static readonly int SssStrength = Shader.PropertyToID("_HoUrpSssStrength");
         public static readonly int SssRadius = Shader.PropertyToID("_HoUrpSssRadius");
         public static readonly int SssDepthTolerance = Shader.PropertyToID("_HoUrpSssDepthTolerance");

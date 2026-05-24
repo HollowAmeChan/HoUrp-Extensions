@@ -21,7 +21,6 @@ struct HoUrpMaterialSemanticData
     half curvature;
     half4 materialCustom0_3;
     half3 sssSourceColor;
-    half sssWeight;
 };
 
 struct HoUrpTransparentOutputData
@@ -57,8 +56,7 @@ HoUrpMaterialSemanticData HoUrpCreateMaterialSemanticData(
     half thickness,
     half curvature,
     half4 materialCustom0_3,
-    half3 sssSourceColor,
-    half sssWeight)
+    half3 sssSourceColor)
 {
     HoUrpMaterialSemanticData data;
     data.materialClass = clamp(materialClass, 0.0h, 255.0h);
@@ -67,7 +65,6 @@ HoUrpMaterialSemanticData HoUrpCreateMaterialSemanticData(
     data.curvature = clamp(curvature, -1.0h, 1.0h);
     data.materialCustom0_3 = saturate(materialCustom0_3);
     data.sssSourceColor = max(sssSourceColor, 0.0h);
-    data.sssWeight = saturate(sssWeight);
     return data;
 }
 

@@ -124,7 +124,7 @@ HoAOV 不应该拥有的内容：
 - ScreenPost rule mask、ImagePost work texture、最终合成中间图等 Post / Image / Composite 资源。
 - Debug tile、debug mode、debug overlay、debug atlas 等 DebugDomain 状态。
 
-SSS 与 MBuffer / HoAOV 的正确关系是：SSS 可以消费 MBuffer 的通用材质、几何和对象语义，例如 normal/depth、mask、material profile、thickness、curvature、diffuse/base color、subsurface color、SSS weight。SSS 不应该自己重新生产这些通用输入。SSS 自己拥有的是经过 feature 策略筛选、扩散、模糊和合成后的 runtime 资源，例如 `Sss.Source`、`Sss.Diffusion`、composite weight。旧 `Aov.SssSource` 这类名字应拆解：通用输入归 MBuffer，SSS 中间结果归 `SubsurfaceScattering`。
+SSS 与 MBuffer / HoAOV 的正确关系是：SSS 可以消费 MBuffer 的通用材质、几何和对象语义，例如 normal/depth、mask、material profile、thickness、curvature、diffuse/base color、subsurface color。SSS 不应该自己重新生产这些通用输入。SSS weight / participation / control 不是 HoAOV 的通用 diffuse 语义，应该由 SSS 自己的 RDG/MRT 或 `Sss.Source.a` 这类 runtime 通道维护。SSS 自己拥有的是经过 feature 策略筛选、扩散、模糊和合成后的 runtime 资源，例如 `Sss.Source`、`Sss.Diffusion`、composite weight。旧 `Aov.SssSource` 这类名字应拆解：通用输入归 MBuffer，SSS 中间结果归 `SubsurfaceScattering`。
 
 Debug 与 HoAOV 的正确关系是：Debug 可以观察 HoAOV 资源，但 Debug 不是 HoAOV 的子功能。跨 AOV、SSS、OIT、ShadowCast、Post cache 的调试视图应归 `DebugDomain` / Render Cache Debug 统一管理，由注册表声明每个 view 的 source resource 与 decode 方式，不能通过一个 `AovDebugMode` 枚举混合所有 Feature 的内部资源。
 

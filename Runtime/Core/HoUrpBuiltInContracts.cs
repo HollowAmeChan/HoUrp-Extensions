@@ -1596,6 +1596,7 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Resources.AovSurfaceData,
                     HoUrpBuiltInNames.Resources.AovDiffuse),
                 new ReadOnlyArray<HoUrpIdentifier>(
+                    HoUrpBuiltInNames.Semantics.ShadingSssWeight,
                     HoUrpBuiltInNames.Semantics.ShadingSssDiffusionColor,
                     HoUrpBuiltInNames.Semantics.ShadingSssCompositeWeight),
                 new ReadOnlyArray<HoUrpIdentifier>(
@@ -1605,8 +1606,7 @@ namespace HoUrp.Extensions.Core
                     HoUrpBuiltInNames.Semantics.MaterialSssProfile,
                     HoUrpBuiltInNames.Semantics.MaterialThickness,
                     HoUrpBuiltInNames.Semantics.MaterialCurvature,
-                    HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
-                    HoUrpBuiltInNames.Semantics.ShadingSssWeight),
+                    HoUrpBuiltInNames.Semantics.ShadingSssSourceColor),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Capabilities.RequiresAov,
                     HoUrpBuiltInNames.Capabilities.SupportsDebugView),

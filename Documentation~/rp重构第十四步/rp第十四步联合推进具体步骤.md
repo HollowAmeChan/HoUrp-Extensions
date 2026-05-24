@@ -52,8 +52,8 @@ block MaterialBlock.ScreenSpaceSssSourceProducer : SemanticProducer in ShadingDo
 要求：
 
 - 不复用 `ForwardThinSss` 作为真 SSS block 名。
-- 参数可先沿用 `_HoUrpGeneratedSssSourceColor`、`_HoUrpGeneratedSssWeight`，但 owner 必须能追溯到新的 block。
-- 如果与旧 `SssSourceProducer` 并存，文档必须说明旧 block 是过渡名还是被替换。
+- 参数只保留 `_HoUrpGeneratedSssSourceColor` 这类可进入 HoAOV 的颜色输入；SSS weight / control 不属于 HoAOV，后续走 SSS 自己的 RDG/MRT 或 `Sss.Source.a`。
+- 旧 `SssSourceProducer` 被 `ScreenSpaceSssSourceProducer` 替换，不再并存。
 
 验收：
 
@@ -86,7 +86,6 @@ HoNpr/ShaderSystem/Presets/Character/Character_LilToon_Skin_SSS.honprpreset
   - `Material.Thickness`
   - `Material.Curvature`
   - `Shading.SssSourceColor`
-  - `Shading.SssWeight`
   - HoAOV 中可供 SSS 消费的颜色输入语义；权重/控制量走 SSS 自己的 RDG/MRT
 
 验收：

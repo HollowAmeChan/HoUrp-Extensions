@@ -92,7 +92,7 @@ Shader "Hidden/HoURP/AOV/AovOutputFallback"
                     half(saturate(_HoUrpMaterialThickness)),
                     half(saturate(_HoUrpMaterialCurvature * 0.5 + 0.5))) * semanticGate;
                 output.materialCustom0 = half4(saturate(_HoUrpMaterialCustom0_3)) * semanticGate;
-                output.diffuse = half4(max(half3(_HoUrpSssSourceColor.rgb), half3(0.0h, 0.0h, 0.0h)) * maskWeight, 1.0h);
+                output.diffuse = half4(max(half3(_HoUrpSssSourceColor.rgb), half3(0.0h, 0.0h, 0.0h)) * maskWeight, 0.0h);
                 return output;
             }
             ENDHLSL

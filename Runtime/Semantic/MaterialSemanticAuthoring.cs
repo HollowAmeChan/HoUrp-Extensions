@@ -46,10 +46,6 @@ namespace HoUrp.Extensions.Semantic
         [SerializeField]
         private Color sssSourceColor = Color.black;
 
-        [SerializeField]
-        [Range(0.0f, 1.0f)]
-        private float sssWeight;
-
         private MaterialPropertyBlock propertyBlock;
 
         public bool IncludeChildren
@@ -122,16 +118,6 @@ namespace HoUrp.Extensions.Semantic
             }
         }
 
-        public float SssWeight
-        {
-            get => sssWeight;
-            set
-            {
-                sssWeight = Mathf.Clamp01(value);
-                ApplyToRenderers();
-            }
-        }
-
         public void ApplyPreset(MaterialSemanticPreset preset)
         {
             switch (preset)
@@ -143,7 +129,6 @@ namespace HoUrp.Extensions.Semantic
                     curvature = 0.25f;
                     materialCustom0_3 = new Vector4(1.0f, 0.25f, 0.0f, 0.0f);
                     sssSourceColor = new Color(1.0f, 0.35f, 0.22f, 1.0f);
-                    sssWeight = 1.0f;
                     break;
                 case MaterialSemanticPreset.Hair:
                     materialClass = 2;
@@ -152,7 +137,6 @@ namespace HoUrp.Extensions.Semantic
                     curvature = 0.35f;
                     materialCustom0_3 = new Vector4(0.65f, 1.0f, 0.0f, 0.0f);
                     sssSourceColor = Color.black;
-                    sssWeight = 0.0f;
                     break;
                 case MaterialSemanticPreset.Eye:
                     materialClass = 3;
@@ -161,7 +145,6 @@ namespace HoUrp.Extensions.Semantic
                     curvature = 0.0f;
                     materialCustom0_3 = new Vector4(0.5f, 0.25f, 1.0f, 0.0f);
                     sssSourceColor = Color.black;
-                    sssWeight = 0.0f;
                     break;
                 case MaterialSemanticPreset.Cloth:
                     materialClass = 4;
@@ -170,7 +153,6 @@ namespace HoUrp.Extensions.Semantic
                     curvature = 0.0f;
                     materialCustom0_3 = new Vector4(0.5f, 0.0f, 0.0f, 0.0f);
                     sssSourceColor = Color.black;
-                    sssWeight = 0.0f;
                     break;
                 case MaterialSemanticPreset.Metal:
                     materialClass = 5;
@@ -179,7 +161,6 @@ namespace HoUrp.Extensions.Semantic
                     curvature = 0.0f;
                     materialCustom0_3 = Vector4.zero;
                     sssSourceColor = Color.black;
-                    sssWeight = 0.0f;
                     break;
                 default:
                     ResetMaterialSemantics();
@@ -197,7 +178,6 @@ namespace HoUrp.Extensions.Semantic
             curvature = 0.0f;
             materialCustom0_3 = Vector4.zero;
             sssSourceColor = Color.black;
-            sssWeight = 0.0f;
             ApplyToRenderers();
         }
 
@@ -236,7 +216,6 @@ namespace HoUrp.Extensions.Semantic
             thickness = Mathf.Clamp01(thickness);
             curvature = Mathf.Clamp(curvature, -1.0f, 1.0f);
             materialCustom0_3 = Clamp01(materialCustom0_3);
-            sssWeight = Mathf.Clamp01(sssWeight);
             if (isActiveAndEnabled)
             {
                 ApplyToRenderers();
@@ -267,7 +246,6 @@ namespace HoUrp.Extensions.Semantic
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.MaterialCurvature, curvature);
                 propertyBlock.SetVector(HoUrpShaderPropertyIds.MaterialCustom0_3, materialCustom0_3);
                 propertyBlock.SetColor(HoUrpShaderPropertyIds.SssSourceColor, sssSourceColor);
-                propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssWeight, sssWeight);
                 targetRenderer.SetPropertyBlock(propertyBlock);
             }
 
@@ -293,7 +271,6 @@ namespace HoUrp.Extensions.Semantic
                 propertyBlock.SetFloat(HoUrpShaderPropertyIds.MaterialCurvature, 0.0f);
                 propertyBlock.SetVector(HoUrpShaderPropertyIds.MaterialCustom0_3, Vector4.zero);
                 propertyBlock.SetColor(HoUrpShaderPropertyIds.SssSourceColor, Color.black);
-                propertyBlock.SetFloat(HoUrpShaderPropertyIds.SssWeight, 0.0f);
                 targetRenderer.SetPropertyBlock(propertyBlock);
             }
 

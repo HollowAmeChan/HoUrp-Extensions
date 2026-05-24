@@ -46,17 +46,11 @@ HoNpr 当前已经具备以下结构：
 HoNpr 当前有：
 
 - `MaterialBlock.ForwardThinSss`
-- `MaterialBlock.SssSourceProducer`
 - `MaterialPreset.Character_LilToon_Skin_fSSS`
 
 其中 `ForwardThinSss` 是 forward/fake SSS 视觉 lobe，输出 `HoNprLobeOutput.transmission`。它不是 HoURP screen-space SSS runtime 本身。
 
-`SssSourceProducer` 已经能输出：
-
-- `Shading.SssSourceColor`
-- `Shading.SssWeight`
-
-但当前 preset 名和能力边界仍偏 `fSSS`。第十四步需要补一个明确的 screen-space SSS block / preset 身份，例如：
+第十四步需要补一个明确的 screen-space SSS block / preset 身份，例如：
 
 - `MaterialBlock.ScreenSpaceSssSourceProducer`
 - `MaterialPreset.Character_LilToon_Skin_SSS`
@@ -96,7 +90,7 @@ HoURP 侧 `HoUrpMaterialContracts.cs` 仍是较早的 prototype 列表。HoNpr �
 - `MaterialBlock.IndirectLightInput`
 - `MaterialBlock.ScreenAoReceiver`
 - `MaterialBlock.MaterialSemanticProducer`
-- `MaterialBlock.SssSourceProducer`
+- `MaterialBlock.ScreenSpaceSssSourceProducer`
 - `MaterialBlock.OitAccumulationOutput`
 
 第十四步需要评估哪些应成为 HoURP 公共契约，哪些仍是 HoNpr 私有风格 block。

@@ -197,14 +197,12 @@ namespace HoUrp.Extensions.Tests.Runtime
                 authoring.SssProfile = -3;
                 authoring.Thickness = 2.0f;
                 authoring.Curvature = -5.0f;
-                authoring.SssWeight = 2.0f;
                 authoring.MaterialCustom0_3 = new Vector4(-1.0f, 0.5f, 2.0f, 1.5f);
 
                 Assert.That(authoring.MaterialClass, Is.EqualTo(255));
                 Assert.That(authoring.SssProfile, Is.EqualTo(0));
                 Assert.That(authoring.Thickness, Is.EqualTo(1.0f));
                 Assert.That(authoring.Curvature, Is.EqualTo(-1.0f));
-                Assert.That(authoring.SssWeight, Is.EqualTo(1.0f));
                 Assert.That(authoring.MaterialCustom0_3, Is.EqualTo(new Vector4(0.0f, 0.5f, 1.0f, 1.0f)));
             }
             finally
@@ -226,7 +224,6 @@ namespace HoUrp.Extensions.Tests.Runtime
                 Assert.That(authoring.MaterialClass, Is.EqualTo(1));
                 Assert.That(authoring.SssProfile, Is.EqualTo(1));
                 Assert.That(authoring.Thickness, Is.GreaterThan(0.0f));
-                Assert.That(authoring.SssWeight, Is.EqualTo(1.0f));
                 Assert.That(authoring.MaterialCustom0_3.x, Is.EqualTo(1.0f));
 
                 authoring.ApplyPreset(MaterialSemanticPreset.Clear);
@@ -234,7 +231,6 @@ namespace HoUrp.Extensions.Tests.Runtime
                 Assert.That(authoring.MaterialClass, Is.EqualTo(0));
                 Assert.That(authoring.SssProfile, Is.EqualTo(0));
                 Assert.That(authoring.Thickness, Is.EqualTo(0.0f));
-                Assert.That(authoring.SssWeight, Is.EqualTo(0.0f));
                 Assert.That(authoring.MaterialCustom0_3, Is.EqualTo(Vector4.zero));
             }
             finally

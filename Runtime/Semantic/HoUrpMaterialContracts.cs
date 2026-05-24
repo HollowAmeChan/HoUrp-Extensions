@@ -13,11 +13,18 @@ namespace HoUrp.Extensions.Semantic
         {
             public static readonly HoUrpIdentifier BaseColorConstant = "MaterialBlock.BaseColorConstant";
             public static readonly HoUrpIdentifier DebugNormal = "MaterialBlock.DebugNormal";
-            public static readonly HoUrpIdentifier SkinSss = "MaterialBlock.SkinSss";
+            public static readonly HoUrpIdentifier ScreenSpaceSssSourceProducer = "MaterialBlock.ScreenSpaceSssSourceProducer";
             public static readonly HoUrpIdentifier MaterialClass = "MaterialBlock.MaterialClass";
             public static readonly HoUrpIdentifier MaterialCustom = "MaterialBlock.MaterialCustom";
+            public static readonly HoUrpIdentifier MaterialSemanticProducer = "MaterialBlock.MaterialSemanticProducer";
             public static readonly HoUrpIdentifier AovOutputStandard = "MaterialBlock.AovOutputStandard";
+            public static readonly HoUrpIdentifier UrpMainLightInput = "MaterialBlock.UrpMainLightInput";
+            public static readonly HoUrpIdentifier UrpAdditionalLightInput = "MaterialBlock.UrpAdditionalLightInput";
+            public static readonly HoUrpIdentifier IndirectLightInput = "MaterialBlock.IndirectLightInput";
+            public static readonly HoUrpIdentifier ScreenAoReceiver = "MaterialBlock.ScreenAoReceiver";
+            public static readonly HoUrpIdentifier HoShadowReceiver = "MaterialBlock.HoShadowReceiver";
             public static readonly HoUrpIdentifier OitTransparent = "MaterialBlock.OitTransparent";
+            public static readonly HoUrpIdentifier OitAccumulationOutput = "MaterialBlock.OitAccumulationOutput";
         }
 
         public static class Presets
@@ -49,19 +56,17 @@ namespace HoUrp.Extensions.Semantic
                     new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
                     "Provides a minimal world normal for forward and AOV output."),
                 new MaterialFeatureBlockDefinition(
-                    FeatureBlocks.SkinSss,
-                    "Skin SSS",
+                    FeatureBlocks.ScreenSpaceSssSourceProducer,
+                    "Screen Space SSS Source Producer",
                     HoUrpDomain.Shading,
-                    new ReadOnlyArray<HoUrpIdentifier>(),
                     new ReadOnlyArray<HoUrpIdentifier>(
-                        HoUrpBuiltInNames.Semantics.MaterialSssProfile,
                         HoUrpBuiltInNames.Semantics.MaterialThickness,
-                        HoUrpBuiltInNames.Semantics.MaterialCurvature,
-                        HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
-                        HoUrpBuiltInNames.Semantics.ShadingSssWeight),
-                    new ReadOnlyArray<string>("HoUrpObjectSemantic.hlsl", "HoUrpMaterialSurface.hlsl", "HoUrpMaterialAov.hlsl"),
+                        HoUrpBuiltInNames.Semantics.MaterialCurvature),
+                    new ReadOnlyArray<HoUrpIdentifier>(
+                        HoUrpBuiltInNames.Semantics.ShadingSssSourceColor),
+                    new ReadOnlyArray<string>("HoUrpMaterialSurface.hlsl", "HoUrpMaterialAov.hlsl"),
                     new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
-                    "Provides minimal SSS semantics for AOV, SSS, and ScreenPost validation."),
+                    "Public HoURP-facing material block for contributing Aov.Diffuse input consumed by screen-space SSS. SSS weight/control remains SSS runtime-owned."),
                 new MaterialFeatureBlockDefinition(
                     FeatureBlocks.MaterialClass,
                     "Material Class",
@@ -85,6 +90,23 @@ namespace HoUrp.Extensions.Semantic
                     new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
                     "Provides Material.Custom0-3 for generated material validation."),
                 new MaterialFeatureBlockDefinition(
+                    FeatureBlocks.MaterialSemanticProducer,
+                    "Material Semantic Producer",
+                    HoUrpDomain.Material,
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<HoUrpIdentifier>(
+                        HoUrpBuiltInNames.Semantics.MaterialClass,
+                        HoUrpBuiltInNames.Semantics.MaterialSssProfile,
+                        HoUrpBuiltInNames.Semantics.MaterialThickness,
+                        HoUrpBuiltInNames.Semantics.MaterialCurvature,
+                        HoUrpBuiltInNames.Semantics.MaterialCustom0,
+                        HoUrpBuiltInNames.Semantics.MaterialCustom1,
+                        HoUrpBuiltInNames.Semantics.MaterialCustom2,
+                        HoUrpBuiltInNames.Semantics.MaterialCustom3),
+                    new ReadOnlyArray<string>("HoUrpMaterialSurface.hlsl"),
+                    new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
+                    "Public HoURP-facing material semantic producer for AOV surface data."),
+                new MaterialFeatureBlockDefinition(
                     FeatureBlocks.AovOutputStandard,
                     "AOV Output Standard",
                     HoUrpDomain.Material,
@@ -103,6 +125,51 @@ namespace HoUrp.Extensions.Semantic
                     new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
                     "Encodes material semantics into the existing AOV MRT layout."),
                 new MaterialFeatureBlockDefinition(
+                    FeatureBlocks.UrpMainLightInput,
+                    "URP Main Light Input",
+                    HoUrpDomain.Lighting,
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<string>("Lighting.hlsl"),
+                    new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
+                    "Public material block contract for consuming URP main light data."),
+                new MaterialFeatureBlockDefinition(
+                    FeatureBlocks.UrpAdditionalLightInput,
+                    "URP Additional Light Input",
+                    HoUrpDomain.Lighting,
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<string>("Lighting.hlsl"),
+                    new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
+                    "Public material block contract for consuming URP additional light data."),
+                new MaterialFeatureBlockDefinition(
+                    FeatureBlocks.IndirectLightInput,
+                    "Indirect Light Input",
+                    HoUrpDomain.Lighting,
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<string>("Lighting.hlsl"),
+                    new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
+                    "Public material block contract for consuming URP indirect light data."),
+                new MaterialFeatureBlockDefinition(
+                    FeatureBlocks.ScreenAoReceiver,
+                    "Screen AO Receiver",
+                    HoUrpDomain.Lighting,
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<string>("HoUrpMaterialSurface.hlsl"),
+                    new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
+                    "Public material block contract for receiving screen-space AO attenuation."),
+                new MaterialFeatureBlockDefinition(
+                    FeatureBlocks.HoShadowReceiver,
+                    "Ho Shadow Receiver",
+                    HoUrpDomain.Lighting,
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<HoUrpIdentifier>(),
+                    new ReadOnlyArray<string>("HoUrpShadowCastSampling.hlsl"),
+                    new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
+                    "Public material block contract for receiving HoURP ShadowCast through the sampling ABI without writing URP main-light shadow."),
+                new MaterialFeatureBlockDefinition(
                     FeatureBlocks.OitTransparent,
                     "OIT Transparent",
                     HoUrpDomain.Composite,
@@ -115,7 +182,20 @@ namespace HoUrp.Extensions.Semantic
                         HoUrpBuiltInNames.Semantics.OitRevealageInput),
                     new ReadOnlyArray<string>("HoUrpMaterialOit.hlsl"),
                     new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
-                    "Provides an OIT-ready accumulation pass without creating OIT runtime resources."));
+                    "Provides an OIT-ready accumulation pass without creating OIT runtime resources."),
+                new MaterialFeatureBlockDefinition(
+                    FeatureBlocks.OitAccumulationOutput,
+                    "OIT Accumulation Output",
+                    HoUrpDomain.Composite,
+                    new ReadOnlyArray<HoUrpIdentifier>(
+                        HoUrpBuiltInNames.Semantics.TransparentColor,
+                        HoUrpBuiltInNames.Semantics.TransparentAlpha),
+                    new ReadOnlyArray<HoUrpIdentifier>(
+                        HoUrpBuiltInNames.Semantics.OitAccumulationInput,
+                        HoUrpBuiltInNames.Semantics.OitRevealageInput),
+                    new ReadOnlyArray<string>("HoUrpMaterialOit.hlsl"),
+                    new ReadOnlyArray<HoUrpIdentifier>(Templates.DebugLitMinimal),
+                    "Public material block contract for writing the HoUrpOitAccumulation pass payload."));
         }
 
         public static MaterialPresetDefinition CreatePrototypePreset()
@@ -127,11 +207,18 @@ namespace HoUrp.Extensions.Semantic
                 new ReadOnlyArray<HoUrpIdentifier>(
                     FeatureBlocks.BaseColorConstant,
                     FeatureBlocks.DebugNormal,
-                    FeatureBlocks.SkinSss,
+                    FeatureBlocks.ScreenSpaceSssSourceProducer,
                     FeatureBlocks.MaterialClass,
                     FeatureBlocks.MaterialCustom,
+                    FeatureBlocks.MaterialSemanticProducer,
                     FeatureBlocks.AovOutputStandard,
-                    FeatureBlocks.OitTransparent),
+                    FeatureBlocks.UrpMainLightInput,
+                    FeatureBlocks.UrpAdditionalLightInput,
+                    FeatureBlocks.IndirectLightInput,
+                    FeatureBlocks.ScreenAoReceiver,
+                    FeatureBlocks.HoShadowReceiver,
+                    FeatureBlocks.OitTransparent,
+                    FeatureBlocks.OitAccumulationOutput),
                 new ReadOnlyArray<HoUrpIdentifier>(
                     HoUrpBuiltInNames.Semantics.MaterialClass,
                     HoUrpBuiltInNames.Semantics.MaterialSssProfile,
@@ -142,7 +229,6 @@ namespace HoUrp.Extensions.Semantic
                     HoUrpBuiltInNames.Semantics.MaterialCustom2,
                     HoUrpBuiltInNames.Semantics.MaterialCustom3,
                     HoUrpBuiltInNames.Semantics.ShadingSssSourceColor,
-                    HoUrpBuiltInNames.Semantics.ShadingSssWeight,
                     HoUrpBuiltInNames.Semantics.TransparentColor,
                     HoUrpBuiltInNames.Semantics.TransparentAlpha,
                     HoUrpBuiltInNames.Semantics.TransparentCoverage,
