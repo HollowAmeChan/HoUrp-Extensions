@@ -19,3 +19,5 @@ sysinfo.txt
 *.apk
 *.aab
 *.unitypackage
+# Local release installers
+/_dist/

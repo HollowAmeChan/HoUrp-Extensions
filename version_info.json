@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "version": "dev",
+  "release_tag": "dev",
+  "release_name": "HoUrp-Extensions development build",
+  "repository": "HollowAmeChan/HoUrp-Extensions",
+  "channel": "dev",
+  "package_name": "com.hollow.hourp-extensions",
+  "package_version": "0.1.0"
+}

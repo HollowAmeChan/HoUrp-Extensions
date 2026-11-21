@@ -63,3 +63,7 @@ D:/Unity_Fork/lilToon-URP-Extensions
 ```
 
 迁移时应优先保留功能契约，而不是照搬旧实现结构。
+
+## 日期版本与安装包
+
+推送默认分支后自动发布日期版本（`YYYYMMDD-HHMMSS`）与 Unity 安装包；在 GitHub Releases 下载 `.tgz`，通过 Package Manager 从 tarball 安装。版本对齐、手动发布与安装说明见 [发布说明](.github/RELEASING.md)。

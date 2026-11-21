@@ -1,0 +1,8 @@
+{
+  "repository": "HollowAmeChan/HoUrp-Extensions",
+  "packages": [
+    {
+      "path": "."
+    }
+  ]
+}
